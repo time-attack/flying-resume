@@ -1,0 +1,2379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAX · 3D Airport Diagram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+  html,body {
+    height:100%;
+    overflow:hidden;
+    background:#141311;
+    color:#f4eed8;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:13px;
+    -webkit-font-smoothing:antialiased;
+  }
+  canvas { display:block; }
+
+  #app { position:relative; width:100vw; height:100vh; }
+  #labels { position:absolute; inset:0; pointer-events:none; }
+
+  /* ——— LOADING ——— */
+  #loader {
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#141311;
+    z-index:100;
+    transition:opacity .6s ease;
+  }
+  #loader.done { opacity:0; pointer-events:none; }
+  #loader .ring {
+    width:22px; height:22px;
+    border:1.5px solid rgba(244,238,216,.15);
+    border-top-color:#ed8e2b;
+    border-radius:50%;
+    animation:spin .9s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ——— HEADER ——— */
+  .header {
+    position:absolute;
+    top:28px;
+    left:32px;
+    max-width:520px;
+    z-index:20;
+    pointer-events:none;
+    animation:fadeUp .9s .2s both cubic-bezier(.2,.8,.2,1);
+  }
+  .mark {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:13px;
+    letter-spacing:.3em;
+    padding:5px 11px 5px 12px;
+    background:#f4eed8;
+    color:#141311;
+    margin-bottom:18px;
+    text-transform:uppercase;
+  }
+  .mark::before {
+    content:"";
+    width:6px; height:6px; border-radius:50%;
+    background:#ed8e2b;
+    display:inline-block;
+  }
+  .header h1 {
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:clamp(30px, 3.4vw, 54px);
+    line-height:.92;
+    letter-spacing:-.015em;
+    color:#f4eed8;
+  }
+  .header h1 .italic {
+    font-style:italic;
+    font-weight:600;
+    color:rgba(244,238,216,.5);
+  }
+  .header .sub {
+    margin-top:14px;
+    font-size:10.5px;
+    letter-spacing:.26em;
+    color:rgba(244,238,216,.52);
+    text-transform:uppercase;
+  }
+  .header .sub span { color:#ed8e2b; }
+
+  /* ——— LEGEND ——— */
+  .legend {
+    position:absolute;
+    top:28px;
+    right:32px;
+    width:264px;
+    padding:18px 20px 20px;
+    background:rgba(20,19,17,.72);
+    backdrop-filter:blur(18px) saturate(140%);
+    -webkit-backdrop-filter:blur(18px) saturate(140%);
+    border:1px solid rgba(244,238,216,.1);
+    z-index:20;
+    animation:fadeUp .9s .35s both cubic-bezier(.2,.8,.2,1);
+  }
+  .legend h2 {
+    font-family:'Syne', sans-serif;
+    font-weight:700;
+    font-size:10px;
+    letter-spacing:.3em;
+    color:rgba(244,238,216,.5);
+    margin-bottom:12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .legend h2::after {
+    content:"";
+    flex:1;
+    height:1px;
+    background:rgba(244,238,216,.1);
+  }
+  .legend ul { list-style:none; display:flex; flex-direction:column; gap:7px; }
+  .legend ul.terminals {
+    flex-direction:row; flex-wrap:wrap; gap:8px;
+  }
+  .legend ul.terminals li {
+    padding:4px 9px;
+    background:rgba(244,238,216,.05);
+    border:1px solid rgba(244,238,216,.08);
+    font-size:11px;
+    letter-spacing:.05em;
+  }
+  .legend li {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:11.5px;
+    color:rgba(244,238,216,.9);
+  }
+  .legend li .meta {
+    margin-left:auto;
+    color:rgba(244,238,216,.4);
+    font-size:10px;
+    letter-spacing:.06em;
+  }
+  .sw {
+    display:inline-block;
+    width:12px; height:12px;
+    border-radius:1px;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);
+  }
+  .section + .section { margin-top:16px; }
+
+  /* ——— COMPASS ——— */
+  .compass {
+    position:absolute;
+    bottom:36px;
+    right:42px;
+    width:72px; height:72px;
+    z-index:20;
+    animation:fadeUp .9s .5s both cubic-bezier(.2,.8,.2,1);
+  }
+  .compass-ring {
+    position:absolute; inset:0;
+    border-radius:50%;
+    border:1px solid rgba(244,238,216,.22);
+    background:rgba(20,19,17,.66);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+  }
+  .compass-ring::before, .compass-ring::after {
+    content:"";
+    position:absolute;
+    background:rgba(244,238,216,.14);
+  }
+  .compass-ring::before { left:50%; top:6px; bottom:6px; width:1px; transform:translateX(-.5px); }
+  .compass-ring::after { top:50%; left:6px; right:6px; height:1px; transform:translateY(-.5px); }
+  .needle {
+    position:absolute;
+    top:8px;
+    left:50%;
+    width:0; height:0;
+    transform:translateX(-50%);
+    border-left:5px solid transparent;
+    border-right:5px solid transparent;
+    border-bottom:18px solid #c9432f;
+    filter:drop-shadow(0 0 4px rgba(201,67,47,.4));
+  }
+  .n-letter {
+    position:absolute;
+    top:-2px;
+    left:50%;
+    transform:translateX(-50%);
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:11px;
+    color:#f4eed8;
+    letter-spacing:.1em;
+  }
+  .compass .tick {
+    position:absolute;
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px;
+    color:rgba(244,238,216,.45);
+    letter-spacing:.1em;
+  }
+  .compass .tick.s { bottom:4px; left:50%; transform:translateX(-50%); }
+  .compass .tick.e { right:6px; top:50%; transform:translateY(-50%); }
+  .compass .tick.w { left:6px; top:50%; transform:translateY(-50%); }
+
+  /* ——— CONTROLS ——— */
+  .controls {
+    position:absolute;
+    bottom:32px;
+    left:32px;
+    display:flex;
+    gap:22px;
+    font-size:10px;
+    letter-spacing:.22em;
+    color:rgba(244,238,216,.55);
+    text-transform:uppercase;
+    z-index:20;
+    animation:fadeUp .9s .5s both cubic-bezier(.2,.8,.2,1);
+  }
+  .controls span { display:flex; align-items:center; gap:7px; }
+  .kbd {
+    display:inline-block;
+    padding:2px 6px;
+    background:rgba(244,238,216,.08);
+    border:1px solid rgba(244,238,216,.12);
+    color:rgba(244,238,216,.85);
+    font-size:9.5px;
+    letter-spacing:.12em;
+  }
+
+  /* ——— CAMERA PRESETS ——— */
+  .presets {
+    position:absolute;
+    bottom:32px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:1px;
+    padding:3px;
+    background:rgba(20,19,17,.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(244,238,216,.1);
+    z-index:20;
+    animation:fadeUp .9s .55s both cubic-bezier(.2,.8,.2,1);
+  }
+  .presets button {
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:rgba(244,238,216,.65);
+    font-family:'Syne', sans-serif;
+    font-weight:700;
+    font-size:10px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    padding:9px 16px;
+    cursor:pointer;
+    transition:color .2s, background .2s;
+  }
+  .presets button:hover { color:#f4eed8; background:rgba(244,238,216,.04); }
+  .presets button.active { color:#141311; background:#ed8e2b; }
+
+  /* ——— ATTRIBUTION ——— */
+  .credit {
+    position:absolute;
+    top:50%;
+    right:14px;
+    transform:translateY(-50%) rotate(90deg);
+    transform-origin:right center;
+    font-size:9px;
+    letter-spacing:.34em;
+    color:rgba(244,238,216,.25);
+    text-transform:uppercase;
+    pointer-events:none;
+  }
+
+  /* ——— EXIT POV BUTTON ——— */
+  .exit-pov {
+    position:absolute;
+    top:28px;
+    left:50%;
+    transform:translateX(-50%) translateY(-90px);
+    padding:10px 20px 10px 16px;
+    background:#c9432f;
+    border:1px solid rgba(244,238,216,.2);
+    color:#f4eed8;
+    font-family:'Syne', sans-serif;
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    cursor:pointer;
+    z-index:30;
+    opacity:0;
+    pointer-events:none;
+    transition:transform .7s cubic-bezier(.2,.8,.2,1), opacity .4s, background .2s;
+    box-shadow:0 10px 34px rgba(201,67,47,.35);
+  }
+  body.in-pov .exit-pov {
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+    pointer-events:auto;
+  }
+  .exit-pov:hover { background:#a93524; }
+  .exit-pov .arrow { margin-right:8px; font-size:13px; display:inline-block; transform:translateY(-1px); }
+
+  /* ——— POV AIRCRAFT PLATE ——— */
+  .pov-plate {
+    position:absolute;
+    bottom:96px;
+    left:50%;
+    transform:translateX(-50%) translateY(18px);
+    padding:14px 26px 16px;
+    background:rgba(20,19,17,.82);
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border:1px solid rgba(237,142,43,.25);
+    border-top:2px solid #ed8e2b;
+    z-index:25;
+    opacity:0;
+    pointer-events:none;
+    transition:transform .7s cubic-bezier(.2,.8,.2,1) .2s, opacity .5s .2s;
+    text-align:center;
+    min-width:260px;
+  }
+  body.in-pov .pov-plate {
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+  }
+  .pov-plate__tag {
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px;
+    letter-spacing:.3em;
+    color:rgba(237,142,43,.8);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .pov-plate__model {
+    font-family:'Syne', sans-serif;
+    font-weight:500;
+    font-size:18px;
+    letter-spacing:.02em;
+    color:#f4eed8;
+  }
+  .pov-plate__model b {
+    font-weight:800;
+    font-style:italic;
+  }
+  .pov-plate__meta {
+    margin-top:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:.22em;
+    color:rgba(244,238,216,.4);
+    text-transform:uppercase;
+  }
+
+  /* ——— POV DIMS ——— */
+  body.in-pov .legend,
+  body.in-pov .presets,
+  body.in-pov .controls,
+  body.in-pov .compass {
+    opacity:.22;
+    filter:saturate(.4);
+    transition:opacity .5s, filter .5s;
+  }
+  body.in-pov .header {
+    opacity:.4;
+    transition:opacity .5s;
+  }
+  body.tutorial-active .pov-plate { opacity:0; transition:opacity .3s; }
+
+  /* ——— TUTORIAL ——— */
+  .tutorial {
+    position:absolute;
+    bottom:32px;
+    left:50%;
+    transform:translateX(-50%) translateY(26px);
+    padding:20px 28px 22px;
+    background:rgba(14,14,12,.9);
+    backdrop-filter:blur(22px) saturate(150%);
+    -webkit-backdrop-filter:blur(22px) saturate(150%);
+    border:1px solid rgba(237,142,43,.32);
+    border-top:2px solid #ed8e2b;
+    z-index:28;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    min-width:360px;
+    opacity:0;
+    pointer-events:none;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1), opacity .4s;
+    box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 40px rgba(237,142,43,.12);
+  }
+  .tutorial.show {
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .tutorial__header { text-align:center; }
+  .tutorial__step {
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px;
+    letter-spacing:.32em;
+    color:#ed8e2b;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .tutorial__title {
+    font-family:'Syne', sans-serif;
+    font-weight:700;
+    font-size:18px;
+    letter-spacing:.01em;
+    color:#f4eed8;
+  }
+  .tutorial__hint {
+    margin-top:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.18em;
+    color:rgba(244,238,216,.55);
+    text-transform:uppercase;
+  }
+
+  .tutorial__keys {
+    display:grid;
+    grid-template-columns:repeat(3, 54px);
+    grid-template-rows:repeat(2, 54px);
+    gap:5px;
+    grid-template-areas:
+      ". w ."
+      "a s d";
+  }
+  .key {
+    position:relative;
+    background:rgba(24,23,20,.8);
+    border:1.5px solid rgba(244,238,216,.2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    transition:border-color .3s, box-shadow .3s, background .3s;
+  }
+  .key span {
+    position:relative;
+    z-index:2;
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:22px;
+    letter-spacing:.04em;
+    color:rgba(244,238,216,.55);
+    transition:color .2s, text-shadow .2s;
+  }
+  .key .fill {
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:0%;
+    background:linear-gradient(to top, #ed8e2b 0%, #f5a848 100%);
+    transition:height .08s linear;
+    z-index:1;
+    box-shadow:inset 0 4px 12px rgba(245,168,72,.4);
+  }
+  .key--w { grid-area:w; }
+  .key--a { grid-area:a; }
+  .key--s { grid-area:s; }
+  .key--d { grid-area:d; }
+
+  .key.active {
+    border-color:#ed8e2b;
+    box-shadow:0 0 22px rgba(237,142,43,.35), 0 0 0 1px rgba(237,142,43,.3);
+    animation:keyBreathe 1.8s ease-in-out infinite;
+  }
+  .key.active span {
+    color:#f4eed8;
+    text-shadow:0 0 10px rgba(237,142,43,.7);
+  }
+  .key.held { animation:none; }
+  .key.complete {
+    border-color:rgba(47,138,71,.55);
+    animation:none;
+    box-shadow:0 0 14px rgba(47,138,71,.2);
+  }
+  .key.complete .fill {
+    background:rgba(47,138,71,.6);
+  }
+  .key.complete span { color:rgba(244,238,216,.9); text-shadow:none; }
+
+  @keyframes keyBreathe {
+    0%, 100% { transform:scale(1); }
+    50%      { transform:scale(1.04); }
+  }
+
+  .tutorial__timer {
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    color:rgba(244,238,216,.5);
+  }
+  .tutorial__timer .t-current {
+    color:#ed8e2b;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    min-width:24px;
+    display:inline-block;
+    text-align:right;
+  }
+  .tutorial__timer .t-sep { margin:0 6px; opacity:.4; }
+  .tutorial__timer .t-unit {
+    margin-left:5px;
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.22em;
+    color:rgba(244,238,216,.35);
+  }
+
+  /* ——— 3D LABELS ——— */
+  .runway-label {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:.15em;
+    background:rgba(20,19,17,.9);
+    color:#f4eed8;
+    padding:3px 7px;
+    border-radius:2px;
+    border:1px solid rgba(244,238,216,.15);
+    white-space:nowrap;
+    transform:translateY(-10px);
+  }
+  .terminal-label {
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:11px;
+    letter-spacing:.04em;
+    background:#f4eed8;
+    color:#141311;
+    padding:3px 8px;
+    border-radius:14px;
+    white-space:nowrap;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+  }
+  .poi-label {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:9.5px;
+    letter-spacing:.2em;
+    color:rgba(244,238,216,.7);
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  /* ——— SOUTHWEST USA MAP VIEW ——— */
+  .map-title {
+    position:absolute;
+    top:28px;
+    left:32px;
+    max-width:360px;
+    text-align:left;
+    opacity:0;
+    pointer-events:none;
+    z-index:40;
+    transform:translateY(-12px);
+    transition:opacity 1.2s 1.2s, transform 1.2s 1.2s cubic-bezier(.2,.8,.2,1);
+  }
+  body.map-view .map-title {
+    opacity:1;
+    transform:translateY(0);
+  }
+  .map-title__sub {
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.3em;
+    color:#ed8e2b;
+    text-transform:uppercase;
+  }
+  .map-title__main {
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:clamp(32px, 3.2vw, 46px);
+    letter-spacing:-.02em;
+    line-height:.92;
+    color:#f4eed8;
+    margin:12px 0 10px;
+  }
+  .map-title__meta {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.24em;
+    color:rgba(244,238,216,.5);
+    text-transform:uppercase;
+  }
+  .map-title__meta span:nth-child(even) { color:rgba(244,238,216,.25); }
+
+  .city-label {
+    font-family:'Syne', sans-serif;
+    font-weight:700;
+    font-size:10px;
+    letter-spacing:.28em;
+    color:rgba(244,238,216,.75);
+    text-transform:uppercase;
+    background:rgba(8,8,6,.85);
+    padding:3px 8px;
+    border:1px solid rgba(244,238,216,.14);
+    white-space:nowrap;
+    opacity:0;
+    transform:translateY(-4px);
+    transition:opacity 1s 1.4s, transform 1s 1.4s cubic-bezier(.2,.8,.2,1);
+  }
+  body.map-view .city-label {
+    opacity:1;
+    transform:translateY(0);
+  }
+  .city-label--active {
+    color:#ed8e2b;
+    border-color:rgba(237,142,43,.55);
+    box-shadow:0 0 20px rgba(237,142,43,.3);
+    font-size:11.5px;
+    letter-spacing:.32em;
+  }
+
+  .state-label {
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:17px;
+    letter-spacing:.42em;
+    color:rgba(237,142,43,.14);
+    text-transform:uppercase;
+    white-space:nowrap;
+    opacity:0;
+    transition:opacity 1.4s 1.6s;
+    pointer-events:none;
+  }
+  body.map-view .state-label { opacity:1; }
+
+  /* fade all airport-scoped UI in map view */
+  body.map-view .tutorial,
+  body.map-view .pov-plate,
+  body.map-view .header,
+  body.map-view .legend,
+  body.map-view .presets,
+  body.map-view .controls,
+  body.map-view .compass,
+  body.map-view .credit {
+    opacity:0 !important;
+    pointer-events:none !important;
+    transition:opacity 1s;
+  }
+  body.map-view .exit-pov {
+    opacity:1 !important;
+    pointer-events:auto !important;
+  }
+
+  /* Fade overlay for clean scene swap */
+  .fade-overlay {
+    position:fixed;
+    inset:0;
+    background:#000;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .9s ease-in-out;
+    z-index:80;
+  }
+  .fade-overlay.active {
+    opacity:1;
+  }
+
+  .plane-marker {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:10px;
+    letter-spacing:.22em;
+    color:#ed8e2b;
+    background:rgba(20,19,17,.92);
+    border:1px solid rgba(237,142,43,.55);
+    padding:4px 9px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    box-shadow:0 0 18px rgba(237,142,43,.35), 0 2px 10px rgba(0,0,0,.4);
+    animation:planePulse 2.2s ease-in-out infinite;
+    transition:opacity .4s;
+  }
+  @keyframes planePulse {
+    0%, 100% { transform:translateY(0); filter:brightness(1); }
+    50%      { transform:translateY(-4px); filter:brightness(1.25); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(18px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  @media (max-width: 760px) {
+    .legend { width:200px; right:14px; top:14px; padding:14px; }
+    .header { left:16px; top:16px; }
+    .controls { left:16px; bottom:16px; gap:10px; font-size:9px; }
+    .compass { right:16px; bottom:18px; width:54px; height:54px; }
+    .presets { padding:2px; }
+    .presets button { padding:7px 10px; font-size:9px; letter-spacing:.16em; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="canvas"></canvas>
+  <div id="labels"></div>
+
+  <div id="loader"><div class="ring"></div></div>
+
+  <header class="header">
+    <div class="mark">KLAX · 33.9416°N 118.4085°W</div>
+    <h1>Los Angeles<br>International<br><span class="italic">Airport</span></h1>
+    <p class="sub">3D Airport Diagram · <span>Interactive Model</span></p>
+  </header>
+
+  <aside class="legend">
+    <div class="section">
+      <h2>Runways</h2>
+      <ul>
+        <li><span class="sw" style="background:#c9432f"></span> 06L / 24R <span class="meta">8,925 ft</span></li>
+        <li><span class="sw" style="background:#e88327"></span> 06R / 24L <span class="meta">10,285 ft</span></li>
+        <li><span class="sw" style="background:#2f8a47"></span> 07L / 25R <span class="meta">12,091 ft</span></li>
+        <li><span class="sw" style="background:#16a8be"></span> 07R / 25L <span class="meta">11,095 ft</span></li>
+      </ul>
+    </div>
+    <div class="section">
+      <h2>Terminals</h2>
+      <ul class="terminals">
+        <li><span class="sw" style="background:#4a3b8c;vertical-align:-2px"></span> 1</li>
+        <li><span class="sw" style="background:#de7329;vertical-align:-2px"></span> 2</li>
+        <li><span class="sw" style="background:#c9432f;vertical-align:-2px"></span> 3</li>
+        <li><span class="sw" style="background:#29b09e;vertical-align:-2px"></span> B · TBIT</li>
+        <li><span class="sw" style="background:#e0a91f;vertical-align:-2px"></span> 4–8</li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="compass" aria-hidden="true">
+    <div class="compass-ring"></div>
+    <div class="needle"></div>
+    <span class="n-letter">N</span>
+    <span class="tick s">S</span>
+    <span class="tick e">E</span>
+    <span class="tick w">W</span>
+  </div>
+
+  <div class="presets">
+    <button data-preset="iso" class="active">Isometric</button>
+    <button data-preset="top">Plan</button>
+    <button data-preset="approach">Approach</button>
+    <button data-preset="terminal">Terminals</button>
+  </div>
+
+  <button class="exit-pov" id="exitPovBtn" aria-label="Exit flight view">
+    <span class="arrow">←</span> Exit Flight View
+  </button>
+
+  <div class="pov-plate" id="povPlate">
+    <div class="pov-plate__tag">Registered · N650LA</div>
+    <div class="pov-plate__model">Gulfstream <b>G650ER</b></div>
+    <div class="pov-plate__meta">Gate B · Stand 201</div>
+  </div>
+
+  <div class="map-title" id="mapTitle" aria-hidden="true">
+    <div class="map-title__sub">▲ Climbing out of KLAX</div>
+    <div class="map-title__main">Above the<br>Clouds</div>
+    <div class="map-title__meta">
+      <span>FL 350</span>
+      <span>·</span>
+      <span>Cruising</span>
+    </div>
+  </div>
+
+  <div class="fade-overlay" id="fadeOverlay"></div>
+
+  <div class="tutorial" id="tutorial">
+    <div class="tutorial__header">
+      <div class="tutorial__step" id="tutStep">Step 1 of 3</div>
+      <div class="tutorial__title" id="tutTitle">Taxi Forward</div>
+      <div class="tutorial__hint" id="tutHint">Hold W — pull out onto the apron</div>
+    </div>
+    <div class="tutorial__keys">
+      <div class="key key--w" data-key="w"><span>W</span><div class="fill"></div></div>
+      <div class="key key--a" data-key="a"><span>A</span><div class="fill"></div></div>
+      <div class="key key--s" data-key="s"><span>S</span><div class="fill"></div></div>
+      <div class="key key--d" data-key="d"><span>D</span><div class="fill"></div></div>
+    </div>
+    <div class="tutorial__timer">
+      <span class="t-current" id="tutElapsed">0.0</span>
+      <span class="t-sep">/</span>
+      <span class="t-total" id="tutDuration">5.0</span>
+      <span class="t-unit">sec held</span>
+    </div>
+  </div>
+
+  <footer class="controls">
+    <span><span class="kbd">Drag</span> Orbit</span>
+    <span><span class="kbd">Scroll</span> Zoom</span>
+    <span><span class="kbd">R-Click</span> Pan</span>
+  </footer>
+
+  <div class="credit">REFERENCE · BERMAN '19</div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+/* ═══════════════════════════════════════════════
+   COLOR PALETTE (sampled from the source diagram)
+   ═══════════════════════════════════════════════ */
+const C = {
+  sky          : 0x141311,
+  ground       : 0xf1e9cf,
+  field        : 0xbcb9ab,
+  fieldDark    : 0xa5a294,
+  asphalt      : 0x767470,
+  taxiway      : 0xa39f90,
+  water        : 0x3a6d78,
+
+  // runways
+  red          : 0xc9432f,
+  orange       : 0xe88327,
+  green        : 0x2f8a47,
+  cyan         : 0x16a8be,
+
+  // terminals
+  purple       : 0x4a3b8c,
+  tOrange      : 0xde7329,
+  tRed         : 0xc9432f,
+  teal         : 0x29b09e,
+  yellow       : 0xe0a91f,
+
+  // buildings
+  buildingA    : 0x2c2b28,
+  buildingB    : 0x504d45,
+  buildingC    : 0x7a7669,
+  parking      : 0x6e6a5e,
+  white        : 0xf4eed8,
+};
+
+/* ═══════════════════════════════════════════════
+   SCENE, CAMERA, RENDERERS
+   ═══════════════════════════════════════════════ */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.sky);
+scene.fog = new THREE.Fog(C.sky, 4500, 11000);
+
+const camera = new THREE.PerspectiveCamera(
+  38,
+  window.innerWidth / window.innerHeight,
+  10,
+  14000
+);
+
+const canvasEl = document.querySelector('#canvas');
+const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.left = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.querySelector('#labels').appendChild(labelRenderer.domElement);
+
+/* ═══════════════════════════════════════════════
+   ORBIT CONTROLS
+   ═══════════════════════════════════════════════ */
+const controls = new OrbitControls(camera, canvasEl);
+controls.enableDamping = true;
+controls.dampingFactor = 0.075;
+controls.minDistance = 420;
+controls.maxDistance = 6500;
+controls.maxPolarAngle = Math.PI / 2 - 0.03;
+controls.screenSpacePanning = false;
+controls.panSpeed = 0.8;
+controls.rotateSpeed = 0.75;
+controls.zoomSpeed = 0.9;
+controls.target.set(0, 0, 0);
+
+/* ═══════════════════════════════════════════════
+   LIGHTING
+   ═══════════════════════════════════════════════ */
+scene.add(new THREE.AmbientLight(0xffe8c2, 0.32));
+
+const hemi = new THREE.HemisphereLight(0xfff5d2, 0x3b3a33, 0.55);
+scene.add(hemi);
+
+const sun = new THREE.DirectionalLight(0xfff0cb, 1.35);
+sun.position.set(-900, 2600, 1300);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+const shadowSpan = 3300;
+sun.shadow.camera.left   = -shadowSpan;
+sun.shadow.camera.right  =  shadowSpan;
+sun.shadow.camera.top    =  shadowSpan;
+sun.shadow.camera.bottom = -shadowSpan;
+sun.shadow.camera.near   = 100;
+sun.shadow.camera.far    = 6500;
+sun.shadow.bias          = -0.00018;
+sun.shadow.normalBias    = 0.6;
+scene.add(sun);
+
+// Cool fill from opposite side
+const fill = new THREE.DirectionalLight(0xb9cde3, 0.26);
+fill.position.set(900, 1200, -1100);
+scene.add(fill);
+
+/* ═══════════════════════════════════════════════
+   GROUND + SURROUNDING CONTEXT
+   ═══════════════════════════════════════════════ */
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(14000, 10000),
+  new THREE.MeshStandardMaterial({ color: C.ground, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Pacific Ocean to the west
+const ocean = new THREE.Mesh(
+  new THREE.PlaneGeometry(3800, 10000),
+  new THREE.MeshStandardMaterial({ color: C.water, roughness: 0.55, metalness: 0.15 })
+);
+ocean.rotation.x = -Math.PI / 2;
+ocean.position.set(-4700, 0.4, 0);
+ocean.receiveShadow = true;
+scene.add(ocean);
+
+// Beach buffer
+const beach = new THREE.Mesh(
+  new THREE.PlaneGeometry(400, 4600),
+  new THREE.MeshStandardMaterial({ color: 0xe8dcb1, roughness: 1 })
+);
+beach.rotation.x = -Math.PI / 2;
+beach.position.set(-2900, 0.6, 0);
+scene.add(beach);
+
+/* ═══════════════════════════════════════════════
+   AIRPORT FIELD (irregular grey pad)
+   ═══════════════════════════════════════════════ */
+const fieldShape = new THREE.Shape();
+fieldShape.moveTo(-2650, -820);
+fieldShape.lineTo(-2550, -1020);
+fieldShape.lineTo(2550, -1020);
+fieldShape.lineTo(2650, -820);
+fieldShape.lineTo(2650, 820);
+fieldShape.lineTo(2550, 1020);
+fieldShape.lineTo(-2550, 1020);
+fieldShape.lineTo(-2650, 820);
+fieldShape.closePath();
+const fieldGeom = new THREE.ShapeGeometry(fieldShape);
+fieldGeom.rotateX(-Math.PI / 2);
+const field = new THREE.Mesh(
+  fieldGeom,
+  new THREE.MeshStandardMaterial({ color: C.field, roughness: 0.98 })
+);
+field.position.y = 1.0;
+field.receiveShadow = true;
+scene.add(field);
+
+// Darker inner apron
+const apronShape = new THREE.Shape();
+apronShape.moveTo(-500, -320);
+apronShape.lineTo(500, -320);
+apronShape.lineTo(500, 320);
+apronShape.lineTo(-500, 320);
+apronShape.closePath();
+const apronGeom = new THREE.ShapeGeometry(apronShape);
+apronGeom.rotateX(-Math.PI / 2);
+const apron = new THREE.Mesh(
+  apronGeom,
+  new THREE.MeshStandardMaterial({ color: C.fieldDark, roughness: 1 })
+);
+apron.position.y = 2.0;
+apron.receiveShadow = true;
+scene.add(apron);
+
+/* ═══════════════════════════════════════════════
+   REUSABLE HELPERS
+   ═══════════════════════════════════════════════ */
+function box(w, h, d, color, roughness = 0.78) {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color, roughness, metalness: 0 })
+  );
+  m.castShadow = true;
+  m.receiveShadow = true;
+  return m;
+}
+
+function labelEl(text, cls) {
+  const el = document.createElement('div');
+  el.className = cls;
+  el.textContent = text;
+  return new CSS2DObject(el);
+}
+
+function darken(hex, amount) {
+  return new THREE.Color(hex).multiplyScalar(amount).getHex();
+}
+
+/* ═══════════════════════════════════════════════
+   RUNWAYS
+   ═══════════════════════════════════════════════ */
+function makeRunway({ x, z, length, width, colorTop, names, tilt }) {
+  const g = new THREE.Group();
+
+  // asphalt body
+  const base = box(length, 3.5, width, C.asphalt, 0.95);
+  base.position.y = 1.75;
+  g.add(base);
+
+  // colored surface stripe (the diagram's visual signature)
+  const top = box(length * 0.995, 0.4, width * 0.94, colorTop, 0.62);
+  top.position.y = 4.2;
+  top.castShadow = false;
+  g.add(top);
+
+  // end thresholds
+  for (const endX of [-length / 2 + 30, length / 2 - 30]) {
+    const stripe = box(10, 0.25, width * 0.82, C.white, 0.4);
+    stripe.position.set(endX, 4.9, 0);
+    stripe.castShadow = false;
+    g.add(stripe);
+  }
+
+  // centerline dashes — start past the thresholds so they never overlap
+  const dashes = 26;
+  const span = length / dashes;
+  for (let i = 1; i < dashes - 1; i++) {
+    const dash = box(span * 0.35, 0.2, 1.2, C.white, 0.4);
+    dash.position.set(-length / 2 + span * (i + 0.5), 5.3, 0);
+    dash.castShadow = false;
+    g.add(dash);
+  }
+
+  // end labels
+  const lL = labelEl(names[0], 'runway-label');
+  lL.position.set(-length / 2 - 50, 60, 0);
+  g.add(lL);
+  const lR = labelEl(names[1], 'runway-label');
+  lR.position.set(length / 2 + 50, 60, 0);
+  g.add(lR);
+
+  g.position.set(x, 0, z);
+  if (tilt) g.rotation.y = tilt;
+  return g;
+}
+
+// Slight NE-SW tilt (LAX heading ≈ 069°/249°)
+const RUNWAY_TILT = -0.11;
+
+scene.add(makeRunway({ length: 2720, width: 48, colorTop: C.red,    x: -420, z: -720, tilt: RUNWAY_TILT, names: ['6L', '24R'] }));
+scene.add(makeRunway({ length: 3140, width: 48, colorTop: C.orange, x: -380, z: -540, tilt: RUNWAY_TILT, names: ['6R', '24L'] }));
+scene.add(makeRunway({ length: 3690, width: 48, colorTop: C.green,  x:  380, z:  540, tilt: RUNWAY_TILT, names: ['7L', '25R'] }));
+scene.add(makeRunway({ length: 3380, width: 48, colorTop: C.cyan,   x:  420, z:  720, tilt: RUNWAY_TILT, names: ['7R', '25L'] }));
+
+/* ═══════════════════════════════════════════════
+   TAXIWAY HINTS
+   ═══════════════════════════════════════════════ */
+function taxi(x, z, w, d, rot = 0, color = C.taxiway) {
+  const t = box(w, 0.4, d, color, 0.95);
+  t.position.set(x, 2.6, z);
+  t.rotation.y = rot;
+  t.castShadow = false;
+  return t;
+}
+// parallel taxiways
+scene.add(taxi(-380, -630, 2500, 10, RUNWAY_TILT));
+scene.add(taxi(-380, -450, 2900, 10, RUNWAY_TILT));
+scene.add(taxi( 380,  450, 3400, 10, RUNWAY_TILT));
+scene.add(taxi( 380,  630, 3100, 10, RUNWAY_TILT));
+
+// perimeter taxiways ringing the terminal apron
+scene.add(taxi(0, -340, 1800, 10));
+scene.add(taxi(0,  340, 1800, 10));
+
+/* ═══════════════════════════════════════════════
+   TERMINAL FACTORY (comb-shaped concourses)
+   ═══════════════════════════════════════════════ */
+function makeTerminal({
+  x, z, color, width, depth, fingers, fingerLength, fingerWidth,
+  fingerDir, height = 38, name, labelColor,
+}) {
+  const g = new THREE.Group();
+  const roof = darken(color, 0.82);
+
+  // main concourse
+  const main = box(width, height, depth, color);
+  main.position.y = height / 2;
+  g.add(main);
+
+  // roof cap
+  const rc = box(width * 1.015, 2, depth * 1.03, roof);
+  rc.position.y = height + 1;
+  rc.castShadow = false;
+  g.add(rc);
+
+  // fingers (gate piers)
+  const spacing = width / fingers;
+  for (let i = 0; i < fingers; i++) {
+    const fx = -width / 2 + spacing * (i + 0.5);
+    const fh = height - 6;
+    const f = box(fingerWidth, fh, fingerLength, color);
+    f.position.set(fx, fh / 2, fingerDir * (depth / 2 + fingerLength / 2));
+    g.add(f);
+
+    const fr = box(fingerWidth * 1.02, 1.5, fingerLength * 1.02, roof);
+    fr.position.set(fx, fh + 0.75, fingerDir * (depth / 2 + fingerLength / 2));
+    fr.castShadow = false;
+    g.add(fr);
+  }
+
+  // floating name label
+  const lbl = labelEl(name, 'terminal-label');
+  lbl.position.set(0, height + 44, 0);
+  g.add(lbl);
+
+  g.position.set(x, 0, z);
+  return g;
+}
+
+/* TOP ROW — Terminals 1, 2, 3 (fingers extend NORTH)  */
+scene.add(makeTerminal({
+  x: 270, z: -200, color: C.purple,
+  width: 130, depth: 44,
+  fingers: 2, fingerLength: 130, fingerWidth: 42,
+  fingerDir: -1, name: '1',
+}));
+scene.add(makeTerminal({
+  x: 115, z: -200, color: C.tOrange,
+  width: 120, depth: 44,
+  fingers: 2, fingerLength: 115, fingerWidth: 40,
+  fingerDir: -1, name: '2',
+}));
+scene.add(makeTerminal({
+  x: -40, z: -200, color: C.tRed,
+  width: 120, depth: 44,
+  fingers: 2, fingerLength: 115, fingerWidth: 40,
+  fingerDir: -1, name: '3',
+}));
+
+/* BOTTOM ROW — Terminals 4–8 (fingers extend SOUTH)  */
+const BOT = 190;
+const termYellow = [
+  { x: -130, w: 92, fl: 100 },
+  { x:  -25, w: 92, fl: 100 },
+  { x:   80, w: 92, fl: 100 },
+  { x:  185, w: 92, fl: 100 },
+  { x:  290, w: 86, fl: 92  },
+];
+const names = ['4', '5', '6', '7', '8'];
+termYellow.forEach((t, i) => {
+  scene.add(makeTerminal({
+    x: t.x, z: BOT, color: C.yellow,
+    width: t.w, depth: 32,
+    fingers: 2, fingerLength: t.fl, fingerWidth: 30,
+    fingerDir: 1, name: names[i],
+  }));
+});
+
+/* TBIT — Tom Bradley International (central spine)   */
+function makeTBIT() {
+  const g = new THREE.Group();
+  const h = 58;
+  const color = C.teal;
+  const roof = darken(color, 0.8);
+
+  const main = box(72, h, 400, color);
+  main.position.y = h / 2;
+  g.add(main);
+
+  const rc = box(74, 2, 402, roof);
+  rc.position.y = h + 1;
+  rc.castShadow = false;
+  g.add(rc);
+
+  // gate fingers extending WEST
+  for (let i = 0; i < 4; i++) {
+    const fz = -165 + i * 110;
+    const fh = h - 8;
+    const f = box(160, fh, 32, color);
+    f.position.set(-72 / 2 - 160 / 2, fh / 2, fz);
+    g.add(f);
+    const fr = box(162, 1.5, 33, roof);
+    fr.position.set(-72 / 2 - 160 / 2, fh + 0.75, fz);
+    fr.castShadow = false;
+    g.add(fr);
+  }
+
+  const lbl = labelEl('B · TBIT', 'terminal-label');
+  lbl.position.set(0, h + 44, 0);
+  g.add(lbl);
+
+  g.position.set(-140, 0, 0);
+  return g;
+}
+scene.add(makeTBIT());
+
+/* ═══════════════════════════════════════════════
+   SUPPORT BUILDINGS
+   ═══════════════════════════════════════════════ */
+function building({ x, z, w, d, h, color = C.buildingB }) {
+  const b = box(w, h, d, color, 0.85);
+  b.position.set(x, h / 2, z);
+  return b;
+}
+
+/* West — cargo / maintenance hangars */
+const cargoColors = [C.buildingA, C.buildingB, C.buildingA, C.buildingC, C.buildingB];
+for (let i = 0; i < 5; i++) {
+  scene.add(building({
+    x: -1350 + i * 120, z: -280,
+    w: 100, d: 80, h: 26 + (i % 2) * 8,
+    color: cargoColors[i],
+  }));
+}
+for (let i = 0; i < 4; i++) {
+  scene.add(building({
+    x: -1300 + i * 140, z: 280,
+    w: 120, d: 90, h: 22 + (i % 2) * 10,
+    color: i % 2 ? C.buildingA : C.buildingB,
+  }));
+}
+// larger hangars
+scene.add(building({ x: -1850, z: -120, w: 260, d: 170, h: 38, color: C.buildingB }));
+scene.add(building({ x: -1850, z: 160,  w: 230, d: 150, h: 34, color: C.buildingA }));
+scene.add(building({ x: -2150, z: 20,   w: 180, d: 240, h: 30, color: C.buildingC }));
+
+// Cluster of small hangars west
+for (let i = 0; i < 3; i++) {
+  for (let j = 0; j < 2; j++) {
+    scene.add(building({
+      x: -1550 + i * 70, z: -560 + j * 90,
+      w: 56, d: 72, h: 16 + (i * j) * 2,
+      color: j ? C.buildingA : C.buildingC,
+    }));
+  }
+}
+
+/* East — parking structures */
+function parkingStructure({ x, z, w, d, levels = 3, color = C.parking }) {
+  const g = new THREE.Group();
+  const lvlH = 6;
+  const totalH = levels * lvlH;
+  // slab levels
+  for (let i = 0; i < levels; i++) {
+    const slab = box(w, lvlH - 1, d, i % 2 ? darken(color, 0.9) : color, 0.85);
+    slab.position.y = i * lvlH + lvlH / 2;
+    g.add(slab);
+  }
+  // corner posts
+  const postColor = darken(color, 0.7);
+  [-1, 1].forEach(sx => [-1, 1].forEach(sz => {
+    const p = box(4, totalH, 4, postColor, 0.8);
+    p.position.set(sx * (w / 2 - 2), totalH / 2, sz * (d / 2 - 2));
+    g.add(p);
+  }));
+  g.position.set(x, 0, z);
+  return g;
+}
+
+// Parking garages near terminals (east side)
+scene.add(parkingStructure({ x: 570, z: -65, w: 80, d: 100, levels: 4 }));
+scene.add(parkingStructure({ x: 570, z: 70,  w: 80, d: 100, levels: 4 }));
+scene.add(parkingStructure({ x: 700, z: -65, w: 80, d: 100, levels: 4, color: darken(C.parking, 1.05) }));
+scene.add(parkingStructure({ x: 700, z: 70,  w: 80, d: 100, levels: 4 }));
+
+// Rental car & far east structures
+for (let i = 0; i < 6; i++) {
+  for (let j = 0; j < 2; j++) {
+    scene.add(building({
+      x: 1150 + i * 110, z: -260 + j * 450,
+      w: 80, d: 140, h: 14 + (i % 2) * 6,
+      color: j % 2 ? C.buildingA : C.buildingC,
+    }));
+  }
+}
+// Central terminal area admin buildings (small)
+scene.add(building({ x: -400, z: -60, w: 40, d: 40, h: 36, color: C.buildingC }));
+scene.add(building({ x: -420, z:  50, w: 30, d: 40, h: 22, color: C.buildingA }));
+
+/* Control tower — iconic LAX theme building */
+function theme() {
+  const g = new THREE.Group();
+  // base plinth
+  const plinth = box(38, 6, 38, C.buildingC, 0.8);
+  plinth.position.y = 3;
+  g.add(plinth);
+  // four radial legs meeting at top
+  const legGeom = new THREE.CylinderGeometry(2.4, 3.2, 55, 8);
+  const legMat = new THREE.MeshStandardMaterial({ color: 0xe3dcc0, roughness: 0.7 });
+  for (let i = 0; i < 4; i++) {
+    const leg = new THREE.Mesh(legGeom, legMat);
+    leg.castShadow = true;
+    leg.receiveShadow = true;
+    const angle = (i / 4) * Math.PI * 2;
+    const r = 13;
+    leg.position.set(Math.cos(angle) * r, 32, Math.sin(angle) * r);
+    leg.rotation.z = Math.cos(angle) * 0.22;
+    leg.rotation.x = Math.sin(angle) * -0.22;
+    g.add(leg);
+  }
+  // disc top
+  const disc = new THREE.Mesh(
+    new THREE.CylinderGeometry(22, 22, 6, 28),
+    new THREE.MeshStandardMaterial({ color: 0xf4eed8, roughness: 0.55 })
+  );
+  disc.position.y = 60;
+  disc.castShadow = true;
+  g.add(disc);
+  // small dome
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(10, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xd4cca8, roughness: 0.5 })
+  );
+  dome.position.y = 63;
+  g.add(dome);
+
+  const lbl = labelEl('THEME BLDG', 'poi-label');
+  lbl.position.set(0, 80, 0);
+  g.add(lbl);
+
+  g.position.set(-220, 0, -60);
+  return g;
+}
+scene.add(theme());
+
+// Control tower
+function controlTower() {
+  const g = new THREE.Group();
+  const shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(5, 7, 88, 12),
+    new THREE.MeshStandardMaterial({ color: 0xe8e1c6, roughness: 0.75 })
+  );
+  shaft.position.y = 44;
+  shaft.castShadow = true;
+  g.add(shaft);
+  const cab = new THREE.Mesh(
+    new THREE.CylinderGeometry(11, 11, 12, 16),
+    new THREE.MeshStandardMaterial({ color: 0x242420, roughness: 0.5, metalness: 0.3 })
+  );
+  cab.position.y = 92;
+  cab.castShadow = true;
+  g.add(cab);
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(11, 6, 16),
+    new THREE.MeshStandardMaterial({ color: 0xc9432f, roughness: 0.6 })
+  );
+  roof.position.y = 101;
+  g.add(roof);
+
+  const lbl = labelEl('ATC TOWER', 'poi-label');
+  lbl.position.set(0, 120, 0);
+  g.add(lbl);
+
+  g.position.set(450, 0, 0);
+  return g;
+}
+scene.add(controlTower());
+
+/* ═══════════════════════════════════════════════
+   CLICKABLE AIRPLANE + THIRD-PERSON POV
+   ═══════════════════════════════════════════════ */
+function makeAirplane() {
+  const g = new THREE.Group();
+  const S = 1.45; // overall scale — a little bigger
+
+  const bodyMat   = new THREE.MeshStandardMaterial({ color: 0xf5efd9, roughness: 0.38, metalness: 0.18 });
+  const accentMat = new THREE.MeshStandardMaterial({ color: 0x26344a, roughness: 0.48 });
+  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xc9432f, roughness: 0.5 });
+  const glassMat  = new THREE.MeshStandardMaterial({ color: 0x121c28, roughness: 0.15, metalness: 0.85 });
+  const engineMat = new THREE.MeshStandardMaterial({ color: 0x36342e, roughness: 0.35, metalness: 0.55 });
+  const dark      = new THREE.MeshStandardMaterial({ color: 0x0a0a08, roughness: 0.9 });
+  const gearMat   = new THREE.MeshStandardMaterial({ color: 0x8a8780, roughness: 0.5, metalness: 0.6 });
+
+  const FL = 30 * S;   // fuselage length
+  const FR = 2.0 * S;  // fuselage radius
+
+  // ─── Fuselage ───
+  const fuse = new THREE.Mesh(new THREE.CylinderGeometry(FR, FR, FL, 28), bodyMat);
+  fuse.rotation.z = Math.PI / 2;
+  fuse.castShadow = true;
+  g.add(fuse);
+
+  // Pointed nose (signature G650 silhouette)
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(FR, 8 * S, 28), bodyMat);
+  nose.rotation.z = Math.PI / 2;
+  nose.position.x = -(FL / 2 + 4 * S);
+  nose.castShadow = true;
+  g.add(nose);
+
+  // Tapered tail cone
+  const tailCone = new THREE.Mesh(new THREE.ConeGeometry(FR, 7 * S, 28), bodyMat);
+  tailCone.rotation.z = -Math.PI / 2;
+  tailCone.position.x = FL / 2 + 3.5 * S;
+  tailCone.castShadow = true;
+  g.add(tailCone);
+
+  // ─── Cockpit ───
+  const cockpit = new THREE.Mesh(new THREE.BoxGeometry(5 * S, 1.7 * S, 3.5 * S), glassMat);
+  cockpit.position.set(-(FL / 2) + 0.8 * S, 1 * S, 0);
+  g.add(cockpit);
+  const cockFairing = new THREE.Mesh(new THREE.BoxGeometry(5 * S, 0.5 * S, 3.6 * S), accentMat);
+  cockFairing.position.set(-(FL / 2) + 0.8 * S, 2 * S, 0);
+  g.add(cockFairing);
+
+  // ─── Oval passenger windows (signature G650 panoramic windows) ───
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 14; i++) {
+      const w = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0 * S, 0.55 * S, 0.14 * S),
+        glassMat
+      );
+      w.position.set(-8 * S + i * 1.2 * S, 0.85 * S, side * (FR + 0.03));
+      g.add(w);
+    }
+  }
+
+  // Fuselage stripe
+  for (const side of [-1, 1]) {
+    const red = new THREE.Mesh(
+      new THREE.BoxGeometry(FL + 14 * S, 0.24 * S, 0.1 * S),
+      stripeMat
+    );
+    red.position.set(0, -0.15 * S, side * (FR + 0.015));
+    g.add(red);
+    const navy = new THREE.Mesh(
+      new THREE.BoxGeometry(FL + 14 * S, 0.14 * S, 0.08 * S),
+      accentMat
+    );
+    navy.position.set(0, 0.12 * S, side * (FR + 0.02));
+    g.add(navy);
+  }
+
+  // ─── Swept wings with winglets ───
+  function buildWing(side) {
+    const wg = new THREE.Group();
+    const WL = 17 * S;
+
+    // Tapered wing (root to tip)
+    const wing = new THREE.Mesh(
+      new THREE.BoxGeometry(6 * S, 0.45 * S, WL),
+      bodyMat
+    );
+    wing.position.z = side * WL / 2;
+    wing.castShadow = true;
+    wg.add(wing);
+
+    // Winglet
+    const winglet = new THREE.Mesh(
+      new THREE.BoxGeometry(3 * S, 2.8 * S, 0.45 * S),
+      bodyMat
+    );
+    winglet.position.set(-0.3 * S, 1.5 * S, side * WL);
+    winglet.castShadow = true;
+    wg.add(winglet);
+
+    // Winglet tip stripe (red)
+    const wTip = new THREE.Mesh(
+      new THREE.BoxGeometry(3.05 * S, 0.55 * S, 0.47 * S),
+      stripeMat
+    );
+    wTip.position.set(-0.3 * S, 2.7 * S, side * WL);
+    wg.add(wTip);
+
+    // Sweep back
+    wg.position.set(1 * S, -0.9 * S, side * FR * 0.55);
+    wg.rotation.y = side * 0.28;
+    return wg;
+  }
+  g.add(buildWing(-1));
+  g.add(buildWing( 1));
+
+  // ─── T-Tail (signature G650) ───
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(5 * S, 7 * S, 0.55 * S), bodyMat);
+  fin.position.set(FL / 2 - 2.5 * S, 5.8 * S, 0);
+  fin.rotation.z = 0.12;
+  fin.castShadow = true;
+  g.add(fin);
+
+  const finStripe = new THREE.Mesh(new THREE.BoxGeometry(3 * S, 4 * S, 0.58 * S), stripeMat);
+  finStripe.position.set(FL / 2 - 1.5 * S, 7 * S, 0);
+  finStripe.rotation.z = 0.12;
+  g.add(finStripe);
+
+  // Horizontal stabilizer at TOP of fin (T-tail)
+  const hstab = new THREE.Mesh(new THREE.BoxGeometry(3 * S, 0.38 * S, 11.5 * S), bodyMat);
+  hstab.position.set(FL / 2 - 1.2 * S, 9.2 * S, 0);
+  hstab.castShadow = true;
+  g.add(hstab);
+
+  // ─── Rear-mounted engines (G650 signature) ───
+  for (const side of [-1, 1]) {
+    const pylon = new THREE.Mesh(
+      new THREE.BoxGeometry(4.5 * S, 1.9 * S, 0.7 * S),
+      bodyMat
+    );
+    pylon.position.set(FL / 2 - 5 * S, 1.3 * S, side * (FR + 0.4 * S));
+    pylon.castShadow = true;
+    g.add(pylon);
+
+    const eng = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.55 * S, 1.4 * S, 6.2 * S, 24),
+      engineMat
+    );
+    eng.rotation.z = Math.PI / 2;
+    eng.position.set(FL / 2 - 5 * S, 1.5 * S, side * (FR + 2 * S));
+    eng.castShadow = true;
+    g.add(eng);
+
+    // Intake (dark)
+    const intake = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.25 * S, 1.25 * S, 0.5 * S, 24),
+      dark
+    );
+    intake.rotation.z = Math.PI / 2;
+    intake.position.set(FL / 2 - 5 * S - 3.2 * S, 1.5 * S, side * (FR + 2 * S));
+    g.add(intake);
+
+    // Exhaust
+    const exhaust = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.25 * S, 0.95 * S, 0.7 * S, 24),
+      dark
+    );
+    exhaust.rotation.z = Math.PI / 2;
+    exhaust.position.set(FL / 2 - 5 * S + 3.3 * S, 1.5 * S, side * (FR + 2 * S));
+    g.add(exhaust);
+  }
+
+  // ─── Landing gear ───
+  for (const side of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.24 * S, 0.24 * S, 2.7 * S, 10), gearMat);
+    leg.position.set(1 * S, -FR - 1.3 * S, side * 2.6 * S);
+    g.add(leg);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.68 * S, 0.68 * S, 0.6 * S, 18), dark);
+    wheel.position.set(1 * S, -FR - 2.7 * S, side * 2.6 * S);
+    wheel.rotation.x = Math.PI / 2;
+    g.add(wheel);
+  }
+  const nLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * S, 0.22 * S, 2.5 * S, 10), gearMat);
+  nLeg.position.set(-FL / 2 + 2.5 * S, -FR - 1.2 * S, 0);
+  g.add(nLeg);
+  const nWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.55 * S, 0.55 * S, 0.55 * S, 18), dark);
+  nWheel.position.set(-FL / 2 + 2.5 * S, -FR - 2.5 * S, 0);
+  nWheel.rotation.x = Math.PI / 2;
+  g.add(nWheel);
+
+  g.userData.clickable = true;
+  g.name = 'airplane';
+  return g;
+}
+
+const airplane = makeAirplane();
+airplane.position.set(0, 7, 350);
+airplane.rotation.y = Math.PI;  // face east
+scene.add(airplane);
+
+// Pulsing marker
+const planeMarker = labelEl('▾ Click to Board', 'plane-marker');
+planeMarker.position.set(0, 22, 0);
+airplane.add(planeMarker);
+
+/* ——— Pointer + raycaster ——— */
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let hovering = false;
+
+function setPointer(e) {
+  const x = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? 0;
+  const y = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? 0;
+  pointer.x = (x / window.innerWidth) * 2 - 1;
+  pointer.y = -(y / window.innerHeight) * 2 + 1;
+}
+
+canvasEl.addEventListener('pointermove', (e) => {
+  if (povActive) return;
+  setPointer(e);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObject(airplane, true);
+  const nh = hits.length > 0;
+  if (nh !== hovering) {
+    hovering = nh;
+    canvasEl.style.cursor = hovering ? 'pointer' : '';
+    planeMarker.element.style.transform = hovering ? 'scale(1.08)' : '';
+  }
+});
+
+canvasEl.addEventListener('click', (e) => {
+  if (povActive) return;
+  setPointer(e);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObject(airplane, true);
+  if (hits.length > 0) enterPov();
+});
+
+/* ——— POV state (static aircraft, camera only) ——— */
+let povActive = false;
+const povSaved = {
+  pos: new THREE.Vector3(),
+  target: new THREE.Vector3(),
+  minD: 0, maxD: 0,
+};
+
+const exitBtn = document.getElementById('exitPovBtn');
+exitBtn.addEventListener('click', exitPov);
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && povActive) exitPov();
+});
+
+function enterPov() {
+  povActive = true;
+  planeMarker.element.style.opacity = '0';
+  document.body.classList.add('in-pov');
+
+  povSaved.pos.copy(camera.position);
+  povSaved.target.copy(controls.target);
+  povSaved.minD = controls.minDistance;
+  povSaved.maxD = controls.maxDistance;
+
+  // reset plane to start, ready for tutorial
+  airplane.position.set(0, AIRPLANE_Y, 350);
+  airplane.rotation.set(0, Math.PI, 0);
+
+  // behind the plane, rotated to match its current heading
+  const behindOffset = new THREE.Vector3(76, 28, 0);
+  behindOffset.applyEuler(new THREE.Euler(0, airplane.rotation.y, 0, 'XYZ'));
+  const behind = airplane.position.clone().add(behindOffset);
+
+  controls.enabled = false;
+  animateCamera(behind, airplane.position.clone(), 1400, () => {
+    // chase cam takes over — orbit stays disabled during tutorial
+    startTutorial();
+  });
+}
+
+function exitPov() {
+  const wasMap = mapActive;
+
+  function doExit() {
+    povActive = false;
+    document.body.classList.remove('in-pov');
+    document.body.classList.remove('tutorial-complete');
+    planeMarker.element.style.opacity = '';
+
+    stopTutorial();
+    exitMapView();
+    keysDown.clear();
+    airplane.position.set(0, AIRPLANE_Y, 350);
+    airplane.rotation.set(0, Math.PI, 0);
+
+    controls.enabled = false;
+    animateCamera(povSaved.pos, povSaved.target, 1400, () => {
+      controls.enabled = true;
+      controls.minDistance = povSaved.minD;
+      controls.maxDistance = povSaved.maxD;
+      controls.maxPolarAngle = Math.PI / 2 - 0.03;
+    });
+  }
+
+  if (wasMap) {
+    fadeOverlay.classList.add('active');
+    setTimeout(() => {
+      doExit();
+      requestAnimationFrame(() => fadeOverlay.classList.remove('active'));
+    }, 900);
+  } else {
+    doExit();
+  }
+}
+
+function animateCamera(toPos, toTarget, duration, done) {
+  const fromPos = camera.position.clone();
+  const fromTarget = controls.target.clone();
+  const start = performance.now();
+  const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  function step(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const k = ease(t);
+    camera.position.lerpVectors(fromPos, toPos, k);
+    controls.target.lerpVectors(fromTarget, toTarget, k);
+    if (t < 1) requestAnimationFrame(step);
+    else done && done();
+  }
+  requestAnimationFrame(step);
+}
+
+/* ═══════════════════════════════════════════════
+   TAXI TUTORIAL — WASD → Runway 7L
+   ═══════════════════════════════════════════════ */
+const PATH_Y = 3;
+const AIRPLANE_Y = 7;
+
+// East threshold of runway 7L/25R ≈ (2214, 742). Runway tilt is -0.11 rad,
+// so "west down the runway" (takeoff heading from east end) = rotation.y of -0.11.
+const RWY_ALIGN = -0.11;
+
+// Route goes east from the south apron of TBIT, past terminals 4-8,
+// then south onto the east end of Runway 7L/25R for takeoff alignment.
+const WAYPOINTS = [
+  new THREE.Vector3(    0, PATH_Y, 350),   // W0: south apron of TBIT, facing east
+  new THREE.Vector3( 2100, PATH_Y, 350),   // W1: east past T4–T8 and east parking
+  new THREE.Vector3( 2100, PATH_Y, 730),   // W2: on Runway 7L near east threshold
+];
+
+const TUTORIAL = [
+  // ── TAXI (steps 1–4) ──
+  { key:'w', duration:10.0, title:'Taxi East', phase:'taxi',
+    hint:'Hold W — long taxi past T4, T5, T6, T7, T8',
+    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 350), toRot: Math.PI },
+  { key:'d', duration:3.0,  title:'Turn Right · Face South', phase:'taxi',
+    hint:'Hold D — 90° right, toward Runway 7L',
+    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 350), toRot: Math.PI / 2 },
+  { key:'w', duration:5.0,  title:'Taxi onto the Runway', phase:'taxi',
+    hint:'Hold W — south onto the east end of Runway 7L',
+    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 730), toRot: Math.PI / 2 },
+  { key:'d', duration:5.0,  title:'Align for Takeoff', phase:'taxi',
+    hint:'Hold D — pivot west, nose down the runway centerline',
+    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 730), toRot: RWY_ALIGN },
+
+  // ── TAKEOFF (steps 5–9) ──
+  { key:'w', duration:3.0, title:'Full Throttle', phase:'takeoff',
+    hint:'Hold W — engines spool to 100% · brakes still set',
+    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 730), toRot: RWY_ALIGN },
+  { key:'w', duration:5.0, title:'Takeoff Roll', phase:'takeoff',
+    hint:'Hold W — release brakes, accelerate past V1',
+    toPos: new THREE.Vector3(900, AIRPLANE_Y, 595), toRot: RWY_ALIGN },
+  { key:'s', duration:2.5, title:'Rotate', phase:'takeoff',
+    hint:'Hold S — pull back · nose up · positive rate',
+    toPos: new THREE.Vector3(450, 28, 548), toRot: RWY_ALIGN, toPitch: -0.28 },
+  { key:'w', duration:3.5, title:'Initial Climb', phase:'takeoff',
+    hint:'Hold W — climb out, maintain takeoff attitude',
+    toPos: new THREE.Vector3(-200, 140, 475), toRot: RWY_ALIGN, toPitch: -0.22 },
+  { key:'d', duration:6.0, title:'Departure Turn', phase:'takeoff',
+    hint:'Hold D — bank right, carve a smooth arc onto the departure heading',
+    toPos:      new THREE.Vector3(-700, 260, 180),
+    controlPos: new THREE.Vector3(-465, 200, 446),  // quadratic bezier control → curved arc
+    toRot: -0.85, toPitch: -0.1, toRoll: -0.32 },
+];
+
+/* ——— Illuminated multi-segment path ——— */
+const pathGroup = new THREE.Group();
+const pathCurve = new THREE.CurvePath();
+for (let i = 0; i < WAYPOINTS.length - 1; i++) {
+  pathCurve.add(new THREE.LineCurve3(WAYPOINTS[i], WAYPOINTS[i + 1]));
+}
+
+const tubeInnerMat = new THREE.MeshBasicMaterial({
+  color: 0xffc070, transparent: true, opacity: 0.95, depthWrite: false,
+});
+const tubeGlowMat = new THREE.MeshBasicMaterial({
+  color: 0xed8e2b, transparent: true, opacity: 0.22, depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+
+// One tube per straight segment so corners stay crisp
+for (const seg of pathCurve.curves) {
+  pathGroup.add(new THREE.Mesh(new THREE.TubeGeometry(seg, 24, 0.85, 10, false), tubeInnerMat));
+  pathGroup.add(new THREE.Mesh(new THREE.TubeGeometry(seg, 24, 2.8,  10, false), tubeGlowMat));
+}
+
+// Corner nodes (visual waypoint markers)
+for (let i = 1; i < WAYPOINTS.length - 1; i++) {
+  const node = new THREE.Mesh(
+    new THREE.SphereGeometry(1.8, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 0.95, depthWrite: false })
+  );
+  node.position.copy(WAYPOINTS[i]);
+  pathGroup.add(node);
+}
+
+// Destination ring — on the runway at 7L threshold
+const pathRing = new THREE.Mesh(
+  new THREE.TorusGeometry(16, 1.2, 14, 48),
+  new THREE.MeshBasicMaterial({ color: 0xffc070, transparent: true, opacity: 0.95, depthWrite: false })
+);
+pathRing.rotation.x = Math.PI / 2;
+pathRing.position.copy(WAYPOINTS[WAYPOINTS.length - 1]);
+pathGroup.add(pathRing);
+
+const pathRingGlow = new THREE.Mesh(
+  new THREE.TorusGeometry(16, 3.2, 14, 48),
+  new THREE.MeshBasicMaterial({
+    color: 0xed8e2b, transparent: true, opacity: 0.28, depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  })
+);
+pathRingGlow.rotation.x = Math.PI / 2;
+pathRingGlow.position.copy(WAYPOINTS[WAYPOINTS.length - 1]);
+pathGroup.add(pathRingGlow);
+
+// Heading arrow inside the ring (shows takeoff direction down 7L)
+const arrowShape = new THREE.Shape();
+arrowShape.moveTo(0, 5);
+arrowShape.lineTo(3, -3);
+arrowShape.lineTo(0, -1);
+arrowShape.lineTo(-3, -3);
+arrowShape.closePath();
+const pathArrow = new THREE.Mesh(
+  new THREE.ShapeGeometry(arrowShape),
+  new THREE.MeshBasicMaterial({ color: 0xfff2d0, transparent: true, opacity: 0.95, depthWrite: false, side: THREE.DoubleSide })
+);
+pathArrow.rotation.x = -Math.PI / 2;
+// Point the arrow down the runway (east along 7L)
+pathArrow.rotation.z = -(Math.PI / 2) + (-0.11);
+pathArrow.position.copy(WAYPOINTS[WAYPOINTS.length - 1]);
+pathArrow.position.y = PATH_Y + 0.1;
+pathGroup.add(pathArrow);
+
+// Traveling pulse
+const pathPulse = new THREE.Mesh(
+  new THREE.SphereGeometry(2.4, 22, 16),
+  new THREE.MeshBasicMaterial({ color: 0xfff2d0, transparent: true, opacity: 1, depthWrite: false })
+);
+pathGroup.add(pathPulse);
+
+pathGroup.visible = false;
+scene.add(pathGroup);
+
+/* ═══════════════════════════════════════════════
+   POST-DEPARTURE · ASCENT INTO THE CLOUDS
+   (airport is hidden, plane climbs through clouds, idles)
+   ═══════════════════════════════════════════════ */
+
+// Snapshot every airport object so we can hide the whole thing
+const airportBackdrop = scene.children.filter(
+  c => c !== airplane && c !== pathGroup && !c.isLight,
+);
+
+const mapGroup = new THREE.Group();
+
+/* ─── Sunset gradient sky dome ─── */
+const skyDome = new THREE.Mesh(
+  new THREE.SphereGeometry(6000, 40, 28),
+  new THREE.ShaderMaterial({
+    uniforms: {
+      horizonColor: { value: new THREE.Color(0xe68c50) },
+      midColor:     { value: new THREE.Color(0x8a5684) },
+      zenithColor:  { value: new THREE.Color(0x152040) },
+    },
+    vertexShader: `
+      varying vec3 vPos;
+      void main() {
+        vPos = normalize(position);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 horizonColor;
+      uniform vec3 midColor;
+      uniform vec3 zenithColor;
+      varying vec3 vPos;
+      void main() {
+        float h = vPos.y;
+        vec3 low  = mix(horizonColor, midColor, smoothstep(-0.1, 0.3, h));
+        vec3 col  = mix(low, zenithColor, smoothstep(0.25, 0.85, h));
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+    side: THREE.BackSide,
+    depthWrite: false,
+  }),
+);
+mapGroup.add(skyDome);
+
+/* ─── Sun (bright disc near horizon) ─── */
+const sun = new THREE.Mesh(
+  new THREE.SphereGeometry(55, 24, 16),
+  new THREE.MeshBasicMaterial({ color: 0xffe7b0, transparent: true, opacity: 0.95, depthWrite: false }),
+);
+sun.position.set(-2800, 160, -1400);
+mapGroup.add(sun);
+
+const sunGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(220, 24, 16),
+  new THREE.MeshBasicMaterial({
+    color: 0xffc788, transparent: true, opacity: 0.28, depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }),
+);
+sunGlow.position.copy(sun.position);
+mapGroup.add(sunGlow);
+
+const sunWideGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(480, 24, 16),
+  new THREE.MeshBasicMaterial({
+    color: 0xff9e62, transparent: true, opacity: 0.12, depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }),
+);
+sunWideGlow.position.copy(sun.position);
+mapGroup.add(sunWideGlow);
+
+/* ─── Cloud layer (soft white puffs, warm underside) ─── */
+const cloudGroup = new THREE.Group();
+const CLOUD_COUNT = 260;
+for (let i = 0; i < CLOUD_COUNT; i++) {
+  const r = 45 + Math.random() * 160;
+  const theta = Math.random() * Math.PI * 2;
+  const dist = 100 + Math.sqrt(Math.random()) * 2400;
+  const puff = new THREE.Mesh(
+    new THREE.SphereGeometry(r, 10, 7),
+    new THREE.MeshStandardMaterial({
+      color: 0xffe4ce,
+      transparent: true,
+      opacity: 0.35 + Math.random() * 0.3,
+      roughness: 1,
+      emissive: 0x4a2e1a,
+      emissiveIntensity: 0.25,
+      depthWrite: false,
+    }),
+  );
+  puff.position.set(
+    Math.cos(theta) * dist,
+    190 + Math.random() * 160,
+    Math.sin(theta) * dist,
+  );
+  puff.scale.y = 0.45 + Math.random() * 0.3;
+  puff.scale.x = 0.9 + Math.random() * 0.4;
+  puff.scale.z = 0.9 + Math.random() * 0.4;
+  cloudGroup.add(puff);
+}
+mapGroup.add(cloudGroup);
+
+/* ─── Stars (sparse, high in the zenith) ─── */
+const starGeo = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 260; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(1 - Math.random() * 0.35);
+  const r = 4200 + Math.random() * 800;
+  starPositions.push(
+    r * Math.sin(phi) * Math.cos(theta),
+    r * Math.cos(phi) + 600,
+    r * Math.sin(phi) * Math.sin(theta),
+  );
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+  color: 0xffffff, size: 1.6,
+  transparent: true, opacity: 0,
+  sizeAttenuation: false, depthWrite: false,
+}));
+mapGroup.add(stars);
+
+/* ─── Sunset-key lighting (only on while map is shown) ─── */
+const mapHemi = new THREE.HemisphereLight(0xffd8a8, 0x32324e, 0.85);
+const mapSunLight = new THREE.DirectionalLight(0xffc58a, 1.1);
+mapSunLight.position.set(-2800, 200, -1400);
+mapHemi.visible = false;
+mapSunLight.visible = false;
+mapGroup.add(mapHemi);
+mapGroup.add(mapSunLight);
+
+mapGroup.visible = false;
+scene.add(mapGroup);
+
+/* ─── Sky/fog originals for restoration ─── */
+const SKY_ORIG = new THREE.Color(0x141311);
+const FOG_ORIG = { near: 4500, far: 11000 };
+const SKY_HAZE = new THREE.Color(0xd68a58);  // warm haze for map fog
+
+let mapActive = false;
+let ascentActive = false;
+let ascentStart = 0;
+const ASCENT_DURATION = 6000;
+const ASCENT_START_Y  = 60;
+const ASCENT_END_Y    = 540;
+const MAP_HEADING     = Math.PI;  // plane nose east
+
+const fadeOverlay = document.getElementById('fadeOverlay');
+
+function enterMapView() {
+  fadeOverlay.classList.add('active');
+  controls.enabled = false;
+
+  setTimeout(() => {
+    // Hide the entire airport, show the sky scene
+    airportBackdrop.forEach(o => o.visible = false);
+    pathGroup.visible = false;
+    mapGroup.visible = true;
+    mapHemi.visible = true;
+    mapSunLight.visible = true;
+    document.body.classList.add('map-view');
+    mapActive = true;
+
+    // Plane begins below the clouds, pitched up for climb
+    airplane.position.set(0, ASCENT_START_Y, 0);
+    airplane.rotation.set(0, MAP_HEADING, 0);
+    airplane.rotation.z = -0.22;  // nose up
+
+    // Camera behind + above the climbing plane
+    const chaseOffset = new THREE.Vector3(95, 26, 0);
+    chaseOffset.applyEuler(new THREE.Euler(0, MAP_HEADING, 0, 'XYZ'));
+    camera.position.copy(airplane.position).add(chaseOffset);
+    controls.target.copy(airplane.position);
+
+    // Warm haze atmosphere
+    scene.background.copy(SKY_HAZE);
+    scene.fog.color.copy(SKY_HAZE);
+    scene.fog.near = 600;
+    scene.fog.far = 4500;
+    stars.material.opacity = 0.55;
+
+    controls.enabled = true;
+    controls.minDistance = 55;
+    controls.maxDistance = 800;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02;
+
+    // Kick off the climb
+    ascentStart = performance.now();
+    ascentActive = true;
+
+    requestAnimationFrame(() => fadeOverlay.classList.remove('active'));
+  }, 900);
+}
+
+function exitMapView() {
+  mapActive = false;
+  ascentActive = false;
+  mapGroup.visible = false;
+  mapHemi.visible = false;
+  mapSunLight.visible = false;
+  document.body.classList.remove('map-view');
+  airportBackdrop.forEach(o => o.visible = true);
+  scene.background.copy(SKY_ORIG);
+  scene.fog.color.copy(SKY_ORIG);
+  scene.fog.near = FOG_ORIG.near;
+  scene.fog.far  = FOG_ORIG.far;
+  stars.material.opacity = 0;
+}
+
+function updateMapFX(dt) {
+  if (!mapActive) return;
+  const now = performance.now();
+
+  if (ascentActive) {
+    const elapsed = now - ascentStart;
+    const t = Math.min(1, elapsed / ASCENT_DURATION);
+    const k = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2; // easeInOut
+
+    airplane.position.y = ASCENT_START_Y + (ASCENT_END_Y - ASCENT_START_Y) * k;
+    // Pitch eases from nose-up climb to near-level cruise
+    airplane.rotation.z = -0.22 + 0.19 * k;
+    // Small climb-roll wobble
+    airplane.rotation.x = Math.sin(elapsed * 0.002) * 0.025;
+
+    if (t >= 1) {
+      ascentActive = false;
+      airplane.rotation.z = -0.03;
+      airplane.rotation.x = 0;
+    }
+  } else {
+    // Idle: gentle breathing float + tiny bank — plane is NOT drifting forward
+    const ts = now / 1000;
+    airplane.position.y = ASCENT_END_Y + Math.sin(ts * 0.55) * 1.8;
+    airplane.rotation.x = Math.sin(ts * 0.35) * 0.012;
+    airplane.rotation.z = -0.03 + Math.sin(ts * 0.4) * 0.008;
+  }
+
+  // Camera target smoothly tracks the plane so orbit feels glued
+  controls.target.lerp(airplane.position, 0.22);
+
+  // Slow cloud drift for life (no plane drift)
+  cloudGroup.rotation.y = now * 0.00002;
+  stars.rotation.y = now * 0.000005;
+}
+
+/* ——— Tutorial state ——— */
+let tutActive = false;
+let tutStep = 0;
+let tutProgress = 0;
+const tutStepStart = new THREE.Vector3();
+let tutStepStartRot = 0;
+let tutStepStartPitch = 0;
+let tutStepStartRoll = 0;
+
+/* ——— WASD input ——— */
+const keysDown = new Set();
+window.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (['w','a','s','d'].includes(k)) {
+    keysDown.add(k);
+    e.preventDefault();
+  }
+});
+window.addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  keysDown.delete(k);
+});
+window.addEventListener('blur', () => keysDown.clear());
+
+/* ——— Tutorial UI refs ——— */
+const tutEl         = document.getElementById('tutorial');
+const tutStepEl     = document.getElementById('tutStep');
+const tutTitleEl    = document.getElementById('tutTitle');
+const tutHintEl     = document.getElementById('tutHint');
+const tutElapsedEl  = document.getElementById('tutElapsed');
+const tutDurationEl = document.getElementById('tutDuration');
+const keyEls   = {};
+const keyFills = {};
+['w','a','s','d'].forEach(k => {
+  keyEls[k]   = document.querySelector(`.key--${k}`);
+  keyFills[k] = keyEls[k].querySelector('.fill');
+});
+
+function refreshTutUI() {
+  ['w','a','s','d'].forEach(k => keyEls[k].classList.remove('active','held'));
+  if (tutStep >= TUTORIAL.length) return;
+  const step = TUTORIAL[tutStep];
+  keyEls[step.key].classList.remove('complete');  // reset when reused in a later step
+  keyEls[step.key].classList.add('active');
+  if (keysDown.has(step.key)) keyEls[step.key].classList.add('held');
+  keyFills[step.key].style.height = (tutProgress * 100).toFixed(1) + '%';
+  tutStepEl.textContent     = `Step ${tutStep + 1} of ${TUTORIAL.length}`;
+  tutTitleEl.textContent    = step.title;
+  tutHintEl.textContent     = step.hint;
+  tutElapsedEl.textContent  = (tutProgress * step.duration).toFixed(1);
+  tutDurationEl.textContent = step.duration.toFixed(1);
+}
+
+function startTutorial() {
+  tutActive = true;
+  tutStep = 0;
+  tutProgress = 0;
+  airplane.position.set(0, AIRPLANE_Y, 350);
+  airplane.rotation.set(0, Math.PI, 0);
+  tutStepStart.copy(airplane.position);
+  tutStepStartRot   = airplane.rotation.y;
+  tutStepStartPitch = airplane.rotation.z;
+  tutStepStartRoll  = airplane.rotation.x;
+
+  ['w','a','s','d'].forEach(k => {
+    keyEls[k].classList.remove('complete');
+    keyFills[k].style.height = '0%';
+  });
+
+  pathGroup.visible = true;
+  tutEl.classList.add('show');
+  document.body.classList.add('tutorial-active');
+  document.body.classList.remove('tutorial-complete');
+  refreshTutUI();
+}
+
+function stopTutorial() {
+  tutActive = false;
+  pathGroup.visible = false;
+  tutEl.classList.remove('show');
+  document.body.classList.remove('tutorial-active');
+  document.body.classList.remove('tutorial-complete');
+}
+
+function completeTutorial() {
+  tutActive = false;
+  ['w','a','s','d'].forEach(k => keyEls[k].classList.remove('active','held'));
+  for (const step of TUTORIAL) {
+    keyEls[step.key].classList.add('complete');
+    keyFills[step.key].style.height = '100%';
+  }
+  tutStepEl.textContent     = 'Tutorial Complete';
+  tutTitleEl.textContent    = 'Airborne · Outbound';
+  tutHintEl.textContent     = 'Pulling up for the big picture…';
+  tutElapsedEl.textContent  = '—';
+  tutDurationEl.textContent = '—';
+  document.body.classList.remove('tutorial-active');
+  document.body.classList.add('tutorial-complete');
+  pathGroup.visible = false;
+
+  // Brief beat, then rise above and frame the Southwest
+  setTimeout(enterMapView, 1600);
+}
+
+function updateTutorial(dt) {
+  if (!tutActive) return;
+  if (tutStep >= TUTORIAL.length) return;
+  const step = TUTORIAL[tutStep];
+
+  if (keysDown.has(step.key)) {
+    tutProgress += dt / step.duration;
+    if (tutProgress > 1) tutProgress = 1;
+
+    const toPitch = step.toPitch ?? 0;
+    const toRoll  = step.toRoll  ?? 0;
+
+    // Curved arc via quadratic bezier when controlPos is given, otherwise linear
+    if (step.controlPos) {
+      const u = 1 - tutProgress, t = tutProgress;
+      const p0 = tutStepStart, p1 = step.controlPos, p2 = step.toPos;
+      airplane.position.set(
+        u*u*p0.x + 2*u*t*p1.x + t*t*p2.x,
+        u*u*p0.y + 2*u*t*p1.y + t*t*p2.y,
+        u*u*p0.z + 2*u*t*p1.z + t*t*p2.z,
+      );
+    } else {
+      airplane.position.lerpVectors(tutStepStart, step.toPos, tutProgress);
+    }
+
+    airplane.rotation.y = tutStepStartRot   + (step.toRot - tutStepStartRot)   * tutProgress;
+    airplane.rotation.z = tutStepStartPitch + (toPitch    - tutStepStartPitch) * tutProgress;
+    airplane.rotation.x = tutStepStartRoll  + (toRoll     - tutStepStartRoll)  * tutProgress;
+
+    if (tutProgress >= 1) {
+      keyEls[step.key].classList.add('complete');
+      keyFills[step.key].style.height = '100%';
+      tutStep++;
+      tutProgress = 0;
+      tutStepStart.copy(airplane.position);
+      tutStepStartRot   = airplane.rotation.y;
+      tutStepStartPitch = airplane.rotation.z;
+      tutStepStartRoll  = airplane.rotation.x;
+
+      // End of taxi → snap camera behind the aligned plane and retire the path
+      if (tutStep === 4) {
+        snapChaseCam();
+        pathGroup.visible = false;
+      }
+
+      if (tutStep >= TUTORIAL.length) {
+        completeTutorial();
+        return;
+      }
+    }
+  }
+  refreshTutUI();
+}
+
+/* ——— Chase camera (behind + above, rotates with plane) ——— */
+function updateChaseCam() {
+  if (!povActive || !tutActive) return;
+  const offset = new THREE.Vector3(76, 28, 0);
+  offset.applyEuler(new THREE.Euler(0, airplane.rotation.y, 0, 'XYZ'));
+  const desired = airplane.position.clone().add(offset);
+  camera.position.lerp(desired, 0.18);
+  controls.target.lerp(airplane.position, 0.24);
+}
+
+function snapChaseCam() {
+  if (!povActive) return;
+  const offset = new THREE.Vector3(76, 28, 0);
+  offset.applyEuler(new THREE.Euler(0, airplane.rotation.y, 0, 'XYZ'));
+  camera.position.copy(airplane.position.clone().add(offset));
+  controls.target.copy(airplane.position);
+}
+
+/* ——— Path pulse + ring pulse ——— */
+function updatePathFX() {
+  if (!pathGroup.visible) return;
+  const t = (performance.now() / 3200) % 1;
+  pathPulse.position.copy(pathCurve.getPointAt(t));
+  const s = 1 + Math.sin(performance.now() / 420) * 0.08;
+  pathRing.scale.set(s, s, s);
+  pathRingGlow.scale.set(s * 1.05, s * 1.05, s * 1.05);
+}
+
+const clock = new THREE.Clock();
+
+/* ═══════════════════════════════════════════════
+   CAMERA PRESETS + INITIAL POSITION
+   ═══════════════════════════════════════════════ */
+const PRESETS = {
+  iso:      { pos: [1400, 1500, 2100], target: [0, 0, 0] },
+  top:      { pos: [0, 3600, 0.01],    target: [0, 0, 0] },
+  approach: { pos: [-2400, 300, -50],  target: [600, 20, 0] },
+  terminal: { pos: [-700, 420, 600],   target: [0, 0, 0] },
+};
+
+function animateTo(preset, ms = 1400) {
+  const from = {
+    px: camera.position.x, py: camera.position.y, pz: camera.position.z,
+    tx: controls.target.x, ty: controls.target.y, tz: controls.target.z,
+  };
+  const to = {
+    px: preset.pos[0], py: preset.pos[1], pz: preset.pos[2],
+    tx: preset.target[0], ty: preset.target[1], tz: preset.target[2],
+  };
+  const start = performance.now();
+  const easeInOut = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  function step(now) {
+    const t = Math.min(1, (now - start) / ms);
+    const k = easeInOut(t);
+    camera.position.set(
+      from.px + (to.px - from.px) * k,
+      from.py + (to.py - from.py) * k,
+      from.pz + (to.pz - from.pz) * k,
+    );
+    controls.target.set(
+      from.tx + (to.tx - from.tx) * k,
+      from.ty + (to.ty - from.ty) * k,
+      from.tz + (to.tz - from.tz) * k,
+    );
+    controls.update();
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// Initial view
+camera.position.set(...PRESETS.iso.pos);
+controls.target.set(...PRESETS.iso.target);
+controls.update();
+
+// Preset button wiring
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.presets button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    animateTo(PRESETS[btn.dataset.preset]);
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   ANIMATION LOOP
+   ═══════════════════════════════════════════════ */
+function resize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+}
+window.addEventListener('resize', resize);
+
+function tick() {
+  requestAnimationFrame(tick);
+  const dt = Math.min(clock.getDelta(), 0.1);
+  updateTutorial(dt);
+  updateChaseCam();
+  updatePathFX();
+  updateMapFX(dt);
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+tick();
+
+/* ═══════════════════════════════════════════════
+   FADE OUT LOADER
+   ═══════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('done'), 400);
+});
+</script>
+</body>
+</html>
