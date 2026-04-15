@@ -1899,33 +1899,34 @@ const skyDome = new THREE.Mesh(
 );
 mapGroup.add(skyDome);
 
-/* ─── Sun (bright disc near horizon) ─── */
-const sun = new THREE.Mesh(
+/* ─── Sunset disc near horizon ─── */
+const sunsetPos = new THREE.Vector3(-2800, 160, -1400);
+const sunsetDisc = new THREE.Mesh(
   new THREE.SphereGeometry(55, 24, 16),
   new THREE.MeshBasicMaterial({ color: 0xffe7b0, transparent: true, opacity: 0.95, depthWrite: false }),
 );
-sun.position.set(-2800, 160, -1400);
-mapGroup.add(sun);
+sunsetDisc.position.copy(sunsetPos);
+mapGroup.add(sunsetDisc);
 
-const sunGlow = new THREE.Mesh(
+const sunsetGlow = new THREE.Mesh(
   new THREE.SphereGeometry(220, 24, 16),
   new THREE.MeshBasicMaterial({
     color: 0xffc788, transparent: true, opacity: 0.28, depthWrite: false,
     blending: THREE.AdditiveBlending,
   }),
 );
-sunGlow.position.copy(sun.position);
-mapGroup.add(sunGlow);
+sunsetGlow.position.copy(sunsetPos);
+mapGroup.add(sunsetGlow);
 
-const sunWideGlow = new THREE.Mesh(
+const sunsetHalo = new THREE.Mesh(
   new THREE.SphereGeometry(480, 24, 16),
   new THREE.MeshBasicMaterial({
     color: 0xff9e62, transparent: true, opacity: 0.12, depthWrite: false,
     blending: THREE.AdditiveBlending,
   }),
 );
-sunWideGlow.position.copy(sun.position);
-mapGroup.add(sunWideGlow);
+sunsetHalo.position.copy(sunsetPos);
+mapGroup.add(sunsetHalo);
 
 /* ─── Cloud layer (soft white puffs, warm underside) ─── */
 const cloudGroup = new THREE.Group();
