@@ -1396,6 +1396,300 @@ function controlTower() {
 scene.add(controlTower());
 
 /* ═══════════════════════════════════════════════
+   LAX DETAIL LAYER — roads, parked jets, jet bridges,
+   palms, fuel farm, helipads, light poles, hold lines
+   ═══════════════════════════════════════════════ */
+
+// Shared material pool (reused → low draw-call cost)
+const DET = {
+  asphalt   : new THREE.MeshStandardMaterial({ color: 0x24221d, roughness: 1 }),
+  lane      : new THREE.MeshStandardMaterial({ color: 0xd8c897, roughness: 0.65 }),
+  concrete  : new THREE.MeshStandardMaterial({ color: 0x9a988a, roughness: 1 }),
+  white     : new THREE.MeshStandardMaterial({ color: 0xf0e8d0, roughness: 0.68, metalness: 0.08 }),
+  dark      : new THREE.MeshStandardMaterial({ color: 0x1a1a16, roughness: 0.95 }),
+  grass     : new THREE.MeshStandardMaterial({ color: 0x384a28, roughness: 1 }),
+  fuel      : new THREE.MeshStandardMaterial({ color: 0xe3ddc6, roughness: 0.55, metalness: 0.25 }),
+  palmTrunk : new THREE.MeshStandardMaterial({ color: 0x6a4c28, roughness: 1 }),
+  palmFronds: new THREE.MeshStandardMaterial({ color: 0x3e5a28, roughness: 1 }),
+  yellow    : new THREE.MeshStandardMaterial({ color: 0xd4a42a, roughness: 0.75 }),
+  bulb      : new THREE.MeshBasicMaterial({ color: 0xffe8a0 }),
+};
+
+const ROAD_Y = 1.4;       // above field (y=1.0), below apron (y=2.0)
+
+// Thin strip helper (roads, lane markers, hold lines)
+function strip(x, z, w, d, mat, y = ROAD_Y, rotY = 0, thickness = 0.35) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, thickness, d), mat);
+  m.position.set(x, y, z);
+  if (rotY) m.rotation.y = rotY;
+  m.receiveShadow = true;
+  scene.add(m);
+  return m;
+}
+
+/* ── Road network (kept clear of the tutorial taxi path at z=350) ── */
+// North + South Terminal Roads (World Way-style loop)
+strip(   80, -430, 960, 18, DET.asphalt);   // north loop road
+strip(   80,  430, 960, 18, DET.asphalt);   // south loop road
+// Terminal access roads between TBIT and both terminal rows
+strip(   80, -100, 920, 10, DET.asphalt);
+strip(   80,  100, 920, 10, DET.asphalt);
+// Century Blvd — approach from the east
+strip( 1280,  -60,1160, 20, DET.asphalt);
+// Century → terminal loop connectors (short verticals on the east side)
+strip(  700, -245, 18, 380, DET.asphalt);   // spans z:[-430,-60]
+strip(  700,  245, 18, 380, DET.asphalt);   // spans z:[60,430]
+
+// Dashed lane markings on Century Blvd
+for (let i = 0; i < 22; i++) {
+  strip(720 + i * 52, -60, 16, 1.2, DET.lane, ROAD_Y + 0.02);
+}
+// Double yellow on north/south loop roads
+for (let i = 0; i < 18; i++) {
+  strip(-400 + i * 55, -430, 22, 0.8, DET.lane, ROAD_Y + 0.02);
+  strip(-400 + i * 55,  430, 22, 0.8, DET.lane, ROAD_Y + 0.02);
+}
+
+/* ── Parked aircraft (15 jets, random liveries, stationed at gates) ── */
+const LIVERIES = [
+  new THREE.MeshStandardMaterial({ color: 0xc9432f, roughness: 0.7 }),  // red
+  new THREE.MeshStandardMaterial({ color: 0x3d5c8e, roughness: 0.7 }),  // blue
+  new THREE.MeshStandardMaterial({ color: 0x2a8f4d, roughness: 0.7 }),  // green
+  new THREE.MeshStandardMaterial({ color: 0xe0a030, roughness: 0.7 }),  // amber
+  new THREE.MeshStandardMaterial({ color: 0x8a3a6e, roughness: 0.7 }),  // magenta
+  new THREE.MeshStandardMaterial({ color: 0x2d4a56, roughness: 0.7 }),  // teal-ish
+];
+
+function parkedPlane(x, z, rotY = 0) {
+  const g = new THREE.Group();
+  const livery = LIVERIES[Math.floor(Math.random() * LIVERIES.length)];
+  // Fuselage
+  const fus = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.7, 20, 12), DET.white);
+  fus.rotation.z = Math.PI / 2;
+  fus.castShadow = true;
+  g.add(fus);
+  // Nose
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(1.7, 3.5, 12), DET.white);
+  nose.rotation.z = Math.PI / 2;
+  nose.position.x = -11.75;
+  g.add(nose);
+  // Tail cone
+  const tailCone = new THREE.Mesh(new THREE.ConeGeometry(1.7, 3, 12), DET.white);
+  tailCone.rotation.z = -Math.PI / 2;
+  tailCone.position.x = 11.5;
+  g.add(tailCone);
+  // Wings
+  const wings = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.3, 22), DET.white);
+  wings.position.y = -0.6;
+  wings.castShadow = true;
+  g.add(wings);
+  // Tail fin (livery color)
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3, 0.35), livery);
+  fin.position.set(8.5, 2, 0);
+  fin.castShadow = true;
+  g.add(fin);
+  // Horizontal stabilizer
+  const hstab = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.3, 6.5), DET.white);
+  hstab.position.set(8.5, 0.8, 0);
+  g.add(hstab);
+  // Engines under wings
+  for (const side of [-1, 1]) {
+    const eng = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 3.5, 10), DET.dark);
+    eng.rotation.z = Math.PI / 2;
+    eng.position.set(-0.8, -1.4, side * 5);
+    g.add(eng);
+  }
+
+  g.position.set(x, 4.2, z);
+  g.rotation.y = rotY;
+  return g;
+}
+
+// Top row (T1, T2, T3) — fingers extend NORTH (−Z), planes face north
+const NORTH = -Math.PI / 2, SOUTH = Math.PI / 2, WEST = 0;
+[
+  [ 220, -315, NORTH], [ 265, -315, NORTH],
+  [  60, -315, NORTH], [ 160, -315, NORTH],
+  [-110, -315, NORTH], [ -15, -315, NORTH],
+  // Bottom row (T4–T8) — fingers extend SOUTH, planes face south
+  [-160,  315, SOUTH], [-100,  315, SOUTH],
+  [ -55,  315, SOUTH],
+  [  65,  315, SOUTH],
+  [ 165,  315, SOUTH],
+  [ 260,  315, SOUTH],
+  // TBIT fingers extend WEST, planes face west
+  [-320, -170, WEST], [-320,  -55, WEST], [-320,   60, WEST], [-320,  170, WEST],
+].forEach(([x, z, r]) => scene.add(parkedPlane(x, z, r)));
+
+/* ── Jet bridges — short connectors from finger tips to parked planes ── */
+function jetBridge(x, z, w, d) {
+  const br = new THREE.Mesh(new THREE.BoxGeometry(w, 3.5, d), DET.concrete);
+  br.position.set(x, 3, z);
+  br.castShadow = true;
+  scene.add(br);
+}
+// Top row — bridges extending north from fingers toward parked planes
+[[ 220, -298, 5, 20], [ 265, -298, 5, 20],
+ [  60, -298, 5, 20], [ 160, -298, 5, 20],
+ [-110, -298, 5, 20], [ -15, -298, 5, 20],
+ // Bottom row
+ [-160,  298, 5, 20], [-100,  298, 5, 20],
+ [ -55,  298, 5, 20], [  65,  298, 5, 20],
+ [ 165,  298, 5, 20], [ 260,  298, 5, 20],
+ // TBIT (horizontal bridges)
+ [-265, -170, 20, 5], [-265,  -55, 20, 5],
+ [-265,   60, 20, 5], [-265,  170, 20, 5],
+].forEach(([x, z, w, d]) => jetBridge(x, z, w, d));
+
+/* ── Palm trees (instanced — single draw call for trunks and fronds) ── */
+const palmPositions = [];
+// Along Century Blvd, both sides
+for (let i = 0; i < 12; i++) palmPositions.push([740 + i * 45, -92]);
+for (let i = 0; i < 12; i++) palmPositions.push([740 + i * 45, -28]);
+// Along World Way loops
+for (let i = 0; i < 8; i++) palmPositions.push([-370 + i * 120, -460]);
+for (let i = 0; i < 8; i++) palmPositions.push([-370 + i * 120,  460]);
+// Between parking garages
+palmPositions.push([505, -145], [505, 100], [660, -140], [660, 100]);
+
+const PALM_N = palmPositions.length;
+const palmTrunk = new THREE.InstancedMesh(
+  new THREE.CylinderGeometry(0.4, 0.7, 7, 6), DET.palmTrunk, PALM_N,
+);
+const palmFronds = new THREE.InstancedMesh(
+  new THREE.SphereGeometry(2.6, 7, 5), DET.palmFronds, PALM_N,
+);
+palmTrunk.castShadow = true;
+palmFronds.castShadow = true;
+
+const _d = new THREE.Object3D();
+palmPositions.forEach(([x, z], i) => {
+  _d.position.set(x, 4.5, z);
+  _d.rotation.set(0, Math.random() * Math.PI * 2, 0);
+  _d.scale.setScalar(0.85 + Math.random() * 0.35);
+  _d.updateMatrix();
+  palmTrunk.setMatrixAt(i, _d.matrix);
+
+  _d.position.y = 9;
+  _d.scale.y = 0.55;  // flatten frond sphere
+  _d.updateMatrix();
+  palmFronds.setMatrixAt(i, _d.matrix);
+});
+palmTrunk.instanceMatrix.needsUpdate = true;
+palmFronds.instanceMatrix.needsUpdate = true;
+scene.add(palmTrunk);
+scene.add(palmFronds);
+
+/* ── Fuel tank farm (west cargo area) ── */
+for (let i = 0; i < 5; i++) {
+  const tank = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 18, 20), DET.fuel);
+  tank.position.set(-1680 + i * 45, 11, 450);
+  tank.castShadow = true;
+  tank.receiveShadow = true;
+  scene.add(tank);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(18.3, 18.3, 0.9, 20), DET.dark);
+  cap.position.set(tank.position.x, 20.35, tank.position.z);
+  scene.add(cap);
+}
+// Pipe gantries linking tanks
+const pipe = new THREE.Mesh(new THREE.BoxGeometry(220, 0.6, 1.2), DET.dark);
+pipe.position.set(-1570, 22, 450);
+scene.add(pipe);
+
+/* ── Helipads ── */
+function helipad(x, z, color = 0xd4a42a) {
+  const pad = new THREE.Mesh(new THREE.CircleGeometry(12, 32), DET.asphalt);
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.set(x, 1.5, z);
+  scene.add(pad);
+
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(10.5, 11.5, 40),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.6 }),
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(x, 1.55, z);
+  scene.add(ring);
+
+  // H mark
+  const hMat = new THREE.MeshStandardMaterial({ color, roughness: 0.6 });
+  const vl = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.15, 7.5), hMat);
+  vl.position.set(x - 3, 1.62, z);
+  scene.add(vl);
+  const vr = vl.clone();
+  vr.position.x = x + 3;
+  scene.add(vr);
+  const xb = new THREE.Mesh(new THREE.BoxGeometry(6, 0.15, 1.2), hMat);
+  xb.position.set(x, 1.62, z);
+  scene.add(xb);
+}
+helipad(-1480,  -90);
+helipad(-1170,  130);
+helipad( 1680,  -60);
+
+/* ── Airport light poles (perimeter + service roads) ── */
+const POLE_POSITIONS = [];
+for (let i = 0; i < 10; i++) POLE_POSITIONS.push([-1200 + i * 260, -880]);
+for (let i = 0; i < 10; i++) POLE_POSITIONS.push([-1200 + i * 260,  880]);
+for (let i = 0; i < 6;  i++) POLE_POSITIONS.push([ 1700, -450 + i * 180]);
+for (let i = 0; i < 6;  i++) POLE_POSITIONS.push([-2100, -450 + i * 180]);
+
+const POLE_N = POLE_POSITIONS.length;
+const poleTrunk = new THREE.InstancedMesh(
+  new THREE.CylinderGeometry(0.3, 0.45, 14, 6), DET.dark, POLE_N,
+);
+const poleBulb = new THREE.InstancedMesh(
+  new THREE.SphereGeometry(0.9, 8, 6), DET.bulb, POLE_N,
+);
+poleTrunk.castShadow = true;
+
+POLE_POSITIONS.forEach(([x, z], i) => {
+  _d.position.set(x, 7, z);
+  _d.rotation.set(0, 0, 0);
+  _d.scale.setScalar(1);
+  _d.updateMatrix();
+  poleTrunk.setMatrixAt(i, _d.matrix);
+
+  _d.position.y = 14.3;
+  _d.updateMatrix();
+  poleBulb.setMatrixAt(i, _d.matrix);
+});
+poleTrunk.instanceMatrix.needsUpdate = true;
+poleBulb.instanceMatrix.needsUpdate = true;
+scene.add(poleTrunk);
+scene.add(poleBulb);
+
+/* ── Runway hold-short lines (yellow) near each runway threshold ── */
+function holdLine(x, z, len, rotY = -0.11) {
+  const primary = new THREE.Mesh(new THREE.BoxGeometry(len, 0.18, 1.4), DET.yellow);
+  primary.position.set(x, 4.5, z);
+  primary.rotation.y = rotY;
+  scene.add(primary);
+  const secondary = new THREE.Mesh(new THREE.BoxGeometry(len, 0.18, 0.8), DET.yellow);
+  secondary.position.set(x, 4.5, z + 3);
+  secondary.rotation.y = rotY;
+  scene.add(secondary);
+}
+// West end of each runway (approach side)
+holdLine(-1410, 395, 55);          // near 7L west threshold
+holdLine(-1410, 710, 55);          // near 7R west threshold
+holdLine(-1410, -510, 55);         // near 6R west threshold
+holdLine(-1410, -695, 55);         // near 6L west threshold
+// East ends
+holdLine( 2155,  710, 55);         // near 25L east threshold
+holdLine( 2155,  395, 55);         // near 25R east threshold
+
+/* ── Grass strips for visual variety (between runways) ── */
+const grassBand = (x, z, w, d) => {
+  const g = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, d), DET.grass);
+  g.position.set(x, 1.25, z);
+  g.receiveShadow = true;
+  scene.add(g);
+};
+grassBand(-350, -630, 1600, 40);   // between 6L and 6R (north pair)
+grassBand( 350,  630, 1900, 40);   // between 7L and 7R (south pair)
+
+/* ═══════════════════════════════════════════════
    CLICKABLE AIRPLANE + THIRD-PERSON POV
    ═══════════════════════════════════════════════ */
 function makeAirplane() {
