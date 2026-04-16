@@ -1427,27 +1427,21 @@ function strip(x, z, w, d, mat, y = ROAD_Y, rotY = 0, thickness = 0.35) {
   return m;
 }
 
-/* ── Road network (kept clear of the tutorial taxi path at z=350) ── */
-// North + South Terminal Roads (World Way-style loop)
-strip(   80, -430, 960, 18, DET.asphalt);   // north loop road
-strip(   80,  430, 960, 18, DET.asphalt);   // south loop road
-// Terminal access roads between TBIT and both terminal rows
-strip(   80, -100, 920, 10, DET.asphalt);
-strip(   80,  100, 920, 10, DET.asphalt);
-// Century Blvd — approach from the east
-strip( 1280,  -60,1160, 20, DET.asphalt);
-// Century → terminal loop connectors (short verticals on the east side)
-strip(  700, -245, 18, 380, DET.asphalt);   // spans z:[-430,-60]
-strip(  700,  245, 18, 380, DET.asphalt);   // spans z:[60,430]
+/* ── Road network (kept clear of the tutorial taxi path at z=350 and TBIT) ── */
+// North + South Terminal Roads (World Way-style loop) — far enough from runways
+strip(   80, -430, 760, 12, DET.asphalt);   // north loop road (shortened)
+strip(   80,  430, 760, 12, DET.asphalt);   // south loop road (shortened)
+// Century Blvd — approach from the east, far from runways
+strip( 1280,  -60, 1160, 14, DET.asphalt);
 
 // Dashed lane markings on Century Blvd
 for (let i = 0; i < 22; i++) {
   strip(720 + i * 52, -60, 16, 1.2, DET.lane, ROAD_Y + 0.02);
 }
-// Double yellow on north/south loop roads
-for (let i = 0; i < 18; i++) {
-  strip(-400 + i * 55, -430, 22, 0.8, DET.lane, ROAD_Y + 0.02);
-  strip(-400 + i * 55,  430, 22, 0.8, DET.lane, ROAD_Y + 0.02);
+// Double yellow on north/south loop roads (fits the 760-wide road)
+for (let i = 0; i < 13; i++) {
+  strip(-280 + i * 55, -430, 20, 0.7, DET.lane, ROAD_Y + 0.02);
+  strip(-280 + i * 55,  430, 20, 0.7, DET.lane, ROAD_Y + 0.02);
 }
 
 /* ── Parked aircraft (15 jets, random liveries, stationed at gates) ── */
@@ -1678,16 +1672,6 @@ holdLine(-1410, -695, 55);         // near 6L west threshold
 // East ends
 holdLine( 2155,  710, 55);         // near 25L east threshold
 holdLine( 2155,  395, 55);         // near 25R east threshold
-
-/* ── Grass strips for visual variety (between runways) ── */
-const grassBand = (x, z, w, d) => {
-  const g = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, d), DET.grass);
-  g.position.set(x, 1.25, z);
-  g.receiveShadow = true;
-  scene.add(g);
-};
-grassBand(-350, -630, 1600, 40);   // between 6L and 6R (north pair)
-grassBand( 350,  630, 1900, 40);   // between 7L and 7R (south pair)
 
 /* ═══════════════════════════════════════════════
    CLICKABLE AIRPLANE + THIRD-PERSON POV
