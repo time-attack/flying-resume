@@ -564,6 +564,129 @@
     text-transform:uppercase;
     white-space:nowrap;
   }
+  .poi-sub {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:400;
+    font-size:7.5px;
+    letter-spacing:.24em;
+    color:rgba(237,142,43,.78);
+    text-transform:uppercase;
+    white-space:nowrap;
+    margin-top:3px;
+  }
+  .label-stack {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    pointer-events:none;
+  }
+  .road-label {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:8.5px;
+    letter-spacing:.42em;
+    color:rgba(244,238,216,.55);
+    text-transform:uppercase;
+    white-space:nowrap;
+    padding:3px 9px;
+    border-top:1px solid rgba(244,238,216,.18);
+    border-bottom:1px solid rgba(244,238,216,.18);
+    background:rgba(20,19,17,.5);
+  }
+  .road-label--hwy {
+    color:rgba(237,142,43,.85);
+    border-color:rgba(237,142,43,.35);
+    background:rgba(20,19,17,.72);
+  }
+  .district-label {
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:15px;
+    letter-spacing:.5em;
+    color:rgba(244,238,216,.32);
+    text-transform:uppercase;
+    white-space:nowrap;
+    text-align:center;
+    text-shadow:0 0 22px rgba(20,19,17,.9);
+  }
+  .district-label--small {
+    font-size:10.5px;
+    letter-spacing:.4em;
+    color:rgba(244,238,216,.42);
+  }
+  .district-sub {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:400;
+    font-size:7px;
+    letter-spacing:.32em;
+    color:rgba(244,238,216,.28);
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .taxi-label {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:9px;
+    letter-spacing:.12em;
+    background:rgba(20,19,17,.78);
+    color:rgba(244,238,216,.92);
+    padding:1px 5px;
+    border-radius:8px;
+    border:1px solid rgba(244,238,216,.22);
+    white-space:nowrap;
+  }
+  .facility-label {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:8.5px;
+    letter-spacing:.28em;
+    color:rgba(244,238,216,.6);
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .facility-sub {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:400;
+    font-size:6.5px;
+    letter-spacing:.28em;
+    color:rgba(244,238,216,.38);
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .parking-label {
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:10px;
+    letter-spacing:.08em;
+    background:#141311;
+    color:#ed8e2b;
+    padding:2px 7px;
+    border-radius:2px;
+    border:1px solid rgba(237,142,43,.45);
+    white-space:nowrap;
+  }
+  .callout-label {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:9px;
+    letter-spacing:.22em;
+    background:rgba(237,142,43,.92);
+    color:#141311;
+    padding:2px 8px;
+    border-radius:2px;
+    white-space:nowrap;
+    text-transform:uppercase;
+    box-shadow:0 2px 6px rgba(0,0,0,.4);
+  }
+  .gate-label {
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:7.5px;
+    letter-spacing:.25em;
+    color:rgba(244,238,216,.45);
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
   /* ——— SOUTHWEST USA MAP VIEW ——— */
   .map-title {
     position:absolute;
@@ -663,43 +786,123 @@
     pointer-events:none !important;
     transition:opacity 1s;
   }
+  /* Hide every ground-level airport label (runway/terminal/taxiway/road/district/
+     facility/parking/theme/ATC) once we're above the clouds. The plane marker is
+     separately hidden via inline opacity when POV engages, so the whole
+     container can safely fade. */
+  body.map-view #labels {
+    opacity:0;
+    transition:opacity 1s;
+  }
   body.map-view .exit-pov {
     opacity:1 !important;
     pointer-events:auto !important;
   }
 
-  /* Fade overlay for clean scene swap */
+  /* Cloud-wash transition — feels like flying into a cloud bank, not a fade-to-black */
   .fade-overlay {
     position:fixed;
     inset:0;
-    background:#000;
+    background:radial-gradient(
+      ellipse at 50% 58%,
+      rgba(255,240,212,0.97) 0%,
+      rgba(238,182,132,0.94) 38%,
+      rgba(158,98,108,0.88) 72%,
+      rgba(40,26,32,0.92) 100%
+    );
     opacity:0;
     pointer-events:none;
-    transition:opacity .9s ease-in-out;
+    transition:opacity 1.2s cubic-bezier(.45,.05,.5,.95);
     z-index:80;
+    overflow:hidden;
+  }
+  .fade-overlay::before,
+  .fade-overlay::after {
+    content:'';
+    position:absolute;
+    inset:-40%;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .9s ease-in-out;
+    will-change:transform, opacity;
+  }
+  .fade-overlay::before {
+    background:
+      radial-gradient(ellipse 44% 36% at 22% 30%, rgba(255,255,255,0.92) 0%, transparent 68%),
+      radial-gradient(ellipse 52% 44% at 76% 56%, rgba(255,242,212,0.87) 0%, transparent 65%),
+      radial-gradient(ellipse 36% 42% at 48% 82%, rgba(255,232,205,0.78) 0%, transparent 60%);
+    filter:blur(2px);
+    animation:cloudRush1 2.8s cubic-bezier(.4,.1,.6,.95) paused;
+  }
+  .fade-overlay::after {
+    background:
+      radial-gradient(ellipse 46% 38% at 28% 82%, rgba(255,255,255,0.86) 0%, transparent 70%),
+      radial-gradient(ellipse 38% 40% at 72% 20%, rgba(255,232,205,0.88) 0%, transparent 65%),
+      radial-gradient(ellipse 56% 44% at 48% 50%, rgba(255,250,235,0.72) 0%, transparent 72%);
+    filter:blur(3px);
+    animation:cloudRush2 2.8s cubic-bezier(.4,.1,.6,.95) paused;
   }
   .fade-overlay.active {
     opacity:1;
+  }
+  .fade-overlay.active::before,
+  .fade-overlay.active::after {
+    opacity:1;
+    animation-play-state:running;
+  }
+  @keyframes cloudRush1 {
+    0%   { transform:translate(0, 28%) scale(1.4); }
+    50%  { transform:translate(-4%, 3%) scale(2.2); }
+    100% { transform:translate(-16%, -22%) scale(3.4); }
+  }
+  @keyframes cloudRush2 {
+    0%   { transform:translate(0, -30%) scale(1.3); }
+    50%  { transform:translate(5%, 5%) scale(2.1); }
+    100% { transform:translate(18%, 26%) scale(3.2); }
   }
 
   .plane-marker {
     font-family:'JetBrains Mono', monospace;
     font-weight:700;
-    font-size:10px;
-    letter-spacing:.22em;
+    font-size:11px;
+    letter-spacing:.24em;
     color:#ed8e2b;
-    background:rgba(20,19,17,.92);
-    border:1px solid rgba(237,142,43,.55);
-    padding:4px 9px;
+    background:rgba(20,19,17,.94);
+    border:1px solid rgba(237,142,43,.6);
+    padding:6px 12px;
     text-transform:uppercase;
     white-space:nowrap;
-    box-shadow:0 0 18px rgba(237,142,43,.35), 0 2px 10px rgba(0,0,0,.4);
+    text-align:center;
+    box-shadow:0 0 22px rgba(237,142,43,.4), 0 2px 14px rgba(0,0,0,.5);
     animation:planePulse 2.2s ease-in-out infinite;
     transition:opacity .4s;
   }
+  .plane-marker .pm-main {
+    display:block;
+    font-size:12px;
+  }
+  .plane-marker .pm-sub {
+    display:block;
+    font-size:8.5px;
+    color:rgba(244,238,216,.72);
+    letter-spacing:.32em;
+    margin-top:3px;
+  }
+  .plane-marker .pm-key {
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:8.5px;
+    color:#141311;
+    background:#ed8e2b;
+    padding:1px 5px;
+    border-radius:2px;
+    margin:0 2px;
+    letter-spacing:.1em;
+  }
   @keyframes planePulse {
     0%, 100% { transform:translateY(0); filter:brightness(1); }
-    50%      { transform:translateY(-4px); filter:brightness(1.25); }
+    50%      { transform:translateY(-5px); filter:brightness(1.3); }
   }
 
   @keyframes fadeUp {
@@ -905,7 +1108,7 @@ const controls = new OrbitControls(camera, canvasEl);
 controls.enableDamping = true;
 controls.dampingFactor = 0.075;
 controls.minDistance = 420;
-controls.maxDistance = 6500;
+controls.maxDistance = 8500;
 controls.maxPolarAngle = Math.PI / 2 - 0.03;
 controls.screenSpacePanning = false;
 controls.panSpeed = 0.8;
@@ -1031,6 +1234,22 @@ function labelEl(text, cls) {
   return new CSS2DObject(el);
 }
 
+function labelStack(title, subtitle, mainCls = 'poi-label', subCls = 'poi-sub') {
+  const wrap = document.createElement('div');
+  wrap.className = 'label-stack';
+  const t = document.createElement('div');
+  t.className = mainCls;
+  t.textContent = title;
+  wrap.appendChild(t);
+  if (subtitle) {
+    const s = document.createElement('div');
+    s.className = subCls;
+    s.textContent = subtitle;
+    wrap.appendChild(s);
+  }
+  return new CSS2DObject(wrap);
+}
+
 function darken(hex, amount) {
   return new THREE.Color(hex).multiplyScalar(amount).getHex();
 }
@@ -1072,10 +1291,10 @@ function makeRunway({ x, z, length, width, colorTop, names, tilt }) {
 
   // end labels
   const lL = labelEl(names[0], 'runway-label');
-  lL.position.set(-length / 2 - 50, 60, 0);
+  lL.position.set(-length / 2 + 60, 8, 0);
   g.add(lL);
   const lR = labelEl(names[1], 'runway-label');
-  lR.position.set(length / 2 + 50, 60, 0);
+  lR.position.set(length / 2 - 60, 8, 0);
   g.add(lR);
 
   g.position.set(x, 0, z);
@@ -1147,9 +1366,9 @@ function makeTerminal({
     g.add(fr);
   }
 
-  // floating name label
+  // label hugging the roof
   const lbl = labelEl(name, 'terminal-label');
-  lbl.position.set(0, height + 44, 0);
+  lbl.position.set(0, height + 4, 0);
   g.add(lbl);
 
   g.position.set(x, 0, z);
@@ -1224,8 +1443,8 @@ function makeTBIT() {
     g.add(fr);
   }
 
-  const lbl = labelEl('B · TBIT', 'terminal-label');
-  lbl.position.set(0, h + 44, 0);
+  const lbl = labelStack('B · TBIT', 'TOM BRADLEY INTERNATIONAL', 'terminal-label', 'poi-sub');
+  lbl.position.set(0, h + 4, 0);
   g.add(lbl);
 
   g.position.set(-140, 0, 0);
@@ -1353,11 +1572,12 @@ function theme() {
   dome.position.y = 63;
   g.add(dome);
 
-  const lbl = labelEl('THEME BLDG', 'poi-label');
-  lbl.position.set(0, 80, 0);
-  g.add(lbl);
+  // label removed — too much floating clutter
 
-  g.position.set(-220, 0, -60);
+  // Central horseshoe courtyard — between TBIT (east face x≈-104) and the
+  // east parking structures (x≈530). Sits between terminal rows 1-3 (z=-178)
+  // and 4-8 (z=174). Matches the real LAX placement at One World Way.
+  g.position.set(120, 0, -10);
   return g;
 }
 scene.add(theme());
@@ -1386,9 +1606,7 @@ function controlTower() {
   roof.position.y = 101;
   g.add(roof);
 
-  const lbl = labelEl('ATC TOWER', 'poi-label');
-  lbl.position.set(0, 120, 0);
-  g.add(lbl);
+  // label removed — too much floating clutter
 
   g.position.set(450, 0, 0);
   return g;
@@ -1396,11 +1614,585 @@ function controlTower() {
 scene.add(controlTower());
 
 /* ═══════════════════════════════════════════════
+   LAX DETAIL LAYER — airside/landside boundary, roads,
+   civilian districts, gateway pylons, facility labels
+   ═══════════════════════════════════════════════ */
+
+const detail = new THREE.Group();
+scene.add(detail);
+
+const ROAD_DARK = 0x2c2a26;
+const ROAD_LIGHT = 0x3b3935;
+const ROAD_FREEWAY = 0x252320;
+const FENCE_DARK = 0x1d1c19;
+const FENCE_POST = 0x14130f;
+const DISTRICT_A = 0xa89572;
+const DISTRICT_B = 0x9e8d6b;
+const DISTRICT_C = 0xb5a27c;
+const DISTRICT_D = 0x847962;
+
+/* ── Road strip — surface arterials and freeways ──
+   elev = height off ground. Default 1.5 sits above the field (y=1.0).
+   World Way arms need elev ≥ 2.4 to clear the dark apron (y=2.0).
+   median = solid white center bar (for freeways)
+   lanes  = per-side divider dashes when ≥ 4
+*/
+function roadStrip({
+  x, z, len, width, rot = 0,
+  color = ROAD_DARK,
+  dashes = true,
+  dashColor = 0xd6c04a,
+  elev = 1.5,
+  median = false,
+  lanes = 2,
+  shoulders = true,
+}) {
+  const g = new THREE.Group();
+  const body = box(len, 0.4, width, color, 0.95);
+  body.position.y = elev;
+  body.castShadow = false;
+  body.receiveShadow = true;
+  g.add(body);
+
+  if (shoulders) {
+    const kerbY = elev + 0.22;
+    const kerbTop = box(len, 0.12, 0.9, 0xe8dfc0, 0.7);
+    kerbTop.position.set(0, kerbY, width/2 - 0.45);
+    kerbTop.castShadow = false;
+    g.add(kerbTop);
+    const kerbBot = box(len, 0.12, 0.9, 0xe8dfc0, 0.7);
+    kerbBot.position.set(0, kerbY, -width/2 + 0.45);
+    kerbBot.castShadow = false;
+    g.add(kerbBot);
+  }
+
+  if (median) {
+    // concrete divider down the middle
+    const med = box(len, 0.8, 3, 0xe8dfc0, 0.55);
+    med.position.set(0, elev + 0.4, 0);
+    med.castShadow = false;
+    g.add(med);
+    // per-side lane dividers
+    if (lanes >= 4) {
+      const halfLanes = Math.floor(lanes / 2);
+      const usable = (width - 3) / 2;                // each side's paved width
+      for (const side of [-1, 1]) {
+        const sideMid = side * (1.5 + usable / 2);   // center of this carriageway
+        for (let l = 1; l < halfLanes; l++) {
+          const lanePos = sideMid + (l / halfLanes - 0.5) * usable;
+          const dashCount = Math.floor(len / 32);
+          for (let j = 0; j < dashCount; j++) {
+            if (j % 2 === 0) continue;
+            const d = box(14, 0.1, 0.35, 0xd4c88e, 0.5);
+            d.position.set(-len/2 + (j + 0.5) * (len / dashCount), elev + 0.24, lanePos);
+            d.castShadow = false;
+            g.add(d);
+          }
+        }
+      }
+    }
+  } else if (dashes) {
+    const count = Math.max(6, Math.floor(len / 55));
+    const span = len / count;
+    for (let i = 0; i < count; i++) {
+      if (i % 2 === 0) continue;
+      const d = box(span * 0.55, 0.12, 0.55, dashColor, 0.6);
+      d.position.set(-len/2 + span * (i + 0.5), elev + 0.24, 0);
+      d.castShadow = false;
+      g.add(d);
+    }
+  }
+  // multi-lane surface roads (no freeway median) — add subtle lane dashes
+  if (!median && lanes >= 4) {
+    const halfLanes = Math.floor(lanes / 2);
+    for (const side of [-1, 1]) {
+      const sideHalf = (width / 2) * 0.88;
+      for (let l = 1; l < halfLanes; l++) {
+        const lanePos = side * (l / halfLanes) * sideHalf;
+        const dashCount = Math.floor(len / 38);
+        for (let j = 0; j < dashCount; j++) {
+          if (j % 2 === 0) continue;
+          const d = box(11, 0.1, 0.3, 0xbfae7a, 0.45);
+          d.position.set(-len/2 + (j + 0.5) * (len / dashCount), elev + 0.24, lanePos);
+          d.castShadow = false;
+          g.add(d);
+        }
+      }
+    }
+  }
+
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+/* ── Elevated overpass deck with support pylons (for interchanges) ── */
+function overpass({
+  x, z, len, width, rot = 0,
+  deckY = 22,
+  color = ROAD_DARK,
+  supports = 3,
+  rails = true,
+  rampLen = 90,
+}) {
+  const g = new THREE.Group();
+
+  // deck
+  const deck = box(len, 1.8, width, color, 0.9);
+  deck.position.y = deckY;
+  deck.castShadow = true;
+  deck.receiveShadow = true;
+  g.add(deck);
+
+  if (rails) {
+    for (const side of [-1, 1]) {
+      const rail = box(len, 3.2, 1.2, 0xd8ccaa, 0.7);
+      rail.position.set(0, deckY + 2.4, side * (width/2 - 0.6));
+      rail.castShadow = false;
+      g.add(rail);
+    }
+  }
+
+  // median
+  const med = box(len, 0.5, 2, 0xe8dfc0, 0.6);
+  med.position.set(0, deckY + 1.15, 0);
+  med.castShadow = false;
+  g.add(med);
+
+  // lane dashes on deck
+  const lanePositions = [-width/4, width/4];
+  for (const lp of lanePositions) {
+    const dashCount = Math.floor(len / 24);
+    for (let j = 0; j < dashCount; j++) {
+      if (j % 2 === 0) continue;
+      const d = box(10, 0.08, 0.3, 0xd4c88e, 0.5);
+      d.position.set(-len/2 + (j + 0.5) * (len/dashCount), deckY + 1.0, lp);
+      d.castShadow = false;
+      g.add(d);
+    }
+  }
+
+  // concrete support pylons
+  for (let i = 0; i < supports; i++) {
+    const t = (i + 0.5) / supports;
+    const sx = -len/2 + t * len;
+    const pillar = box(6, deckY, width * 0.55, 0x54504a, 0.75);
+    pillar.position.set(sx, deckY/2, 0);
+    pillar.castShadow = true;
+    g.add(pillar);
+    const cap = box(10, 1.5, width * 0.75, 0x6b6559, 0.7);
+    cap.position.set(sx, deckY - 1.2, 0);
+    cap.castShadow = true;
+    g.add(cap);
+  }
+
+  // approach ramps each end (sloped wedges)
+  for (const end of [-1, 1]) {
+    const rampGeom = new THREE.BoxGeometry(rampLen, 1.6, width);
+    const rampMat = new THREE.MeshStandardMaterial({ color, roughness: 0.92 });
+    const ramp = new THREE.Mesh(rampGeom, rampMat);
+    ramp.castShadow = true;
+    ramp.receiveShadow = true;
+    ramp.position.set(end * (len/2 + rampLen/2), deckY/2, 0);
+    ramp.rotation.z = end * Math.atan2(deckY, rampLen);
+    g.add(ramp);
+    // ramp rails
+    if (rails) {
+      for (const side of [-1, 1]) {
+        const rr = box(rampLen, 2, 0.9, 0xd8ccaa, 0.7);
+        rr.position.set(end * (len/2 + rampLen/2), deckY/2 + 2.2, side * (width/2 - 0.5));
+        rr.rotation.z = end * Math.atan2(deckY, rampLen);
+        rr.castShadow = false;
+        g.add(rr);
+      }
+    }
+  }
+
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+/* ── Freeway on-ramp / off-ramp curve (simple elevated arc slice) ── */
+function rampArc({ x, z, radius = 180, startAngle = 0, endAngle = Math.PI/2, width = 18, elev = 8, color = ROAD_LIGHT, segs = 18 }) {
+  const g = new THREE.Group();
+  const steps = segs;
+  for (let i = 0; i < steps; i++) {
+    const a0 = startAngle + (endAngle - startAngle) * (i / steps);
+    const a1 = startAngle + (endAngle - startAngle) * ((i + 1) / steps);
+    const mid = (a0 + a1) / 2;
+    const seg = box(((a1 - a0) * radius) + 0.8, 0.8, width, color, 0.88);
+    seg.position.set(Math.cos(mid) * radius, elev, Math.sin(mid) * radius);
+    seg.rotation.y = -mid;
+    seg.castShadow = true;
+    seg.receiveShadow = true;
+    g.add(seg);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+/* ── Perimeter fence: posts + rail ── */
+function fenceSegment(x1, z1, x2, z2) {
+  const g = new THREE.Group();
+  const dx = x2 - x1, dz = z2 - z1;
+  const len = Math.hypot(dx, dz);
+  const angle = Math.atan2(dz, dx);
+  // bottom rail
+  const bot = box(len, 1.4, 0.5, FENCE_DARK, 0.9);
+  bot.position.set((x1+x2)/2, 0.7, (z1+z2)/2);
+  bot.rotation.y = -angle;
+  bot.castShadow = false;
+  bot.receiveShadow = true;
+  g.add(bot);
+  // top rail
+  const top = box(len, 0.6, 0.5, FENCE_DARK, 0.9);
+  top.position.set((x1+x2)/2, 7.4, (z1+z2)/2);
+  top.rotation.y = -angle;
+  top.castShadow = false;
+  g.add(top);
+  // thin screen body (visually reads as chain-link)
+  const screen = box(len, 6, 0.12, 0x4a4842, 0.8);
+  screen.position.set((x1+x2)/2, 4.5, (z1+z2)/2);
+  screen.rotation.y = -angle;
+  screen.material.transparent = true;
+  screen.material.opacity = 0.55;
+  screen.castShadow = false;
+  g.add(screen);
+  // posts every 90 units
+  const posts = Math.max(3, Math.floor(len / 90));
+  for (let i = 0; i <= posts; i++) {
+    const t = i / posts;
+    const p = box(1.8, 8, 1.8, FENCE_POST, 0.85);
+    p.position.set(x1 + dx * t, 4, z1 + dz * t);
+    p.castShadow = false;
+    g.add(p);
+  }
+  return g;
+}
+
+// Follow the airport field shape (matches line 977-986 vertices).
+const fenceVerts = [
+  [-2650, -820], [-2550, -1020], [2550, -1020], [2650, -820],
+  [2650, 820],   [2550, 1020],   [-2550, 1020], [-2650, 820],
+];
+for (let i = 0; i < fenceVerts.length; i++) {
+  const a = fenceVerts[i];
+  const b = fenceVerts[(i + 1) % fenceVerts.length];
+  detail.add(fenceSegment(a[0], a[1], b[0], b[1]));
+}
+
+/* ── Gates in the fence (at Sepulveda & Century access) ── */
+function fenceGate(x, z, rot = 0) {
+  const g = new THREE.Group();
+  const arm = box(26, 1.2, 0.6, 0xed8e2b, 0.8);
+  arm.position.set(0, 5, 0);
+  arm.castShadow = false;
+  g.add(arm);
+  const postL = box(2, 10, 2, FENCE_POST, 0.85);
+  postL.position.set(-14, 5, 0);
+  g.add(postL);
+  const postR = box(2, 10, 2, FENCE_POST, 0.85);
+  postR.position.set(14, 5, 0);
+  g.add(postR);
+  // gate label removed — clutter
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+detail.add(fenceGate(2650, 0, Math.PI/2));       // east gate (Sepulveda side)
+detail.add(fenceGate(-1800, -1020, 0));          // north service gate
+detail.add(fenceGate(0, 1020, 0));               // south service gate
+
+/* ═══════════════════════════════════════════════
+   SURROUNDING HIGHWAY NETWORK — layered, proper lane
+   striping and medians. All at elev 1.5 unless noted.
+   ═══════════════════════════════════════════════ */
+
+/* CENTURY BLVD — main N arterial, split so I-405 overpass sits between.
+   West part stops at x≈3560, east part resumes at x≈3840 (I-405 runs 3640–3760). */
+detail.add(roadStrip({ x:  830, z: -1200, len: 5460, width: 52, elev: 1.5, lanes: 4, color: ROAD_DARK }));
+detail.add(roadStrip({ x: 4200, z: -1200, len:  720, width: 52, elev: 1.5, lanes: 4, color: ROAD_DARK }));
+
+/* IMPERIAL HWY / CA-90 — S arterial */
+detail.add(roadStrip({ x: 400, z: 1200, len: 5400, width: 46, elev: 1.5, lanes: 4, color: ROAD_DARK }));
+
+/* SEPULVEDA BLVD / CA-1 — N-S on east side, broken for Century overpass (z -1200) */
+detail.add(roadStrip({ x: 2750, z: -700, len: 1280, width: 46, rot: Math.PI/2, elev: 1.5, lanes: 4, color: ROAD_DARK }));
+detail.add(roadStrip({ x: 2750, z:  700, len: 1280, width: 46, rot: Math.PI/2, elev: 1.5, lanes: 4, color: ROAD_DARK }));
+
+/* I-405 SAN DIEGO FREEWAY — 8-lane divided, far east, broken for Century overpass */
+detail.add(roadStrip({ x: 3700, z: -1650, len:  540, width: 130, rot: Math.PI/2,
+  elev: 1.5, median: true, lanes: 8, color: ROAD_FREEWAY, dashColor: 0xf0d06a }));
+detail.add(roadStrip({ x: 3700, z:   150, len: 2700, width: 130, rot: Math.PI/2,
+  elev: 1.5, median: true, lanes: 8, color: ROAD_FREEWAY, dashColor: 0xf0d06a }));
+
+/* I-105 CENTURY FREEWAY — E-W, terminates at east side of LAX (6-lane divided) */
+detail.add(roadStrip({ x: 3400, z: 900, len: 2600, width: 110,
+  elev: 1.5, median: true, lanes: 6, color: ROAD_FREEWAY, dashColor: 0xf0d06a }));
+
+/* Aviation Blvd — N-S between the airport fence and I-405 */
+detail.add(roadStrip({ x: 3200, z: 0, len: 3000, width: 34, rot: Math.PI/2, elev: 1.5, lanes: 2, color: ROAD_LIGHT }));
+
+/* Lincoln Blvd — NW of airport, short segment */
+detail.add(roadStrip({ x: -2800, z: -1400, len: 1400, width: 34, rot: Math.PI/2, elev: 1.5, lanes: 2, color: ROAD_DARK }));
+
+/* ── World Way — terminal drop-off horseshoe (INSIDE apron, y must clear 2.0) ── */
+// North arm between T1-3 and Theme Building
+detail.add(roadStrip({ x: 100, z: -140, len: 540, width: 18, dashes: false, elev: 2.6, color: ROAD_LIGHT }));
+// South arm between T4-8 and Theme Building
+detail.add(roadStrip({ x: 100, z:  140, len: 540, width: 18, dashes: false, elev: 2.6, color: ROAD_LIGHT }));
+// East turn-around connector
+detail.add(roadStrip({ x: 370, z: 0, len: 300, width: 18, rot: Math.PI/2, dashes: false, elev: 2.6, color: ROAD_LIGHT }));
+// Approach spur from Sepulveda entering the horseshoe
+detail.add(roadStrip({ x: 1250, z: 0, len: 1760, width: 30, dashes: true, elev: 1.5, lanes: 4, color: ROAD_LIGHT }));
+
+/* ═══════════════════════════════════════════════
+   INTERCHANGES (layered overpasses + ramps)
+   ═══════════════════════════════════════════════ */
+
+/* Century Blvd OVER I-405 (Century is the elevated deck) */
+detail.add(overpass({ x: 3700, z: -1200, len: 280, width: 54, rot: 0, deckY: 22, supports: 3, rampLen: 110 }));
+
+/* Century Blvd OVER Sepulveda Blvd (smaller overpass) */
+detail.add(overpass({ x: 2750, z: -1200, len: 160, width: 54, rot: 0, deckY: 14, supports: 2, rampLen: 70 }));
+
+/* I-105 meeting I-405 / Century — ramp arcs connecting the two freeways */
+detail.add(rampArc({ x: 3700, z: 900, radius: 220, startAngle: Math.PI, endAngle: Math.PI * 1.5, width: 22, elev: 10, color: ROAD_LIGHT }));
+detail.add(rampArc({ x: 3700, z: 900, radius: 260, startAngle: 0,        endAngle: -Math.PI/2,     width: 22, elev: 10, color: ROAD_LIGHT }));
+
+/* ═══════════════════════════════════════════════
+   LAX MONUMENT SIGN — the giant "LAX" block letters
+   at the east entry near Century/Sepulveda (replaces pylons)
+   ═══════════════════════════════════════════════ */
+function laxLetter(char, x, z, opts = {}) {
+  const h = opts.h || 92;
+  const t = opts.thick || 15;
+  const w = opts.spread || 56;
+  const color = opts.color || 0xf4eed8;
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 0.28,
+    roughness: 0.42,
+    metalness: 0.2,
+  });
+  const bar = (bw, bh, bd, px, py, pz, rz = 0) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat);
+    b.position.set(px, py, pz);
+    if (rz) b.rotation.z = rz;
+    b.castShadow = true;
+    g.add(b);
+  };
+  if (char === 'L') {
+    bar(t, h, t, -w/2 + t/2, h/2, 0);           // vertical stem
+    bar(w, t, t, 0, t/2, 0);                    // base foot
+  } else if (char === 'A') {
+    const lean = 0.18;
+    bar(t, h, t, -w/2 + t/2 + 3, h/2, 0,  lean); // left leg
+    bar(t, h, t,  w/2 - t/2 - 3, h/2, 0, -lean); // right leg
+    bar(w * 0.62, t, t, 0, h * 0.44, 0);         // crossbar
+    bar(w * 0.28, t, t, 0, h - t/2, 0);          // apex cap
+  } else if (char === 'X') {
+    const diag = Math.hypot(h, w);
+    const ang  = Math.atan2(h, w);
+    bar(diag * 0.98, t, t, 0, h/2, 0, -ang);
+    bar(diag * 0.98, t, t, 0, h/2, 0,  ang);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function laxMonument(x, z) {
+  const g = new THREE.Group();
+
+  // black granite plinth
+  const plinth = box(320, 10, 86, 0x1a1917, 0.85);
+  plinth.position.y = 5;
+  plinth.castShadow = true;
+  plinth.receiveShadow = true;
+  g.add(plinth);
+  // plinth top trim
+  const trim = box(324, 1.2, 90, 0x2b2923, 0.8);
+  trim.position.y = 10.6;
+  trim.castShadow = false;
+  g.add(trim);
+
+  // "L  A  X"
+  const spacing = 98;
+  const letterY = 10;
+  const letters = [
+    laxLetter('L', -spacing, 0),
+    laxLetter('A', 0, 0),
+    laxLetter('X',  spacing, 0),
+  ];
+  letters.forEach(lt => { lt.position.y = letterY; g.add(lt); });
+
+  // subtitle plate
+  const subplate = box(260, 0.8, 12, 0xed8e2b, 0.3);
+  const smat = subplate.material;
+  smat.emissive = new THREE.Color(0xed8e2b);
+  smat.emissiveIntensity = 0.6;
+  subplate.position.set(0, 11.2, 32);
+  subplate.castShadow = false;
+  g.add(subplate);
+
+  // uplights front-facing
+  for (let i = 0; i < 11; i++) {
+    const lt = new THREE.Mesh(
+      new THREE.BoxGeometry(5, 2.5, 5),
+      new THREE.MeshStandardMaterial({
+        color: 0xffd894,
+        emissive: 0xed8e2b,
+        emissiveIntensity: 0.75,
+        roughness: 0.4,
+      })
+    );
+    lt.position.set(-145 + i * 29, 11.7, 41);
+    g.add(lt);
+  }
+
+  // label overhead
+  const lbl = labelStack('LAX', 'LOS ANGELES INTL · MONUMENT', 'callout-label', 'poi-sub');
+  lbl.position.set(0, 132, 0);
+  g.add(lbl);
+
+  g.position.set(x, 0, z);
+  return g;
+}
+
+// Place the monument on the east median between the airport and Sepulveda,
+// near Century Blvd — the real-world position of the LAX Pylon monument.
+detail.add(laxMonument(2620, -1160));
+
+/* ═══════════════════════════════════════════════
+   CIVILIAN-SIDE DISTRICT TILES (neighborhoods)
+   ═══════════════════════════════════════════════ */
+function districtTile({ x, z, w, d, color, title, sub, size = 'large' }) {
+  const g = new THREE.Group();
+  const tile = box(w, 1.2, d, color, 1);
+  tile.position.y = 0.6;
+  tile.castShadow = false;
+  tile.receiveShadow = true;
+  g.add(tile);
+  // subtle grid of small "block" bumps for density feel
+  const cols = Math.max(2, Math.floor(w / 120));
+  const rows = Math.max(2, Math.floor(d / 120));
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      if (Math.random() < 0.35) continue;
+      const bw = 32 + Math.random() * 26;
+      const bd = 22 + Math.random() * 18;
+      const bh = 6 + Math.random() * 12;
+      const bx = -w/2 + (i + 0.5) * (w / cols) + (Math.random() - 0.5) * 30;
+      const bz = -d/2 + (j + 0.5) * (d / rows) + (Math.random() - 0.5) * 30;
+      const b = box(bw, bh, bd, i % 2 ? 0x6e634d : 0x5a5240, 0.9);
+      b.position.set(bx, bh/2 + 1.2, bz);
+      b.castShadow = false;
+      g.add(b);
+    }
+  }
+  const labelCls = size === 'small' ? 'district-label district-label--small' : 'district-label';
+  const lbl = labelStack(title, sub, labelCls, 'district-sub');
+  lbl.position.set(0, 24, 0);
+  g.add(lbl);
+  g.position.set(x, 0, z);
+  return g;
+}
+
+detail.add(districtTile({
+  x: 400, z: -1650, w: 3200, d: 540, color: DISTRICT_A,
+  title: 'WESTCHESTER', sub: 'RESIDENTIAL · PLAYA VISTA',
+}));
+detail.add(districtTile({
+  x: -2050, z: -1500, w: 1100, d: 780, color: DISTRICT_B,
+  title: 'PLAYA DEL REY', sub: 'COASTAL',
+}));
+detail.add(districtTile({
+  x: 500, z: 1650, w: 4000, d: 740, color: DISTRICT_C,
+  title: 'EL SEGUNDO', sub: 'AEROSPACE · OFFICES',
+}));
+detail.add(districtTile({
+  x: 3300, z: -1650, w: 900, d: 680, color: DISTRICT_D,
+  title: 'CENTURY CORRIDOR', sub: 'HOTEL ROW', size: 'small',
+}));
+
+// Dockweiler Beach label removed — clutter
+
+/* ═══════════════════════════════════════════════
+   ROAD NAMEPLATES (floating labels along each road)
+   ═══════════════════════════════════════════════ */
+function roadLabel(text, x, z, y = 14, cls = 'road-label') {
+  const lbl = labelEl(text, cls);
+  lbl.position.set(x, y, z);
+  return lbl;
+}
+// Road labels removed — they were cluttering the view
+
+/* ═══════════════════════════════════════════════
+   FACILITY LABELS — name the unlabeled asset clusters
+   ═══════════════════════════════════════════════ */
+function facilityLabel(title, sub, x, z, y = 70) {
+  const lbl = labelStack(title, sub, 'facility-label', 'facility-sub');
+  lbl.position.set(x, y, z);
+  return lbl;
+}
+
+// Facility labels removed — too much floating clutter
+
+// Parking structures — individual P-labels
+function parkingLabel(text, x, z) {
+  const lbl = labelEl(text, 'parking-label');
+  lbl.position.set(x, 36, z);
+  return lbl;
+}
+// Parking + rental-car labels removed — clutter
+
+/* ═══════════════════════════════════════════════
+   TAXIWAY IDENTIFIERS — letter markers on existing taxi strips
+   ═══════════════════════════════════════════════ */
+function twyLabel(text, x, z) {
+  const lbl = labelEl(text, 'taxi-label');
+  lbl.position.set(x, 10, z);
+  return lbl;
+}
+// Taxiway labels removed — clutter
+
+/* ═══════════════════════════════════════════════
+   ICONIC SPOTTER LANDMARKS (tiny, authentic)
+   In-N-Out Burger (9149 S. Sepulveda) — famous LAX plane-spotting
+   ═══════════════════════════════════════════════ */
+function spotterPin(title, sub, x, z, color = 0xc9432f) {
+  const g = new THREE.Group();
+  const b = box(22, 10, 22, color, 0.85);
+  b.position.y = 5;
+  b.castShadow = true;
+  g.add(b);
+  const roof = box(24, 1.2, 24, 0xe8dfc0, 0.7);
+  roof.position.y = 10.6;
+  g.add(roof);
+  const lbl = labelStack(title, sub, 'callout-label', 'poi-sub');
+  lbl.position.set(0, 26, 0);
+  g.add(lbl);
+  g.position.set(x, 0, z);
+  return g;
+}
+// In-N-Out next to 25R approach
+detail.add(spotterPin('IN-N-OUT', 'PLANE SPOTTING ★', 2430, 520));
+// The Proud Bird (near 25L approach, south side)
+detail.add(spotterPin('THE PROUD BIRD', 'AVIATION THEMED', 2450, 1080, 0xde7329));
+
+/* ═══════════════════════════════════════════════
+   RUNWAY THRESHOLD CALLOUTS (just approach-end IDs as pills)
+   ═══════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════
    CLICKABLE AIRPLANE + THIRD-PERSON POV
    ═══════════════════════════════════════════════ */
 function makeAirplane() {
   const g = new THREE.Group();
-  const S = 1.45; // overall scale — a little bigger
+  const S = 1.85; // overall scale — easier to spot and click
 
   const bodyMat   = new THREE.MeshStandardMaterial({ color: 0xf5efd9, roughness: 0.38, metalness: 0.18 });
   const accentMat = new THREE.MeshStandardMaterial({ color: 0x26344a, roughness: 0.48 });
@@ -1592,10 +2384,30 @@ airplane.position.set(0, 7, 350);
 airplane.rotation.y = Math.PI;  // face east
 scene.add(airplane);
 
-// Pulsing marker
-const planeMarker = labelEl('▾ Click to Board', 'plane-marker');
-planeMarker.position.set(0, 22, 0);
+// Pulsing marker — sits BELOW the plane so the fuselage isn't blocked.
+// Outer wrapper handles CSS2D positioning, inner .plane-marker owns animation.
+const planeMarkerWrap = document.createElement('div');
+planeMarkerWrap.style.pointerEvents = 'none';
+planeMarkerWrap.innerHTML = `
+  <div class="plane-marker">
+    <span class="pm-main">▴ Click here to fly plane</span>
+    <span class="pm-sub">or press <span class="pm-key">↵ ENTER</span> to board</span>
+  </div>
+`;
+const planeMarker = new CSS2DObject(planeMarkerWrap);
+// Offset away from the plane so it doesn't block content
+planeMarker.position.set(0, -58, 32);
 airplane.add(planeMarker);
+
+// Leader line connecting the plane to the marker
+const markerLine = new THREE.Line(
+  new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, -58, 32),
+  ]),
+  new THREE.LineBasicMaterial({ color: 0xed8e2b, transparent: true, opacity: 0.6 }),
+);
+airplane.add(markerLine);
 
 /* ——— Pointer + raycaster ——— */
 const raycaster = new THREE.Raycaster();
@@ -1618,7 +2430,8 @@ canvasEl.addEventListener('pointermove', (e) => {
   if (nh !== hovering) {
     hovering = nh;
     canvasEl.style.cursor = hovering ? 'pointer' : '';
-    planeMarker.element.style.transform = hovering ? 'scale(1.08)' : '';
+    const innerMk = planeMarker.element.querySelector('.plane-marker');
+    if (innerMk) innerMk.style.filter = hovering ? 'brightness(1.35) drop-shadow(0 0 14px rgba(237,142,43,.55))' : '';
   }
 });
 
@@ -1642,11 +2455,16 @@ const exitBtn = document.getElementById('exitPovBtn');
 exitBtn.addEventListener('click', exitPov);
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && povActive) exitPov();
+  if (e.key === 'Enter' && !povActive) {
+    e.preventDefault();
+    enterPov();
+  }
 });
 
 function enterPov() {
   povActive = true;
   planeMarker.element.style.opacity = '0';
+  markerLine.visible = false;
   document.body.classList.add('in-pov');
 
   povSaved.pos.copy(camera.position);
@@ -1678,6 +2496,7 @@ function exitPov() {
     document.body.classList.remove('in-pov');
     document.body.classList.remove('tutorial-complete');
     planeMarker.element.style.opacity = '';
+    markerLine.visible = true;
 
     stopTutorial();
     exitMapView();
@@ -1928,28 +2747,76 @@ const sunsetHalo = new THREE.Mesh(
 sunsetHalo.position.copy(sunsetPos);
 mapGroup.add(sunsetHalo);
 
-/* ─── Cloud layer (soft white puffs, warm underside) ─── */
+/* ─── Cloud layer ─── */
 const cloudGroup = new THREE.Group();
-const CLOUD_COUNT = 260;
+
+/* Solid cloud FLOOR — a large flat disk beneath the puffs so there are NO
+   gaps to see through when looking down. Provides a continuous warm cloud
+   carpet the puffs sit on top of. */
+const cloudFloor = new THREE.Mesh(
+  new THREE.CircleGeometry(5200, 64),
+  new THREE.MeshBasicMaterial({
+    color: 0xf4c79c,
+    transparent: true,
+    opacity: 0.95,
+    depthWrite: false,
+  }),
+);
+cloudFloor.rotation.x = -Math.PI / 2;
+cloudFloor.position.y = 170;
+cloudGroup.add(cloudFloor);
+
+/* Ring of darker cloud shade to soften the disc edge into the horizon haze */
+const cloudFloorRim = new THREE.Mesh(
+  new THREE.RingGeometry(4200, 5200, 64, 1),
+  new THREE.MeshBasicMaterial({
+    color: 0xc68a68,
+    transparent: true,
+    opacity: 0.55,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  }),
+);
+cloudFloorRim.rotation.x = -Math.PI / 2;
+cloudFloorRim.position.y = 168.5;
+cloudGroup.add(cloudFloorRim);
+
+/* A second darker carpet layer just under the top surface to give depth
+   (prevents the disc from looking flat and painterly). */
+const cloudUnderside = new THREE.Mesh(
+  new THREE.CircleGeometry(5200, 64),
+  new THREE.MeshBasicMaterial({
+    color: 0x8a5a55,
+    transparent: true,
+    opacity: 0.7,
+    depthWrite: false,
+  }),
+);
+cloudUnderside.rotation.x = -Math.PI / 2;
+cloudUnderside.position.y = 155;
+cloudGroup.add(cloudUnderside);
+
+/* Individual cloud puffs — denser now that the floor is solid */
+const CLOUD_COUNT = 460;
 for (let i = 0; i < CLOUD_COUNT; i++) {
-  const r = 45 + Math.random() * 160;
+  const r = 48 + Math.random() * 170;
   const theta = Math.random() * Math.PI * 2;
-  const dist = 100 + Math.sqrt(Math.random()) * 2400;
+  const dist = 60 + Math.sqrt(Math.random()) * 2600;
   const puff = new THREE.Mesh(
     new THREE.SphereGeometry(r, 10, 7),
     new THREE.MeshStandardMaterial({
-      color: 0xffe4ce,
+      color: 0xfff0d8,
       transparent: true,
-      opacity: 0.35 + Math.random() * 0.3,
+      opacity: 0.62 + Math.random() * 0.28,
       roughness: 1,
-      emissive: 0x4a2e1a,
-      emissiveIntensity: 0.25,
+      emissive: 0x5a3a22,
+      emissiveIntensity: 0.3,
       depthWrite: false,
     }),
   );
   puff.position.set(
     Math.cos(theta) * dist,
-    190 + Math.random() * 160,
+    192 + Math.random() * 140,
     Math.sin(theta) * dist,
   );
   puff.scale.y = 0.45 + Math.random() * 0.3;
@@ -2010,44 +2877,8 @@ const fadeOverlay = document.getElementById('fadeOverlay');
 function enterMapView() {
   fadeOverlay.classList.add('active');
   controls.enabled = false;
-
   setTimeout(() => {
-    // Hide the entire airport, show the sky scene
-    airportBackdrop.forEach(o => o.visible = false);
-    pathGroup.visible = false;
-    mapGroup.visible = true;
-    mapHemi.visible = true;
-    mapSunLight.visible = true;
-    document.body.classList.add('map-view');
-    mapActive = true;
-
-    // Plane begins below the clouds, pitched up for climb
-    airplane.position.set(0, ASCENT_START_Y, 0);
-    airplane.rotation.set(0, MAP_HEADING, 0);
-    airplane.rotation.z = -0.22;  // nose up
-
-    // Camera behind + above the climbing plane
-    const chaseOffset = new THREE.Vector3(95, 26, 0);
-    chaseOffset.applyEuler(new THREE.Euler(0, MAP_HEADING, 0, 'XYZ'));
-    camera.position.copy(airplane.position).add(chaseOffset);
-    controls.target.copy(airplane.position);
-
-    // Warm haze atmosphere
-    scene.background.copy(SKY_HAZE);
-    scene.fog.color.copy(SKY_HAZE);
-    scene.fog.near = 600;
-    scene.fog.far = 4500;
-    stars.material.opacity = 0.55;
-
-    controls.enabled = true;
-    controls.minDistance = 55;
-    controls.maxDistance = 800;
-    controls.maxPolarAngle = Math.PI / 2 - 0.02;
-
-    // Kick off the climb
-    ascentStart = performance.now();
-    ascentActive = true;
-
+    performMapSwap();
     requestAnimationFrame(() => fadeOverlay.classList.remove('active'));
   }, 900);
 }
@@ -2187,6 +3018,82 @@ function stopTutorial() {
   document.body.classList.remove('tutorial-complete');
 }
 
+/* ───── Pull-up climb (visible flying phase before cloud wash) ─────
+   Plays a 2s scripted climb after the tutorial ends — plane pitches up
+   dramatically and rises while the camera pulls back. This is what the
+   user sees BEFORE the cloud overlay starts fading in.
+*/
+let pullUpActive = false;
+let pullUpStart = 0;
+const pullUpStartPos = new THREE.Vector3();
+let pullUpStartRotY = 0;
+let pullUpStartRotZ = 0;
+let pullUpStartRotX = 0;
+const PULL_UP_DURATION = 2000;
+
+function updatePullUp() {
+  if (!pullUpActive) return;
+  const elapsed = performance.now() - pullUpStart;
+  const t = Math.min(1, elapsed / PULL_UP_DURATION);
+  const k = 1 - Math.pow(1 - t, 2); // easeOutQuad
+
+  // Plane's forward is -X in local frame; rotate by y to get world forward
+  const fwd = new THREE.Vector3(-1, 0, 0);
+  fwd.applyEuler(new THREE.Euler(0, pullUpStartRotY, 0, 'XYZ'));
+
+  airplane.position.copy(pullUpStartPos)
+    .add(fwd.clone().multiplyScalar(260 * k))
+    .add(new THREE.Vector3(0, 220 * k, 0));
+
+  // Pitch nose up steeply (~-0.55 rad ≈ 31°)
+  airplane.rotation.z = pullUpStartRotZ + (-0.55 - pullUpStartRotZ) * k;
+  // Small roll wobble that damps as we level off
+  airplane.rotation.x = pullUpStartRotX + Math.sin(elapsed * 0.004) * 0.045 * (1 - k * 0.6);
+
+  // Camera pulls back and slightly higher
+  const back = 76 + 55 * k;
+  const up   = 28 + 24 * k;
+  const co = new THREE.Vector3(back, up, 0);
+  co.applyEuler(new THREE.Euler(0, airplane.rotation.y, 0, 'XYZ'));
+  camera.position.lerp(airplane.position.clone().add(co), 0.16);
+  controls.target.lerp(airplane.position, 0.22);
+}
+
+/* Split enterMapView so completeTutorial can drive the pull-up + cloud wash
+   independently before swapping the scene. */
+function performMapSwap() {
+  airportBackdrop.forEach(o => o.visible = false);
+  pathGroup.visible = false;
+  mapGroup.visible = true;
+  mapHemi.visible = true;
+  mapSunLight.visible = true;
+  document.body.classList.add('map-view');
+  mapActive = true;
+
+  airplane.position.set(0, ASCENT_START_Y, 0);
+  airplane.rotation.set(0, MAP_HEADING, 0);
+  airplane.rotation.z = -0.22;
+
+  const chaseOffset = new THREE.Vector3(95, 26, 0);
+  chaseOffset.applyEuler(new THREE.Euler(0, MAP_HEADING, 0, 'XYZ'));
+  camera.position.copy(airplane.position).add(chaseOffset);
+  controls.target.copy(airplane.position);
+
+  scene.background.copy(SKY_HAZE);
+  scene.fog.color.copy(SKY_HAZE);
+  scene.fog.near = 600;
+  scene.fog.far = 4500;
+  stars.material.opacity = 0.55;
+
+  controls.enabled = true;
+  controls.minDistance = 55;
+  controls.maxDistance = 800;
+  controls.maxPolarAngle = Math.PI / 2 - 0.02;
+
+  ascentStart = performance.now();
+  ascentActive = true;
+}
+
 function completeTutorial() {
   tutActive = false;
   ['w','a','s','d'].forEach(k => keyEls[k].classList.remove('active','held'));
@@ -2196,15 +3103,30 @@ function completeTutorial() {
   }
   tutStepEl.textContent     = 'Tutorial Complete';
   tutTitleEl.textContent    = 'Airborne · Outbound';
-  tutHintEl.textContent     = 'Pulling up for the big picture…';
+  tutHintEl.textContent     = 'Pulling up — climbing into the clouds…';
   tutElapsedEl.textContent  = '—';
   tutDurationEl.textContent = '—';
   document.body.classList.remove('tutorial-active');
   document.body.classList.add('tutorial-complete');
   pathGroup.visible = false;
 
-  // Brief beat, then rise above and frame the Southwest
-  setTimeout(enterMapView, 1600);
+  // Begin the visible climb
+  pullUpActive = true;
+  pullUpStart = performance.now();
+  pullUpStartPos.copy(airplane.position);
+  pullUpStartRotY = airplane.rotation.y;
+  pullUpStartRotZ = airplane.rotation.z;
+  pullUpStartRotX = airplane.rotation.x;
+  controls.enabled = false;
+
+  // 900ms into the climb, start the cloud wash
+  setTimeout(() => fadeOverlay.classList.add('active'), 900);
+  // 2000ms — plane has climbed, clouds are densest → swap the scene behind the wash
+  setTimeout(() => {
+    pullUpActive = false;
+    performMapSwap();
+    requestAnimationFrame(() => fadeOverlay.classList.remove('active'));
+  }, 2000);
 }
 
 function updateTutorial(dt) {
@@ -2360,6 +3282,7 @@ function tick() {
   requestAnimationFrame(tick);
   const dt = Math.min(clock.getDelta(), 0.1);
   updateTutorial(dt);
+  updatePullUp();
   updateChaseCam();
   updatePathFX();
   updateMapFX(dt);
