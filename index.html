@@ -1538,38 +1538,38 @@ scene.add(building({ x: -420, z:  50, w: 30, d: 40, h: 22, color: C.buildingA })
 /* Control tower — iconic LAX theme building */
 function theme() {
   const g = new THREE.Group();
-  // base plinth — scaled up ~1.5×
-  const plinth = box(56, 9, 56, C.buildingC, 0.8);
-  plinth.position.y = 4.5;
+  // base plinth
+  const plinth = box(38, 6, 38, C.buildingC, 0.8);
+  plinth.position.y = 3;
   g.add(plinth);
   // four radial legs meeting at top
-  const legGeom = new THREE.CylinderGeometry(3.6, 4.8, 80, 8);
+  const legGeom = new THREE.CylinderGeometry(2.4, 3.2, 55, 8);
   const legMat = new THREE.MeshStandardMaterial({ color: 0xe3dcc0, roughness: 0.7 });
   for (let i = 0; i < 4; i++) {
     const leg = new THREE.Mesh(legGeom, legMat);
     leg.castShadow = true;
     leg.receiveShadow = true;
     const angle = (i / 4) * Math.PI * 2;
-    const r = 20;
-    leg.position.set(Math.cos(angle) * r, 49, Math.sin(angle) * r);
-    leg.rotation.z = Math.cos(angle) * 0.2;
-    leg.rotation.x = Math.sin(angle) * -0.2;
+    const r = 13;
+    leg.position.set(Math.cos(angle) * r, 32, Math.sin(angle) * r);
+    leg.rotation.z = Math.cos(angle) * 0.22;
+    leg.rotation.x = Math.sin(angle) * -0.22;
     g.add(leg);
   }
   // disc top
   const disc = new THREE.Mesh(
-    new THREE.CylinderGeometry(32, 32, 9, 32),
+    new THREE.CylinderGeometry(22, 22, 6, 28),
     new THREE.MeshStandardMaterial({ color: 0xf4eed8, roughness: 0.55 })
   );
-  disc.position.y = 90;
+  disc.position.y = 60;
   disc.castShadow = true;
   g.add(disc);
-  // dome
+  // small dome
   const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(15, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.SphereGeometry(10, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2),
     new THREE.MeshStandardMaterial({ color: 0xd4cca8, roughness: 0.5 })
   );
-  dome.position.y = 95;
+  dome.position.y = 63;
   g.add(dome);
 
   // label removed — too much floating clutter
@@ -1620,44 +1620,6 @@ scene.add(controlTower());
 
 const detail = new THREE.Group();
 scene.add(detail);
-
-/* ── World Way horseshoe road (wraps around terminal complex) ── */
-const HORSESHOE_MAT = new THREE.MeshStandardMaterial({ color: 0x2a2824, roughness: 1 });
-const HORSESHOE_Y = 1.5;
-
-// North arm — in front of terminals 1, 2, 3 (z ≈ -155)
-const hNorth = new THREE.Mesh(new THREE.BoxGeometry(620, 0.4, 14), HORSESHOE_MAT);
-hNorth.position.set(110, HORSESHOE_Y, -155);
-hNorth.receiveShadow = true;
-detail.add(hNorth);
-
-// South arm — in front of terminals 4-8 (z ≈ 155)
-const hSouth = new THREE.Mesh(new THREE.BoxGeometry(620, 0.4, 14), HORSESHOE_MAT);
-hSouth.position.set(110, HORSESHOE_Y, 155);
-hSouth.receiveShadow = true;
-detail.add(hSouth);
-
-// West curve — semicircle arc connecting north and south arms around TBIT
-const horseshoeArc = new THREE.Mesh(
-  new THREE.TorusGeometry(155, 7, 4, 20, Math.PI),
-  HORSESHOE_MAT,
-);
-horseshoeArc.rotation.set(-Math.PI / 2, Math.PI / 2, 0);
-horseshoeArc.position.set(-200, HORSESHOE_Y, 0);
-horseshoeArc.receiveShadow = true;
-detail.add(horseshoeArc);
-
-// Lane-marking dashes on both arms
-const laneMat = new THREE.MeshStandardMaterial({ color: 0xb8a470, roughness: 0.7 });
-for (let i = 0; i < 12; i++) {
-  const x = -80 + i * 50;
-  const dN = new THREE.Mesh(new THREE.BoxGeometry(18, 0.15, 1), laneMat);
-  dN.position.set(x, HORSESHOE_Y + 0.25, -155);
-  detail.add(dN);
-  const dS = new THREE.Mesh(new THREE.BoxGeometry(18, 0.15, 1), laneMat);
-  dS.position.set(x, HORSESHOE_Y + 0.25, 155);
-  detail.add(dS);
-}
 
 const ROAD_DARK = 0x2c2a26;
 const ROAD_LIGHT = 0x3b3935;
@@ -2434,16 +2396,16 @@ planeMarkerWrap.innerHTML = `
 `;
 const planeMarker = new CSS2DObject(planeMarkerWrap);
 // Offset away from the plane so it doesn't block content
-planeMarker.position.set(0, -90, 50);
+planeMarker.position.set(0, -58, 32);
 airplane.add(planeMarker);
 
-// Leader line connecting the plane to the distant marker
+// Leader line connecting the plane to the marker
 const markerLine = new THREE.Line(
   new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(0, -2, 0),
-    new THREE.Vector3(0, -90, 50),
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, -58, 32),
   ]),
-  new THREE.LineBasicMaterial({ color: 0xed8e2b, transparent: true, opacity: 0.55 }),
+  new THREE.LineBasicMaterial({ color: 0xed8e2b, transparent: true, opacity: 0.6 }),
 );
 airplane.add(markerLine);
 
