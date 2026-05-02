@@ -3921,6 +3921,7 @@ function updateMapFX(dt) {
       ascentActive = false;
       airplane.rotation.z = -0.03;
       airplane.rotation.x = 0;
+      if (portfolioMode === 'airport') triggerBoardReveal();
     }
   } else {
     // Idle: gentle breathing float + tiny bank — plane is NOT drifting forward
@@ -4769,6 +4770,16 @@ function setMode(mode) {
 }
 
 window.PORTFOLIO_SET_MODE = setMode; // exposed for transition wiring + manual testing
+
+function triggerBoardReveal() {
+  // Fade existing canvas via the existing fadeOverlay element, then swap modes.
+  const fade = document.getElementById('fadeOverlay');
+  fade.classList.add('active');
+  setTimeout(() => {
+    setMode('board');
+    requestAnimationFrame(() => fade.classList.remove('active'));
+  }, 400);
+}
 
 function tick() {
   requestAnimationFrame(tick);
