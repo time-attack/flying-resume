@@ -96,6 +96,42 @@
   }
   .header .sub span { color:#ed8e2b; }
 
+  .site-nav {
+    position:absolute;
+    top:28px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:24;
+    display:flex;
+    gap:8px;
+    transition:opacity .35s ease, transform .35s ease;
+  }
+  .site-nav a {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:92px;
+    padding:10px 14px;
+    border:1px solid rgba(244,238,216,.14);
+    background:rgba(20,19,17,.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    color:#f4eed8;
+    font-family:'Syne', sans-serif;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.24em;
+    text-decoration:none;
+    text-transform:uppercase;
+    transition:background .2s, color .2s, border-color .2s, transform .2s;
+  }
+  .site-nav a:hover {
+    background:#ed8e2b;
+    border-color:#ed8e2b;
+    color:#141311;
+    transform:translateY(-1px);
+  }
+
   /* ——— LEGEND ——— */
   .legend {
     position:absolute;
@@ -381,6 +417,12 @@
   body.in-pov .header {
     opacity:.4;
     transition:opacity .5s;
+  }
+  body.in-pov .site-nav,
+  body.map-view .site-nav {
+    opacity:0;
+    pointer-events:none;
+    transform:translateX(-50%) translateY(-8px);
   }
   body.tutorial-active .pov-plate { opacity:0; transition:opacity .3s; }
 
@@ -864,29 +906,29 @@
   .plane-marker {
     font-family:'JetBrains Mono', monospace;
     font-weight:700;
-    font-size:11px;
-    letter-spacing:.24em;
+    font-size:8px;
+    letter-spacing:.2em;
     color:#ed8e2b;
-    background:rgba(20,19,17,.94);
-    border:1px solid rgba(237,142,43,.6);
-    padding:6px 12px;
+    background:rgba(20,19,17,.92);
+    border:1px solid rgba(237,142,43,.5);
+    padding:4px 8px;
     text-transform:uppercase;
     white-space:nowrap;
     text-align:center;
-    box-shadow:0 0 22px rgba(237,142,43,.4), 0 2px 14px rgba(0,0,0,.5);
+    box-shadow:0 0 14px rgba(237,142,43,.3), 0 2px 8px rgba(0,0,0,.4);
     animation:planePulse 2.2s ease-in-out infinite;
     transition:opacity .4s;
   }
   .plane-marker .pm-main {
     display:block;
-    font-size:12px;
+    font-size:9px;
   }
   .plane-marker .pm-sub {
     display:block;
-    font-size:8.5px;
+    font-size:7px;
     color:rgba(244,238,216,.72);
-    letter-spacing:.32em;
-    margin-top:3px;
+    letter-spacing:.28em;
+    margin-top:2px;
   }
   .plane-marker .pm-key {
     display:inline-block;
@@ -911,6 +953,8 @@
   }
 
   @media (max-width: 760px) {
+    .site-nav { top:14px; }
+    .site-nav a { min-width:auto; padding:8px 11px; font-size:9px; letter-spacing:.18em; }
     .legend { width:200px; right:14px; top:14px; padding:14px; }
     .header { left:16px; top:16px; }
     .controls { left:16px; bottom:16px; gap:10px; font-size:9px; }
@@ -918,6 +962,45 @@
     .presets { padding:2px; }
     .presets button { padding:7px 10px; font-size:9px; letter-spacing:.16em; }
   }
+
+/* ═══════════════════════════════════════════════
+   PORTFOLIO DEPARTURE BOARD
+   ═══════════════════════════════════════════════ */
+#board {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #0a0908;
+  color: #f4eed8;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  overflow-y: auto;
+  display: none;
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+body.board-view #board {
+  display: block;
+  opacity: 1;
+}
+body.board-view #canvas,
+body.board-view #labels,
+body.board-view .header,
+body.board-view .legend,
+body.board-view .compass,
+body.board-view .presets,
+body.board-view .site-nav,
+body.board-view #mapTitle,
+body.board-view .pov-plate,
+body.board-view #exitPovBtn,
+body.board-view #tutorial {
+  display: none !important;
+}
+
+#board .board-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px 48px 80px;
+}
 </style>
 </head>
 <body>
@@ -927,6 +1010,10 @@
 
   <div id="loader"><div class="ring"></div></div>
 
+  <nav class="site-nav" aria-label="Site">
+    <a href="blog.html">Blog</a>
+  </nav>
+
   <header class="header">
     <div class="mark">KLAX · 33.9416°N 118.4085°W</div>
     <h1>Los Angeles<br>International<br><span class="italic">Airport</span></h1>
@@ -934,15 +1021,6 @@
   </header>
 
   <aside class="legend">
-    <div class="section">
-      <h2>Runways</h2>
-      <ul>
-        <li><span class="sw" style="background:#c9432f"></span> 06L / 24R <span class="meta">8,925 ft</span></li>
-        <li><span class="sw" style="background:#e88327"></span> 06R / 24L <span class="meta">10,285 ft</span></li>
-        <li><span class="sw" style="background:#2f8a47"></span> 07L / 25R <span class="meta">12,091 ft</span></li>
-        <li><span class="sw" style="background:#16a8be"></span> 07R / 25L <span class="meta">11,095 ft</span></li>
-      </ul>
-    </div>
     <div class="section">
       <h2>Terminals</h2>
       <ul class="terminals">
@@ -995,9 +1073,9 @@
 
   <div class="tutorial" id="tutorial">
     <div class="tutorial__header">
-      <div class="tutorial__step" id="tutStep">Step 1 of 3</div>
-      <div class="tutorial__title" id="tutTitle">Taxi Forward</div>
-      <div class="tutorial__hint" id="tutHint">Hold W — pull out onto the apron</div>
+      <div class="tutorial__step" id="tutStep">Step 1 of 11</div>
+      <div class="tutorial__title" id="tutTitle">Push Back &amp; Taxi · Charlie</div>
+      <div class="tutorial__hint" id="tutHint">Hold W — taxi east on Taxiway C from the TBIT apron</div>
     </div>
     <div class="tutorial__keys">
       <div class="key key--w" data-key="w"><span>W</span><div class="fill"></div></div>
@@ -1030,11 +1108,13 @@
   }
 }
 </script>
-
+<script src="osm_lax_data.js"></script>
+<script src="portfolio-data.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 /* ═══════════════════════════════════════════════
    COLOR PALETTE (sampled from the source diagram)
@@ -1074,7 +1154,7 @@ const C = {
    ═══════════════════════════════════════════════ */
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(C.sky);
-scene.fog = new THREE.Fog(C.sky, 4500, 11000);
+scene.fog = new THREE.Fog(C.sky, 8000, 18000);
 
 const camera = new THREE.PerspectiveCamera(
   38,
@@ -1085,10 +1165,10 @@ const camera = new THREE.PerspectiveCamera(
 
 const canvasEl = document.querySelector('#canvas');
 const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1108,7 +1188,7 @@ const controls = new OrbitControls(camera, canvasEl);
 controls.enableDamping = true;
 controls.dampingFactor = 0.075;
 controls.minDistance = 420;
-controls.maxDistance = 8500;
+controls.maxDistance = 14000;
 controls.maxPolarAngle = Math.PI / 2 - 0.03;
 controls.screenSpacePanning = false;
 controls.panSpeed = 0.8;
@@ -1127,14 +1207,14 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff0cb, 1.35);
 sun.position.set(-900, 2600, 1300);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-const shadowSpan = 3300;
+sun.shadow.mapSize.set(1024, 1024);
+const shadowSpan = 3500;
 sun.shadow.camera.left   = -shadowSpan;
 sun.shadow.camera.right  =  shadowSpan;
 sun.shadow.camera.top    =  shadowSpan;
 sun.shadow.camera.bottom = -shadowSpan;
 sun.shadow.camera.near   = 100;
-sun.shadow.camera.far    = 6500;
+sun.shadow.camera.far    = 10000;
 sun.shadow.bias          = -0.00018;
 sun.shadow.normalBias    = 0.6;
 scene.add(sun);
@@ -1161,7 +1241,7 @@ const ocean = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: C.water, roughness: 0.55, metalness: 0.15 })
 );
 ocean.rotation.x = -Math.PI / 2;
-ocean.position.set(-4700, 0.4, 0);
+ocean.position.set(-5000, 0.4, 0);
 ocean.receiveShadow = true;
 scene.add(ocean);
 
@@ -1171,21 +1251,21 @@ const beach = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0xe8dcb1, roughness: 1 })
 );
 beach.rotation.x = -Math.PI / 2;
-beach.position.set(-2900, 0.6, 0);
+beach.position.set(-3300, 0.6, 0);
 scene.add(beach);
 
 /* ═══════════════════════════════════════════════
    AIRPORT FIELD (irregular grey pad)
    ═══════════════════════════════════════════════ */
 const fieldShape = new THREE.Shape();
-fieldShape.moveTo(-2650, -820);
-fieldShape.lineTo(-2550, -1020);
-fieldShape.lineTo(2550, -1020);
-fieldShape.lineTo(2650, -820);
-fieldShape.lineTo(2650, 820);
-fieldShape.lineTo(2550, 1020);
-fieldShape.lineTo(-2550, 1020);
-fieldShape.lineTo(-2650, 820);
+fieldShape.moveTo(-2900, -800);
+fieldShape.lineTo(-2800, -1100);
+fieldShape.lineTo(2400, -1100);
+fieldShape.lineTo(2500, -800);
+fieldShape.lineTo(2500, 1000);
+fieldShape.lineTo(2400, 1300);
+fieldShape.lineTo(-2800, 1300);
+fieldShape.lineTo(-2900, 1000);
 fieldShape.closePath();
 const fieldGeom = new THREE.ShapeGeometry(fieldShape);
 fieldGeom.rotateX(-Math.PI / 2);
@@ -1197,22 +1277,6 @@ field.position.y = 1.0;
 field.receiveShadow = true;
 scene.add(field);
 
-// Darker inner apron
-const apronShape = new THREE.Shape();
-apronShape.moveTo(-500, -320);
-apronShape.lineTo(500, -320);
-apronShape.lineTo(500, 320);
-apronShape.lineTo(-500, 320);
-apronShape.closePath();
-const apronGeom = new THREE.ShapeGeometry(apronShape);
-apronGeom.rotateX(-Math.PI / 2);
-const apron = new THREE.Mesh(
-  apronGeom,
-  new THREE.MeshStandardMaterial({ color: C.fieldDark, roughness: 1 })
-);
-apron.position.y = 2.0;
-apron.receiveShadow = true;
-scene.add(apron);
 
 /* ═══════════════════════════════════════════════
    REUSABLE HELPERS
@@ -1255,246 +1319,213 @@ function darken(hex, amount) {
 }
 
 /* ═══════════════════════════════════════════════
-   RUNWAYS
+   OSM GEOMETRY RENDERERS
    ═══════════════════════════════════════════════ */
-function makeRunway({ x, z, length, width, colorTop, names, tilt }) {
-  const g = new THREE.Group();
 
-  // asphalt body
-  const base = box(length, 3.5, width, C.asphalt, 0.95);
-  base.position.y = 1.75;
-  g.add(base);
-
-  // colored surface stripe (the diagram's visual signature)
-  const top = box(length * 0.995, 0.4, width * 0.94, colorTop, 0.62);
-  top.position.y = 4.2;
-  top.castShadow = false;
-  g.add(top);
-
-  // end thresholds
-  for (const endX of [-length / 2 + 30, length / 2 - 30]) {
-    const stripe = box(10, 0.25, width * 0.82, C.white, 0.4);
-    stripe.position.set(endX, 4.9, 0);
-    stripe.castShadow = false;
-    g.add(stripe);
+// Shared material cache — avoids creating thousands of duplicate MeshStandardMaterials
+const _matCache = new Map();
+function sharedStandardMaterial(color, roughness = 0.95, metalness = 0, side = THREE.FrontSide) {
+  const key = `${color}|${roughness}|${metalness}|${side}`;
+  let m = _matCache.get(key);
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ color, roughness, metalness, side });
+    _matCache.set(key, m);
   }
-
-  // centerline dashes — start past the thresholds so they never overlap
-  const dashes = 26;
-  const span = length / dashes;
-  for (let i = 1; i < dashes - 1; i++) {
-    const dash = box(span * 0.35, 0.2, 1.2, C.white, 0.4);
-    dash.position.set(-length / 2 + span * (i + 0.5), 5.3, 0);
-    dash.castShadow = false;
-    g.add(dash);
-  }
-
-  // end labels
-  const lL = labelEl(names[0], 'runway-label');
-  lL.position.set(-length / 2 + 60, 8, 0);
-  g.add(lL);
-  const lR = labelEl(names[1], 'runway-label');
-  lR.position.set(length / 2 - 60, 8, 0);
-  g.add(lR);
-
-  g.position.set(x, 0, z);
-  if (tilt) g.rotation.y = tilt;
-  return g;
+  return m;
 }
 
-// Slight NE-SW tilt (LAX heading ≈ 069°/249°)
-const RUNWAY_TILT = -0.11;
+// Reusable unit box geometry — instances are scaled rather than allocating per-segment
+const _unitBox = new THREE.BoxGeometry(1, 1, 1);
 
-scene.add(makeRunway({ length: 2720, width: 48, colorTop: C.red,    x: -420, z: -720, tilt: RUNWAY_TILT, names: ['6L', '24R'] }));
-scene.add(makeRunway({ length: 3140, width: 48, colorTop: C.orange, x: -380, z: -540, tilt: RUNWAY_TILT, names: ['6R', '24L'] }));
-scene.add(makeRunway({ length: 3690, width: 48, colorTop: C.green,  x:  380, z:  540, tilt: RUNWAY_TILT, names: ['7L', '25R'] }));
-scene.add(makeRunway({ length: 3380, width: 48, colorTop: C.cyan,   x:  420, z:  720, tilt: RUNWAY_TILT, names: ['7R', '25L'] }));
+// Build a merged BufferGeometry for a polyline strip (1 mesh, no per-segment allocations).
+function buildPolyStripGeom(pts, width, thick, y) {
+  const geoms = [];
+  const tmp = new THREE.Matrix4();
+  const pos = new THREE.Vector3();
+  const quat = new THREE.Quaternion();
+  const scl = new THREE.Vector3();
+  for (let i = 0; i < pts.length - 2; i += 2) {
+    const x1 = pts[i], z1 = pts[i+1], x2 = pts[i+2], z2 = pts[i+3];
+    const dx = x2 - x1, dz = z2 - z1;
+    const len = Math.hypot(dx, dz);
+    if (len < 0.3) continue;
+    pos.set((x1+x2)/2, y, (z1+z2)/2);
+    quat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.atan2(dz, dx));
+    scl.set(len + 0.5, thick, width);
+    tmp.compose(pos, quat, scl);
+    const g = _unitBox.clone();
+    g.applyMatrix4(tmp);
+    geoms.push(g);
+  }
+  if (!geoms.length) return null;
+  return BufferGeometryUtils.mergeGeometries(geoms, false);
+}
+
+// Render a polyline as a connected strip of flat quads (single merged mesh)
+function polyStrip(pts, width, thick, color, y, castSh = false) {
+  const merged = buildPolyStripGeom(pts, width, thick, y);
+  if (!merged) return new THREE.Group();
+  const mesh = new THREE.Mesh(merged, sharedStandardMaterial(color, 0.95));
+  mesh.receiveShadow = true;
+  mesh.castShadow = castSh;
+  return mesh;
+}
+
+// Bulk-merge many polylines that share the same color/material into ONE mesh.
+// Inputs: array of {pts, width, thick, y}
+function polyStripBatch(items, color, castSh = false) {
+  const all = [];
+  for (const it of items) {
+    const g = buildPolyStripGeom(it.pts, it.width, it.thick, it.y);
+    if (g) all.push(g);
+  }
+  if (!all.length) return new THREE.Group();
+  const merged = BufferGeometryUtils.mergeGeometries(all, false);
+  const mesh = new THREE.Mesh(merged, sharedStandardMaterial(color, 0.95));
+  mesh.receiveShadow = true;
+  mesh.castShadow = castSh;
+  return mesh;
+}
+
+// Render a closed polygon as an extruded 3D building
+function polyBuilding(pts, height, color) {
+  // Negate z so 3D_z = +osm_z, consistent with polyStrip (both use osm coords directly)
+  const shape = new THREE.Shape();
+  shape.moveTo(pts[0], -pts[1]);
+  for (let i = 2; i < pts.length; i += 2) shape.lineTo(pts[i], -pts[i+1]);
+  shape.closePath();
+  const geom = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+  // Extrude runs 0..+depth along Z; rotateX(-PI/2) maps that to 0..+height along Y.
+  // Base sits on the ground (y=0) naturally — do NOT lift the mesh.
+  geom.rotateX(-Math.PI / 2);
+  const mesh = new THREE.Mesh(geom, sharedStandardMaterial(color, 0.78, 0, THREE.DoubleSide));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+// Render a closed polygon as a flat surface
+function polyFlat(pts, color, y) {
+  // Negate z so 3D_z = +osm_z, consistent with polyStrip
+  const shape = new THREE.Shape();
+  shape.moveTo(pts[0], -pts[1]);
+  for (let i = 2; i < pts.length; i += 2) shape.lineTo(pts[i], -pts[i+1]);
+  shape.closePath();
+  const geom = new THREE.ShapeGeometry(shape);
+  geom.rotateX(-Math.PI / 2);
+  const mesh = new THREE.Mesh(geom, sharedStandardMaterial(color, 0.98, 0, THREE.DoubleSide));
+  mesh.position.y = y;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+const RUNWAY_TILT = 0.123;
 
 /* ═══════════════════════════════════════════════
-   TAXIWAY HINTS
+   OSM RUNWAYS (exact polylines from OpenStreetMap)
+   — bulk-merged into a single mesh + a single dash mesh
    ═══════════════════════════════════════════════ */
-function taxi(x, z, w, d, rot = 0, color = C.taxiway) {
-  const t = box(w, 0.4, d, color, 0.95);
-  t.position.set(x, 2.6, z);
-  t.rotation.y = rot;
-  t.castShadow = false;
-  return t;
+{
+  const rwyItems = [];
+  const dashGeoms = [];
+  const dashMat = sharedStandardMaterial(C.white, 0.4);
+  for (const rwy of window.OSM_RWY) {
+    if (!rwy.ref) continue;
+    rwyItems.push({ pts: rwy.pts, width: rwy.w, thick: 3.5, y: 1.75 });
+    // centerline dashes — accumulate into a merged geometry
+    const tmp = new THREE.Matrix4();
+    for (let i = 0; i < rwy.pts.length - 2; i += 4) {
+      const mx = (rwy.pts[i]+rwy.pts[i+2])/2, mz = (rwy.pts[i+1]+rwy.pts[i+3])/2;
+      tmp.makeTranslation(mx, 5.0, mz);
+      const dg = new THREE.BoxGeometry(2, 0.15, 1);
+      dg.applyMatrix4(tmp);
+      dashGeoms.push(dg);
+    }
+    // runway end labels
+    const names = rwy.ref.split('/');
+    const lL = labelEl(names[0], 'runway-label');
+    lL.position.set(rwy.pts[0], 8, rwy.pts[1]);
+    scene.add(lL);
+    const lR = labelEl(names[1], 'runway-label');
+    lR.position.set(rwy.pts[rwy.pts.length-2], 8, rwy.pts[rwy.pts.length-1]);
+    scene.add(lR);
+  }
+  scene.add(polyStripBatch(rwyItems, C.asphalt));
+  if (dashGeoms.length) {
+    const dashMesh = new THREE.Mesh(BufferGeometryUtils.mergeGeometries(dashGeoms, false), dashMat);
+    dashMesh.castShadow = false;
+    dashMesh.receiveShadow = false;
+    scene.add(dashMesh);
+  }
 }
-// parallel taxiways
-scene.add(taxi(-380, -630, 2500, 10, RUNWAY_TILT));
-scene.add(taxi(-380, -450, 2900, 10, RUNWAY_TILT));
-scene.add(taxi( 380,  450, 3400, 10, RUNWAY_TILT));
-scene.add(taxi( 380,  630, 3100, 10, RUNWAY_TILT));
-
-// perimeter taxiways ringing the terminal apron
-scene.add(taxi(0, -340, 1800, 10));
-scene.add(taxi(0,  340, 1800, 10));
 
 /* ═══════════════════════════════════════════════
-   TERMINAL FACTORY (comb-shaped concourses)
+   OSM TAXIWAYS (367 polylines from OpenStreetMap)
+   — bulk-merged into a single mesh
    ═══════════════════════════════════════════════ */
-function makeTerminal({
-  x, z, color, width, depth, fingers, fingerLength, fingerWidth,
-  fingerDir, height = 38, name, labelColor,
-}) {
-  const g = new THREE.Group();
-  const roof = darken(color, 0.82);
-
-  // main concourse
-  const main = box(width, height, depth, color);
-  main.position.y = height / 2;
-  g.add(main);
-
-  // roof cap
-  const rc = box(width * 1.015, 2, depth * 1.03, roof);
-  rc.position.y = height + 1;
-  rc.castShadow = false;
-  g.add(rc);
-
-  // fingers (gate piers)
-  const spacing = width / fingers;
-  for (let i = 0; i < fingers; i++) {
-    const fx = -width / 2 + spacing * (i + 0.5);
-    const fh = height - 6;
-    const f = box(fingerWidth, fh, fingerLength, color);
-    f.position.set(fx, fh / 2, fingerDir * (depth / 2 + fingerLength / 2));
-    g.add(f);
-
-    const fr = box(fingerWidth * 1.02, 1.5, fingerLength * 1.02, roof);
-    fr.position.set(fx, fh + 0.75, fingerDir * (depth / 2 + fingerLength / 2));
-    fr.castShadow = false;
-    g.add(fr);
-  }
-
-  // label hugging the roof
-  const lbl = labelEl(name, 'terminal-label');
-  lbl.position.set(0, height + 4, 0);
-  g.add(lbl);
-
-  g.position.set(x, 0, z);
-  return g;
-}
-
-/* TOP ROW — Terminals 1, 2, 3 (fingers extend NORTH)  */
-scene.add(makeTerminal({
-  x: 270, z: -200, color: C.purple,
-  width: 130, depth: 44,
-  fingers: 2, fingerLength: 130, fingerWidth: 42,
-  fingerDir: -1, name: '1',
-}));
-scene.add(makeTerminal({
-  x: 115, z: -200, color: C.tOrange,
-  width: 120, depth: 44,
-  fingers: 2, fingerLength: 115, fingerWidth: 40,
-  fingerDir: -1, name: '2',
-}));
-scene.add(makeTerminal({
-  x: -40, z: -200, color: C.tRed,
-  width: 120, depth: 44,
-  fingers: 2, fingerLength: 115, fingerWidth: 40,
-  fingerDir: -1, name: '3',
-}));
-
-/* BOTTOM ROW — Terminals 4–8 (fingers extend SOUTH)  */
-const BOT = 190;
-const termYellow = [
-  { x: -130, w: 92, fl: 100 },
-  { x:  -25, w: 92, fl: 100 },
-  { x:   80, w: 92, fl: 100 },
-  { x:  185, w: 92, fl: 100 },
-  { x:  290, w: 86, fl: 92  },
-];
-const names = ['4', '5', '6', '7', '8'];
-termYellow.forEach((t, i) => {
-  scene.add(makeTerminal({
-    x: t.x, z: BOT, color: C.yellow,
-    width: t.w, depth: 32,
-    fingers: 2, fingerLength: t.fl, fingerWidth: 30,
-    fingerDir: 1, name: names[i],
+{
+  const twyItems = window.OSM_TWY.map(twy => ({
+    pts: twy.p,
+    width: Math.min(twy.w, 30),
+    thick: 0.3,
+    y: 2.4,
   }));
-});
-
-/* TBIT — Tom Bradley International (central spine)   */
-function makeTBIT() {
-  const g = new THREE.Group();
-  const h = 58;
-  const color = C.teal;
-  const roof = darken(color, 0.8);
-
-  const main = box(72, h, 400, color);
-  main.position.y = h / 2;
-  g.add(main);
-
-  const rc = box(74, 2, 402, roof);
-  rc.position.y = h + 1;
-  rc.castShadow = false;
-  g.add(rc);
-
-  // gate fingers extending WEST
-  for (let i = 0; i < 4; i++) {
-    const fz = -165 + i * 110;
-    const fh = h - 8;
-    const f = box(160, fh, 32, color);
-    f.position.set(-72 / 2 - 160 / 2, fh / 2, fz);
-    g.add(f);
-    const fr = box(162, 1.5, 33, roof);
-    fr.position.set(-72 / 2 - 160 / 2, fh + 0.75, fz);
-    fr.castShadow = false;
-    g.add(fr);
-  }
-
-  const lbl = labelStack('B · TBIT', 'TOM BRADLEY INTERNATIONAL', 'terminal-label', 'poi-sub');
-  lbl.position.set(0, h + 4, 0);
-  g.add(lbl);
-
-  g.position.set(-140, 0, 0);
-  return g;
+  scene.add(polyStripBatch(twyItems, C.taxiway));
 }
-scene.add(makeTBIT());
 
 /* ═══════════════════════════════════════════════
-   SUPPORT BUILDINGS
+   OSM TERMINALS (exact building footprints from OpenStreetMap)
    ═══════════════════════════════════════════════ */
-function building({ x, z, w, d, h, color = C.buildingB }) {
-  const b = box(w, h, d, color, 0.85);
-  b.position.set(x, h / 2, z);
-  return b;
-}
-
-/* West — cargo / maintenance hangars */
-const cargoColors = [C.buildingA, C.buildingB, C.buildingA, C.buildingC, C.buildingB];
-for (let i = 0; i < 5; i++) {
-  scene.add(building({
-    x: -1350 + i * 120, z: -280,
-    w: 100, d: 80, h: 26 + (i % 2) * 8,
-    color: cargoColors[i],
-  }));
-}
-for (let i = 0; i < 4; i++) {
-  scene.add(building({
-    x: -1300 + i * 140, z: 280,
-    w: 120, d: 90, h: 22 + (i % 2) * 10,
-    color: i % 2 ? C.buildingA : C.buildingB,
-  }));
-}
-// larger hangars
-scene.add(building({ x: -1850, z: -120, w: 260, d: 170, h: 38, color: C.buildingB }));
-scene.add(building({ x: -1850, z: 160,  w: 230, d: 150, h: 34, color: C.buildingA }));
-scene.add(building({ x: -2150, z: 20,   w: 180, d: 240, h: 30, color: C.buildingC }));
-
-// Cluster of small hangars west
-for (let i = 0; i < 3; i++) {
-  for (let j = 0; j < 2; j++) {
-    scene.add(building({
-      x: -1550 + i * 70, z: -560 + j * 90,
-      w: 56, d: 72, h: 16 + (i * j) * 2,
-      color: j ? C.buildingA : C.buildingC,
-    }));
+const termColors = {'1':C.purple,'2':C.tOrange,'3':C.tRed,'B':C.teal,
+  '4':C.yellow,'5':C.yellow,'6':C.yellow,'7':C.yellow,'8':C.yellow};
+for (const term of window.OSM_TERM) {
+  const col = termColors[term.r] || C.yellow;
+  const h = parseFloat(term.h) || 25;
+  try {
+    scene.add(polyBuilding(term.p, h, col));
+  } catch(e) { /* skip malformed polygons */ }
+  // label
+  if (term.r) {
+    const cx = term.p.reduce((s,v,i) => i%2===0 ? s+v : s, 0) / (term.p.length/2);
+    const cz = term.p.reduce((s,v,i) => i%2===1 ? s+v : s, 0) / (term.p.length/2);
+    const cls = term.r === 'B' ? 'terminal-label' : 'terminal-label';
+    const lbl = term.r === 'B'
+      ? labelStack('B · TBIT', 'TOM BRADLEY INTERNATIONAL', 'terminal-label', 'poi-sub')
+      : labelEl(term.r, cls);
+    lbl.position.set(cx, h + 4, cz);
+    scene.add(lbl);
   }
+}
+
+/* ═══════════════════════════════════════════════
+   OSM APRONS (flat ramp areas from OpenStreetMap)
+   ═══════════════════════════════════════════════ */
+for (const apron of window.OSM_APRON) {
+  try { scene.add(polyFlat(apron.p, C.fieldDark, 2.0)); } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════
+   OSM HANGARS & BUILDINGS (exact footprints from OpenStreetMap)
+   ═══════════════════════════════════════════════ */
+const hangarColors = [C.buildingA, C.buildingB, C.buildingC];
+for (let i = 0; i < window.OSM_HANGAR.length; i++) {
+  const h = window.OSM_HANGAR[i];
+  const ht = parseFloat(h.h) || 12;
+  const col = hangarColors[i % 3];
+  try { scene.add(polyBuilding(h.p, ht, col)); } catch(e) {}
 }
 
 /* East — parking structures */
-function parkingStructure({ x, z, w, d, levels = 3, color = C.parking }) {
+function parkingStructure({
+  x,
+  z,
+  w,
+  d,
+  levels = 3,
+  color = C.parking,
+  coreLift = 8,
+  rotation = 0,
+}) {
   const g = new THREE.Group();
   const lvlH = 6;
   const totalH = levels * lvlH;
@@ -1511,104 +1542,185 @@ function parkingStructure({ x, z, w, d, levels = 3, color = C.parking }) {
     p.position.set(sx * (w / 2 - 2), totalH / 2, sz * (d / 2 - 2));
     g.add(p);
   }));
+  // vertical cores at each corner to break up the massing
+  const coreW = Math.max(18, w * 0.16);
+  const coreD = Math.max(18, d * 0.18);
+  const coreH = totalH + coreLift;
+  [-1, 1].forEach(sx => [-1, 1].forEach(sz => {
+    const core = box(coreW, coreH, coreD, darken(color, 0.62), 0.82);
+    core.position.set(sx * (w / 2 - coreW * 0.45), coreH / 2, sz * (d / 2 - coreD * 0.45));
+    g.add(core);
+  }));
+  // rooftop screen walls
+  [
+    { w: w - 18, d: 5, x: 0, z:  d / 2 - 6 },
+    { w: w - 18, d: 5, x: 0, z: -d / 2 + 6 },
+    { w: 5, d: d - 18, x:  w / 2 - 6, z: 0 },
+    { w: 5, d: d - 18, x: -w / 2 + 6, z: 0 },
+  ].forEach(edge => {
+    const screen = box(edge.w, 4.5, edge.d, darken(color, 0.54), 0.78);
+    screen.position.set(edge.x, totalH + 2.25, edge.z);
+    g.add(screen);
+  });
+  const entry = box(w * 0.42, 3.2, 8, darken(color, 0.55), 0.75);
+  entry.position.set(0, 1.6, d / 2 + 5);
+  g.add(entry);
   g.position.set(x, 0, z);
+  g.rotation.y = rotation;
   return g;
 }
 
-// Parking garages near terminals (east side)
-scene.add(parkingStructure({ x: 570, z: -65, w: 80, d: 100, levels: 4 }));
-scene.add(parkingStructure({ x: 570, z: 70,  w: 80, d: 100, levels: 4 }));
-scene.add(parkingStructure({ x: 700, z: -65, w: 80, d: 100, levels: 4, color: darken(C.parking, 1.05) }));
-scene.add(parkingStructure({ x: 700, z: 70,  w: 80, d: 100, levels: 4 }));
+const OSM_GRID_ORIGIN = { lat: 33.9435, lon: -118.4040 };
+const OSM_METERS_PER_DEG_LAT = 111320;
+const OSM_METERS_PER_DEG_LON = 111320 * Math.cos(THREE.MathUtils.degToRad(OSM_GRID_ORIGIN.lat));
 
-// Rental car & far east structures
-for (let i = 0; i < 6; i++) {
-  for (let j = 0; j < 2; j++) {
-    scene.add(building({
-      x: 1150 + i * 110, z: -260 + j * 450,
-      w: 80, d: 140, h: 14 + (i % 2) * 6,
-      color: j % 2 ? C.buildingA : C.buildingC,
-    }));
-  }
+function localFromLatLon(lat, lon) {
+  return new THREE.Vector3(
+    (lon - OSM_GRID_ORIGIN.lon) * OSM_METERS_PER_DEG_LON,
+    0,
+    (lat - OSM_GRID_ORIGIN.lat) * OSM_METERS_PER_DEG_LAT,
+  );
 }
-// Central terminal area admin buildings (small)
-scene.add(building({ x: -400, z: -60, w: 40, d: 40, h: 36, color: C.buildingC }));
-scene.add(building({ x: -420, z:  50, w: 30, d: 40, h: 22, color: C.buildingA }));
 
-/* Control tower — iconic LAX theme building */
+// Researched April 16, 2026:
+// - Theme Building centroid/footprint from OpenStreetMap way 37891817, checked
+//   against Structurae's 201 World Way coordinates and LAWA's 135 ft / 41 m
+//   height fact sheet.
+// - LAX Control Tower shaft centroid/height from OpenStreetMap way 534332717,
+//   with the office/base building offset from OSM way 413226266.
+const THEME_BUILDING_POS = new THREE.Vector3(148, 0, -80);
+const THEME_BUILDING_SCALE = new THREE.Vector3(1.13, 0.863, 1.134);
+
+const ATC_TOWER_POS = new THREE.Vector3(30, 0, -68);
+const ATC_TOWER_SCALE = new THREE.Vector3(0.894, 0.743, 1.0);
+const ATC_TOWER_ROTATION_Y = -THREE.MathUtils.degToRad(9.9);
+const ATC_TOWER_BASE_OFFSET = new THREE.Vector3(2, 0, -6.5);
+
+/* Theme Building — re-anchored to the central-island footprint rather than
+   the terminal row so it no longer drifts toward TBIT/T3. */
 function theme() {
   const g = new THREE.Group();
-  // base plinth
-  const plinth = box(38, 6, 38, C.buildingC, 0.8);
-  plinth.position.y = 3;
-  g.add(plinth);
-  // four radial legs meeting at top
-  const legGeom = new THREE.CylinderGeometry(2.4, 3.2, 55, 8);
-  const legMat = new THREE.MeshStandardMaterial({ color: 0xe3dcc0, roughness: 0.7 });
-  for (let i = 0; i < 4; i++) {
-    const leg = new THREE.Mesh(legGeom, legMat);
-    leg.castShadow = true;
-    leg.receiveShadow = true;
-    const angle = (i / 4) * Math.PI * 2;
-    const r = 13;
-    leg.position.set(Math.cos(angle) * r, 32, Math.sin(angle) * r);
-    leg.rotation.z = Math.cos(angle) * 0.22;
-    leg.rotation.x = Math.sin(angle) * -0.22;
-    g.add(leg);
+  const archMat = new THREE.MeshStandardMaterial({ color: 0xf1ead1, roughness: 0.5, metalness: 0.04 });
+  const deckMat = new THREE.MeshStandardMaterial({ color: 0xe3dcc5, roughness: 0.58, metalness: 0.05 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x2d343d, roughness: 0.18, metalness: 0.5 });
+
+  const podium = new THREE.Mesh(
+    new THREE.CylinderGeometry(25, 28, 5, 32),
+    new THREE.MeshStandardMaterial({ color: C.buildingC, roughness: 0.84 })
+  );
+  podium.position.y = 2.5;
+  podium.castShadow = true;
+  podium.receiveShadow = true;
+  g.add(podium);
+
+  const plaza = new THREE.Mesh(
+    new THREE.CylinderGeometry(31, 34, 3.2, 40),
+    new THREE.MeshStandardMaterial({ color: 0xc8bba1, roughness: 0.92 })
+  );
+  plaza.position.y = 4.6;
+  plaza.castShadow = true;
+  plaza.receiveShadow = true;
+  g.add(plaza);
+
+  for (let i = 0; i < 2; i++) {
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(42, 3.6, 12, 72, Math.PI), archMat);
+    arch.rotation.y = i * Math.PI / 2;
+    arch.castShadow = true;
+    arch.receiveShadow = true;
+    g.add(arch);
+
+    const innerArch = new THREE.Mesh(new THREE.TorusGeometry(37, 1.5, 8, 64, Math.PI), deckMat);
+    innerArch.rotation.y = i * Math.PI / 2;
+    innerArch.position.y = 2;
+    innerArch.castShadow = true;
+    innerArch.receiveShadow = true;
+    g.add(innerArch);
   }
-  // disc top
-  const disc = new THREE.Mesh(
-    new THREE.CylinderGeometry(22, 22, 6, 28),
-    new THREE.MeshStandardMaterial({ color: 0xf4eed8, roughness: 0.55 })
+
+  const deck = new THREE.Mesh(
+    new THREE.CylinderGeometry(27, 31, 7.5, 48),
+    deckMat
   );
-  disc.position.y = 60;
-  disc.castShadow = true;
-  g.add(disc);
-  // small dome
+  deck.position.y = 24;
+  deck.castShadow = true;
+  deck.receiveShadow = true;
+  g.add(deck);
+
+  const glassBand = new THREE.Mesh(
+    new THREE.CylinderGeometry(19, 19, 8, 40),
+    glassMat
+  );
+  glassBand.position.y = 27;
+  glassBand.castShadow = true;
+  g.add(glassBand);
+
+  const roof = new THREE.Mesh(
+    new THREE.CylinderGeometry(23, 18, 5, 40),
+    new THREE.MeshStandardMaterial({ color: 0xf4eed8, roughness: 0.45 })
+  );
+  roof.position.y = 33.5;
+  roof.castShadow = true;
+  g.add(roof);
+
   const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(10, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshStandardMaterial({ color: 0xd4cca8, roughness: 0.5 })
+    new THREE.SphereGeometry(12, 22, 14, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xd9d0b3, roughness: 0.42 })
   );
-  dome.position.y = 63;
+  dome.position.y = 35.5;
+  dome.castShadow = true;
   g.add(dome);
 
-  // label removed — too much floating clutter
-
-  // Central horseshoe courtyard — between TBIT (east face x≈-104) and the
-  // east parking structures (x≈530). Sits between terminal rows 1-3 (z=-178)
-  // and 4-8 (z=174). Matches the real LAX placement at One World Way.
-  g.position.set(120, 0, -10);
+  g.scale.copy(THEME_BUILDING_SCALE);
+  g.position.copy(THEME_BUILDING_POS);
   return g;
 }
 scene.add(theme());
 
-// Control tower
+/* 1995 LAX ATC tower — moved back onto the central axis west of the Theme
+   Building so it reads as its own landmark instead of clipping into T6. */
 function controlTower() {
   const g = new THREE.Group();
-  const shaft = new THREE.Mesh(
-    new THREE.CylinderGeometry(5, 7, 88, 12),
-    new THREE.MeshStandardMaterial({ color: 0xe8e1c6, roughness: 0.75 })
-  );
-  shaft.position.y = 44;
+  const concrete = new THREE.MeshStandardMaterial({ color: 0xe6dec8, roughness: 0.76 });
+  const darkGlass = new THREE.MeshStandardMaterial({ color: 0x262d34, roughness: 0.16, metalness: 0.55 });
+  const trim = new THREE.MeshStandardMaterial({ color: 0xcfc4a8, roughness: 0.56 });
+
+  const base = box(34, 10, 26, C.buildingC, 0.86);
+  base.position.set(ATC_TOWER_BASE_OFFSET.x, 5, ATC_TOWER_BASE_OFFSET.z);
+  g.add(base);
+
+  const annex = box(18, 7, 14, 0xd8ceb7, 0.82);
+  annex.position.set(-19 + ATC_TOWER_BASE_OFFSET.x, 3.5, ATC_TOWER_BASE_OFFSET.z);
+  g.add(annex);
+
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 7.4, 78, 10), concrete);
+  shaft.position.y = 49;
   shaft.castShadow = true;
+  shaft.receiveShadow = true;
   g.add(shaft);
-  const cab = new THREE.Mesh(
-    new THREE.CylinderGeometry(11, 11, 12, 16),
-    new THREE.MeshStandardMaterial({ color: 0x242420, roughness: 0.5, metalness: 0.3 })
-  );
-  cab.position.y = 92;
+
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(9.8, 11.2, 6, 10), trim);
+  collar.position.y = 84;
+  collar.castShadow = true;
+  g.add(collar);
+
+  const cab = new THREE.Mesh(new THREE.CylinderGeometry(13.2, 11.6, 12, 10), darkGlass);
+  cab.position.y = 92.5;
   cab.castShadow = true;
   g.add(cab);
-  const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(11, 6, 16),
-    new THREE.MeshStandardMaterial({ color: 0xc9432f, roughness: 0.6 })
-  );
-  roof.position.y = 101;
+
+  const roof = new THREE.Mesh(new THREE.CylinderGeometry(9.2, 12.6, 5, 10), trim);
+  roof.position.y = 100.5;
+  roof.castShadow = true;
   g.add(roof);
 
-  // label removed — too much floating clutter
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 12, 6), darkGlass);
+  mast.position.y = 109.5;
+  mast.castShadow = true;
+  g.add(mast);
 
-  g.position.set(450, 0, 0);
+  g.scale.copy(ATC_TOWER_SCALE);
+  g.position.copy(ATC_TOWER_POS);
+  g.rotation.y = ATC_TOWER_ROTATION_Y;
   return g;
 }
 scene.add(controlTower());
@@ -1621,6 +1733,13 @@ scene.add(controlTower());
 const detail = new THREE.Group();
 scene.add(detail);
 
+const infrastructureDetail = new THREE.Group();
+const coastalDetail = new THREE.Group();
+const landsideDetail = new THREE.Group();
+const airsideDetail = new THREE.Group();
+const lightingDetail = new THREE.Group();
+detail.add(infrastructureDetail, coastalDetail, landsideDetail, airsideDetail, lightingDetail);
+
 const ROAD_DARK = 0x2c2a26;
 const ROAD_LIGHT = 0x3b3935;
 const ROAD_FREEWAY = 0x252320;
@@ -1631,206 +1750,386 @@ const DISTRICT_B = 0x9e8d6b;
 const DISTRICT_C = 0xb5a27c;
 const DISTRICT_D = 0x847962;
 
-/* ── Road strip — surface arterials and freeways ──
-   elev = height off ground. Default 1.5 sits above the field (y=1.0).
-   World Way arms need elev ≥ 2.4 to clear the dark apron (y=2.0).
-   median = solid white center bar (for freeways)
-   lanes  = per-side divider dashes when ≥ 4
-*/
-function roadStrip({
-  x, z, len, width, rot = 0,
-  color = ROAD_DARK,
-  dashes = true,
-  dashColor = 0xd6c04a,
-  elev = 1.5,
-  median = false,
-  lanes = 2,
-  shoulders = true,
-}) {
+function seededValue(a, b, c = 0) {
+  const s = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453123;
+  return s - Math.floor(s);
+}
+
+function flatPad(points, color, y = 0.6, roughness = 0.98) {
+  const shape = new THREE.Shape();
+  shape.moveTo(points[0][0], -points[0][1]);
+  for (let i = 1; i < points.length; i++) shape.lineTo(points[i][0], -points[i][1]);
+  shape.closePath();
+  const geom = new THREE.ShapeGeometry(shape);
+  geom.rotateX(-Math.PI / 2);
+  const mesh = new THREE.Mesh(
+    geom,
+    new THREE.MeshStandardMaterial({ color, roughness, side: THREE.DoubleSide }),
+  );
+  mesh.position.y = y;
+  mesh.receiveShadow = true;
+  mesh.castShadow = false;
+  return mesh;
+}
+
+function litBox(w, h, d, color, emissiveColor = color, intensity = 0.9) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.34,
+      metalness: 0.14,
+      emissive: emissiveColor,
+      emissiveIntensity: intensity,
+    }),
+  );
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function curveFromFlatPoints(flat) {
+  const pts = [];
+  for (let i = 0; i < flat.length; i += 2) pts.push(new THREE.Vector3(flat[i], 0, flat[i + 1]));
+  return new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+}
+
+function roadRibbon(flatPts, outerWidth, innerWidth, y = 1.15) {
   const g = new THREE.Group();
-  const body = box(len, 0.4, width, color, 0.95);
-  body.position.y = elev;
-  body.castShadow = false;
-  body.receiveShadow = true;
+  g.add(polyStrip(flatPts, outerWidth, 1.6, ROAD_DARK, y));
+  g.add(polyStrip(flatPts, innerWidth, 0.85, ROAD_LIGHT, y + 0.45));
+  return g;
+}
+
+function planterBed(w, d, baseColor = 0x80705b, shrubColor = 0x645b46) {
+  const g = new THREE.Group();
+  const bed = box(w, 2.1, d, baseColor, 0.95);
+  bed.position.y = 1.05;
+  bed.castShadow = false;
+  g.add(bed);
+  const count = Math.max(2, Math.floor(w / 26));
+  for (let i = 0; i < count; i++) {
+    const t = count === 1 ? 0.5 : i / (count - 1);
+    const shrub = box(10 + (i % 2) * 5, 6 + ((i + 1) % 2) * 2, d * 0.44, shrubColor, 0.9);
+    shrub.position.set(-w / 2 + 12 + t * (w - 24), 4.6, 0);
+    shrub.castShadow = false;
+    g.add(shrub);
+  }
+  return g;
+}
+
+function makeLowPolyCar({ bodyColor = 0xaf5231, roofColor = 0xe7dcc6, scale = 1 }) {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.52 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: roofColor, roughness: 0.44 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x202834, roughness: 0.18, metalness: 0.62 });
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x141312, roughness: 0.94 });
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(14, 3.2, 6.4), bodyMat);
+  body.position.y = 2.3;
+  body.castShadow = true;
   g.add(body);
 
-  if (shoulders) {
-    const kerbY = elev + 0.22;
-    const kerbTop = box(len, 0.12, 0.9, 0xe8dfc0, 0.7);
-    kerbTop.position.set(0, kerbY, width/2 - 0.45);
-    kerbTop.castShadow = false;
-    g.add(kerbTop);
-    const kerbBot = box(len, 0.12, 0.9, 0xe8dfc0, 0.7);
-    kerbBot.position.set(0, kerbY, -width/2 + 0.45);
-    kerbBot.castShadow = false;
-    g.add(kerbBot);
-  }
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(7, 2.2, 5.4), roofMat);
+  cabin.position.set(1.2, 4.55, 0);
+  cabin.castShadow = true;
+  g.add(cabin);
 
-  if (median) {
-    // concrete divider down the middle
-    const med = box(len, 0.8, 3, 0xe8dfc0, 0.55);
-    med.position.set(0, elev + 0.4, 0);
-    med.castShadow = false;
-    g.add(med);
-    // per-side lane dividers
-    if (lanes >= 4) {
-      const halfLanes = Math.floor(lanes / 2);
-      const usable = (width - 3) / 2;                // each side's paved width
-      for (const side of [-1, 1]) {
-        const sideMid = side * (1.5 + usable / 2);   // center of this carriageway
-        for (let l = 1; l < halfLanes; l++) {
-          const lanePos = sideMid + (l / halfLanes - 0.5) * usable;
-          const dashCount = Math.floor(len / 32);
-          for (let j = 0; j < dashCount; j++) {
-            if (j % 2 === 0) continue;
-            const d = box(14, 0.1, 0.35, 0xd4c88e, 0.5);
-            d.position.set(-len/2 + (j + 0.5) * (len / dashCount), elev + 0.24, lanePos);
-            d.castShadow = false;
-            g.add(d);
-          }
-        }
-      }
-    }
-  } else if (dashes) {
-    const count = Math.max(6, Math.floor(len / 55));
-    const span = len / count;
-    for (let i = 0; i < count; i++) {
-      if (i % 2 === 0) continue;
-      const d = box(span * 0.55, 0.12, 0.55, dashColor, 0.6);
-      d.position.set(-len/2 + span * (i + 0.5), elev + 0.24, 0);
-      d.castShadow = false;
-      g.add(d);
-    }
-  }
-  // multi-lane surface roads (no freeway median) — add subtle lane dashes
-  if (!median && lanes >= 4) {
-    const halfLanes = Math.floor(lanes / 2);
-    for (const side of [-1, 1]) {
-      const sideHalf = (width / 2) * 0.88;
-      for (let l = 1; l < halfLanes; l++) {
-        const lanePos = side * (l / halfLanes) * sideHalf;
-        const dashCount = Math.floor(len / 38);
-        for (let j = 0; j < dashCount; j++) {
-          if (j % 2 === 0) continue;
-          const d = box(11, 0.1, 0.3, 0xbfae7a, 0.45);
-          d.position.set(-len/2 + (j + 0.5) * (len / dashCount), elev + 0.24, lanePos);
-          d.castShadow = false;
-          g.add(d);
-        }
-      }
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(5.9, 1.5, 5.05), glassMat);
+  glass.position.set(1.35, 4.8, 0);
+  g.add(glass);
+
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.2, 5.8), bodyMat);
+  nose.position.set(-4.8, 3.35, 0);
+  nose.castShadow = true;
+  g.add(nose);
+
+  for (const side of [-1, 1]) {
+    for (const axle of [-4.3, 4.2]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 1.1, 12), tireMat);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(axle, 1.15, side * 3.15);
+      g.add(wheel);
     }
   }
 
-  g.position.set(x, 0, z);
-  g.rotation.y = rot;
+  g.scale.setScalar(scale);
   return g;
 }
 
-/* ── Elevated overpass deck with support pylons (for interchanges) ── */
-function overpass({
-  x, z, len, width, rot = 0,
-  deckY = 22,
-  color = ROAD_DARK,
-  supports = 3,
-  rails = true,
-  rampLen = 90,
-}) {
+function flattenPointPairs(pairs) {
+  return pairs.flatMap(([x, z]) => [x, z]);
+}
+
+function flatToPointPairs(flatPts) {
+  const pts = [];
+  for (let i = 0; i < flatPts.length; i += 2) pts.push([flatPts[i], flatPts[i + 1]]);
+  return pts;
+}
+
+function pointPairsToFlat(pts) {
+  return pts.flatMap(([x, z]) => [x, z]);
+}
+
+function centroid2D(pts) {
+  let x = 0;
+  let z = 0;
+  for (const p of pts) {
+    x += p[0];
+    z += p[1];
+  }
+  return [x / pts.length, z / pts.length];
+}
+
+function pointInPolygon2D(point, poly) {
+  const [x, z] = point;
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, zi] = poly[i];
+    const [xj, zj] = poly[j];
+    const intersects =
+      ((zi > z) !== (zj > z)) &&
+      (x < ((xj - xi) * (z - zi)) / ((zj - zi) || 1e-9) + xi);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function nearestPointOnSegment2D(point, a, b) {
+  const dx = b[0] - a[0];
+  const dz = b[1] - a[1];
+  const len2 = dx * dx + dz * dz;
+  let t = 0;
+  if (len2 > 0) t = ((point[0] - a[0]) * dx + (point[1] - a[1]) * dz) / len2;
+  t = THREE.MathUtils.clamp(t, 0, 1);
+  return [a[0] + dx * t, a[1] + dz * t];
+}
+
+function nearestPointOnPolygon2D(point, poly) {
+  let bestPoint = poly[0];
+  let bestDist = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const candidate = nearestPointOnSegment2D(point, poly[i], poly[(i + 1) % poly.length]);
+    const dist = Math.hypot(point[0] - candidate[0], point[1] - candidate[1]);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestPoint = candidate;
+    }
+  }
+  return { point: bestPoint, dist: bestDist };
+}
+
+function densifyPointPairs(pts, step = 8) {
+  const dense = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const segments = Math.max(1, Math.ceil(len / step));
+    for (let j = 0; j < segments; j++) {
+      const t = j / segments;
+      dense.push([
+        THREE.MathUtils.lerp(a[0], b[0], t),
+        THREE.MathUtils.lerp(a[1], b[1], t),
+      ]);
+    }
+  }
+  dense.push(pts[pts.length - 1]);
+  return dense;
+}
+
+function smoothPointPairs(pts, passes = 1) {
+  let smoothed = pts.map(p => p.slice());
+  for (let pass = 0; pass < passes; pass++) {
+    smoothed = smoothed.map((p, i) => {
+      if (i === 0 || i === smoothed.length - 1) return p.slice();
+      return [
+        smoothed[i - 1][0] * 0.25 + p[0] * 0.5 + smoothed[i + 1][0] * 0.25,
+        smoothed[i - 1][1] * 0.25 + p[1] * 0.5 + smoothed[i + 1][1] * 0.25,
+      ];
+    });
+  }
+  return smoothed;
+}
+
+function flatPathLength(flatPts) {
+  let total = 0;
+  for (let i = 0; i < flatPts.length - 2; i += 2) {
+    total += Math.hypot(flatPts[i + 2] - flatPts[i], flatPts[i + 3] - flatPts[i + 1]);
+  }
+  return total;
+}
+
+function longestFlatPath(paths) {
+  if (!paths.length) return null;
+  return paths.reduce((best, path) => (
+    !best || flatPathLength(path) > flatPathLength(best) ? path : best
+  ), null);
+}
+
+function terminalRoadSurface(flatPts, { outerWidth, innerWidth, y, edgeWidth = 2.2, stripeWidth = 0 }) {
   const g = new THREE.Group();
+  g.add(polyStrip(flatPts, outerWidth + edgeWidth, 0.28, 0x171512, y - 0.16));
+  g.add(roadRibbon(flatPts, outerWidth, innerWidth, y));
+  if (stripeWidth > 0) {
+    g.add(polyStrip(flatPts, stripeWidth, 0.08, 0x9f9685, y + 0.82));
+  }
+  return g;
+}
+const TERMINAL_LOOP_TRAFFIC = {
+  worldWay: flattenPointPairs([
+    [622, 74.6], [613.4, 66.1], [606.3, 58.8], [597.4, 48.9], [592.7, 44], [582, 33.5],
+    [575.1, 27.4], [568.6, 22.2], [557.6, 15.1], [547.6, 9.5], [541.3, 6.7], [534.2, 4.3],
+    [524.1, 1.7], [517, 0.7], [483.6, -3.8], [477.1, -4.5], [436, -9.7], [406.6, -13.3],
+    [401.4, -13.9], [397, -14.4], [317.9, -24], [310, -25], [282.9, -28.6], [254.4, -32],
+    [231.1, -35], [226, -35.6], [206.2, -38], [122.3, -48.4], [101.8, -51.2], [94.7, -52.1],
+    [-6.6, -67.3], [-11, -68], [-39.1, -71.1], [-92.2, -77.7], [-96.2, -78.2], [-122.8, -81.6],
+    [-127.1, -82.2], [-173.3, -88.3], [-214.3, -93.3], [-218.4, -93.8], [-232.3, -95.6],
+    [-251.8, -98], [-293.7, -103.4], [-296.9, -103.7], [-310.9, -105.5], [-329.8, -104.1],
+    [-340.5, -100.2], [-348.9, -93.8], [-354.2, -85.8], [-357.2, -77.3], [-361.8, -37.7],
+    [-366.5, 2.8], [-366.8, 5.6], [-367.6, 11.7], [-369.2, 25.5], [-371, 41.3], [-373.2, 60],
+    [-376.7, 90.1], [-376.8, 97.6], [-375.6, 105.5], [-372.8, 112.9], [-368, 119.7],
+    [-360.7, 125], [-351.8, 128.4], [-324.6, 131.6], [-319, 132.3], [-302.4, 134.4],
+    [-301.2, 134.5], [-269.1, 138.5], [-228.1, 143.7], [-223.2, 144.3], [-209.4, 146],
+    [-194.1, 147.9], [-152.8, 153.1], [-92.3, 160.3], [-86.3, 161], [-73.8, 162.4],
+    [-69.4, 162.9], [-26.9, 167.6], [39.6, 175], [62.9, 177.6], [69.2, 178.3], [100.1, 181.7],
+    [150.9, 187.3], [206.2, 193.5], [211.8, 194.1], [244.7, 197.7], [266, 199.5], [282.3, 200.7],
+    [287.2, 201.1], [301.1, 201.6], [317.4, 202.1], [340.5, 202.5], [359.4, 202.5], [414.1, 202],
+    [425.2, 202.1], [468.5, 202.2], [479.5, 202.4], [523.1, 202.2], [547, 201.7], [558.6, 201],
+    [569.3, 199.6], [581, 196.9], [591.6, 193.3], [636.8, 168.6], [668.6, 150.5], [689.4, 140.2],
+  ]),
+  centerWay: flattenPointPairs([
+    [-165.3, 26.3], [-156.3, 27.8], [-152.1, 28.5], [-143.4, 29.8], [-134.3, 31.6], [-125.5, 33.8],
+    [-117.1, 36.9], [-107.2, 34.2], [-101.7, 31.6], [-97.4, 28.2], [-92, 23.2], [-87.3, 20.1],
+    [-82.5, 18], [-77.1, 16.7], [-73.1, 16.4], [-68.3, 16.6], [-66, 16.8], [-63.5, 17.1],
+    [-52.1, 18.4], [-21, 22.2], [4.5, 25.6], [9.5, 26.6], [18, 29.2], [22.5, 30.1], [52.9, 34],
+    [73.4, 36.6], [77, 37], [79.8, 37.4], [82.7, 37.5], [86.9, 36.4], [91, 34.3], [95, 31.8],
+    [99.2, 28.7], [105.4, 24.3], [112.6, 19.8], [120.9, 16.3], [129.2, 14.1], [137, 13],
+    [144.9, 13.2], [153.6, 14.7], [160.6, 17.6], [167.4, 20.9], [173.3, 24.5], [177.8, 28.2],
+    [183, 33.6], [186.7, 38.3], [188.5, 40.7], [193.3, 47.7], [197, 53.3], [201.9, 59.7],
+    [204.8, 63.2], [209.5, 68.5], [214.5, 73.6], [225.8, 85.7], [219.1, 88.4], [212.4, 91.9],
+    [196.6, 101.2], [193.1, 103.8], [188.6, 108], [183.9, 112.6], [178, 117.8], [172, 122.6],
+    [166, 126.1], [157.7, 129.5], [147.8, 132.4], [137.2, 133.3], [127.8, 132.5], [118.6, 130.3],
+    [111.6, 127.7], [105.2, 123.3], [100.1, 119.2], [95.9, 114.7], [90.1, 108.7], [87.7, 106.4],
+    [85.2, 104.1], [79.9, 100.5], [75.2, 98.7], [72, 98.1], [67.4, 97.5], [0.6, 89.2], [-25.8, 86],
+    [-29.4, 85.5], [-33, 85.1], [-36.8, 84.4], [-40.4, 83.9], [-43.9, 83], [-47.2, 82],
+    [-50.2, 80.9], [-53.9, 79.5], [-57.3, 78], [-59.7, 76.7], [-60.5, 76.3], [-63.6, 74.5],
+    [-66.7, 72.7], [-69.7, 70.5], [-72.7, 68.4], [-75.6, 66.2], [-78.6, 64], [-81.5, 61.8],
+    [-84.5, 59.7], [-89.4, 56.4], [-94.6, 53.5], [-99, 51.6], [-106.1, 49.5], [-114.1, 47.5],
+    [-123.7, 45.8], [-133.1, 44.6], [-153.8, 42], [-158.3, 41.6], [-167.2, 40.6],
+  ]),
+  westWay: flattenPointPairs([
+    [-173.3, -88.3], [-158.9, -72.3], [-155.5, -63.7], [-164.4, 18.3], [-164.6, 20.5], [-165.3, 26.3],
+    [-167.2, 40.6], [-168.3, 47.9], [-180.8, 133.9], [-182.1, 136.9], [-194.1, 147.9],
+  ]),
+  eastWay: flattenPointPairs([
+    [254.4, -32], [249.6, -30.7], [246.3, -28.9], [243.7, -26.7], [240.5, -22], [239, -18.6],
+    [238.3, -16.1], [238.1, -15.2], [237, -3.3], [227.6, 70], [225.8, 85.7], [224.4, 97.1],
+    [215.2, 173.2], [215.3, 176.4], [215.9, 179.2], [217.1, 182.1], [219.8, 185.3], [222.5, 187.1],
+    [225.9, 189.2], [233.7, 193.1], [244.7, 197.7],
+  ]),
+  themeWay: flattenPointPairs([
+    [83, -37], [82, -41], [82, -45], [81, -48], [79, -64], [77, -85], [76, -89], [76, -93], [75, -98],
+  ]),
+  postWay: flattenPointPairs([
+    [655, -6], [654, -1], [655, 3], [657, 11], [659, 24], [659, 27], [666, 69], [685, 169],
+    [690, 201], [693, 234], [691, 246],
+  ]),
+};
 
-  // deck
-  const deck = box(len, 1.8, width, color, 0.9);
-  deck.position.y = deckY;
-  deck.castShadow = true;
-  deck.receiveShadow = true;
-  g.add(deck);
+const TERMINAL_LOOP_OBSTACLES = window.OSM_TERM
+  .filter(term => ['1', '2', '3', '4', '5', '6', '7', '8', 'B'].includes(term.r))
+  .map(term => {
+    const poly = flatToPointPairs(term.p);
+    return { poly, centroid: centroid2D(poly) };
+  });
 
-  if (rails) {
-    for (const side of [-1, 1]) {
-      const rail = box(len, 3.2, 1.2, 0xd8ccaa, 0.7);
-      rail.position.set(0, deckY + 2.4, side * (width/2 - 0.6));
-      rail.castShadow = false;
-      g.add(rail);
+function pointBlockedByTerminal(point, pad = 0) {
+  for (const obstacle of TERMINAL_LOOP_OBSTACLES) {
+    if (pointInPolygon2D(point, obstacle.poly)) return true;
+    if (pad > 0 && nearestPointOnPolygon2D(point, obstacle.poly).dist < pad) return true;
+  }
+  return false;
+}
+
+function clipVisibleFlatPath(flatPts, { bounds = null, pad = 10, minLength = 18, step = 8 } = {}) {
+  const dense = densifyPointPairs(flatToPointPairs(flatPts), step);
+  const segments = [];
+  let current = [];
+
+  const insideBounds = point => (
+    !bounds ||
+    (
+      point[0] >= bounds.minX &&
+      point[0] <= bounds.maxX &&
+      point[1] >= bounds.minZ &&
+      point[1] <= bounds.maxZ
+    )
+  );
+
+  for (const point of dense) {
+    const keep = insideBounds(point) && !pointBlockedByTerminal(point, pad);
+    if (keep) {
+      current.push(point);
+    } else if (current.length > 1) {
+      segments.push(pointPairsToFlat(current));
+      current = [];
+    } else {
+      current = [];
     }
   }
+  if (current.length > 1) segments.push(pointPairsToFlat(current));
 
-  // median
-  const med = box(len, 0.5, 2, 0xe8dfc0, 0.6);
-  med.position.set(0, deckY + 1.15, 0);
-  med.castShadow = false;
-  g.add(med);
+  return segments.filter(path => flatPathLength(path) >= minLength);
+}
 
-  // lane dashes on deck
-  const lanePositions = [-width/4, width/4];
-  for (const lp of lanePositions) {
-    const dashCount = Math.floor(len / 24);
-    for (let j = 0; j < dashCount; j++) {
-      if (j % 2 === 0) continue;
-      const d = box(10, 0.08, 0.3, 0xd4c88e, 0.5);
-      d.position.set(-len/2 + (j + 0.5) * (len/dashCount), deckY + 1.0, lp);
-      d.castShadow = false;
-      g.add(d);
-    }
-  }
+function deconflictedFlatPath(flatPts, {
+  clearance = 18,
+  bounds = null,
+  step = 10,
+  pushRounds = 5,
+  finalSmoothPasses = 6,
+} = {}) {
+  const nudgePoint = point => {
+    let shifted = point.slice();
+    for (const obstacle of TERMINAL_LOOP_OBSTACLES) {
+      const inside = pointInPolygon2D(shifted, obstacle.poly);
+      const near = nearestPointOnPolygon2D(shifted, obstacle.poly);
+      if (!inside && near.dist >= clearance) continue;
 
-  // concrete support pylons
-  for (let i = 0; i < supports; i++) {
-    const t = (i + 0.5) / supports;
-    const sx = -len/2 + t * len;
-    const pillar = box(6, deckY, width * 0.55, 0x54504a, 0.75);
-    pillar.position.set(sx, deckY/2, 0);
-    pillar.castShadow = true;
-    g.add(pillar);
-    const cap = box(10, 1.5, width * 0.75, 0x6b6559, 0.7);
-    cap.position.set(sx, deckY - 1.2, 0);
-    cap.castShadow = true;
-    g.add(cap);
-  }
+      let dir = inside
+        ? [shifted[0] - obstacle.centroid[0], shifted[1] - obstacle.centroid[1]]
+        : [shifted[0] - near.point[0], shifted[1] - near.point[1]];
 
-  // approach ramps each end (sloped wedges)
-  for (const end of [-1, 1]) {
-    const rampGeom = new THREE.BoxGeometry(rampLen, 1.6, width);
-    const rampMat = new THREE.MeshStandardMaterial({ color, roughness: 0.92 });
-    const ramp = new THREE.Mesh(rampGeom, rampMat);
-    ramp.castShadow = true;
-    ramp.receiveShadow = true;
-    ramp.position.set(end * (len/2 + rampLen/2), deckY/2, 0);
-    ramp.rotation.z = end * Math.atan2(deckY, rampLen);
-    g.add(ramp);
-    // ramp rails
-    if (rails) {
-      for (const side of [-1, 1]) {
-        const rr = box(rampLen, 2, 0.9, 0xd8ccaa, 0.7);
-        rr.position.set(end * (len/2 + rampLen/2), deckY/2 + 2.2, side * (width/2 - 0.5));
-        rr.rotation.z = end * Math.atan2(deckY, rampLen);
-        rr.castShadow = false;
-        g.add(rr);
+      let mag = Math.hypot(dir[0], dir[1]);
+      if (mag < 0.001) {
+        dir = [0, inside ? -1 : 1];
+        mag = 1;
       }
+      dir = [dir[0] / mag, dir[1] / mag];
+      const shift = inside ? clearance + 4 : clearance - near.dist;
+      shifted = [shifted[0] + dir[0] * shift, shifted[1] + dir[1] * shift];
     }
+
+    if (bounds) {
+      shifted[0] = THREE.MathUtils.clamp(shifted[0], bounds.minX, bounds.maxX);
+      shifted[1] = THREE.MathUtils.clamp(shifted[1], bounds.minZ, bounds.maxZ);
+    }
+    return shifted;
+  };
+
+  let pts = densifyPointPairs(flatToPointPairs(flatPts), step);
+
+  for (let round = 0; round < pushRounds; round++) {
+    pts = pts.map(nudgePoint);
+    pts = smoothPointPairs(pts, 2);
   }
 
-  g.position.set(x, 0, z);
-  g.rotation.y = rot;
-  return g;
+  pts = smoothPointPairs(pts, finalSmoothPasses).map(nudgePoint).map(nudgePoint);
+  return pointPairsToFlat(pts);
 }
 
-/* ── Freeway on-ramp / off-ramp curve (simple elevated arc slice) ── */
-function rampArc({ x, z, radius = 180, startAngle = 0, endAngle = Math.PI/2, width = 18, elev = 8, color = ROAD_LIGHT, segs = 18 }) {
-  const g = new THREE.Group();
-  const steps = segs;
-  for (let i = 0; i < steps; i++) {
-    const a0 = startAngle + (endAngle - startAngle) * (i / steps);
-    const a1 = startAngle + (endAngle - startAngle) * ((i + 1) / steps);
-    const mid = (a0 + a1) / 2;
-    const seg = box(((a1 - a0) * radius) + 0.8, 0.8, width, color, 0.88);
-    seg.position.set(Math.cos(mid) * radius, elev, Math.sin(mid) * radius);
-    seg.rotation.y = -mid;
-    seg.castShadow = true;
-    seg.receiveShadow = true;
-    g.add(seg);
-  }
-  g.position.set(x, 0, z);
-  return g;
-}
+
 
 /* ── Perimeter fence: posts + rail ── */
 function fenceSegment(x1, z1, x2, z2) {
@@ -1873,13 +2172,13 @@ function fenceSegment(x1, z1, x2, z2) {
 
 // Follow the airport field shape (matches line 977-986 vertices).
 const fenceVerts = [
-  [-2650, -820], [-2550, -1020], [2550, -1020], [2650, -820],
-  [2650, 820],   [2550, 1020],   [-2550, 1020], [-2650, 820],
+  [-2900, -800], [-2800, -1100], [2400, -1100], [2500, -800],
+  [2500, 1000],  [2400, 1300],   [-2800, 1300], [-2900, 1000],
 ];
 for (let i = 0; i < fenceVerts.length; i++) {
   const a = fenceVerts[i];
   const b = fenceVerts[(i + 1) % fenceVerts.length];
-  detail.add(fenceSegment(a[0], a[1], b[0], b[1]));
+  infrastructureDetail.add(fenceSegment(a[0], a[1], b[0], b[1]));
 }
 
 /* ── Gates in the fence (at Sepulveda & Century access) ── */
@@ -1900,66 +2199,10 @@ function fenceGate(x, z, rot = 0) {
   g.rotation.y = rot;
   return g;
 }
-detail.add(fenceGate(2650, 0, Math.PI/2));       // east gate (Sepulveda side)
-detail.add(fenceGate(-1800, -1020, 0));          // north service gate
-detail.add(fenceGate(0, 1020, 0));               // south service gate
+infrastructureDetail.add(fenceGate(2500, 0, Math.PI/2));       // east gate (Sepulveda side)
+infrastructureDetail.add(fenceGate(-1800, -1100, 0));          // north service gate
+infrastructureDetail.add(fenceGate(0, 1300, 0));               // south service gate
 
-/* ═══════════════════════════════════════════════
-   SURROUNDING HIGHWAY NETWORK — layered, proper lane
-   striping and medians. All at elev 1.5 unless noted.
-   ═══════════════════════════════════════════════ */
-
-/* CENTURY BLVD — main N arterial, split so I-405 overpass sits between.
-   West part stops at x≈3560, east part resumes at x≈3840 (I-405 runs 3640–3760). */
-detail.add(roadStrip({ x:  830, z: -1200, len: 5460, width: 52, elev: 1.5, lanes: 4, color: ROAD_DARK }));
-detail.add(roadStrip({ x: 4200, z: -1200, len:  720, width: 52, elev: 1.5, lanes: 4, color: ROAD_DARK }));
-
-/* IMPERIAL HWY / CA-90 — S arterial */
-detail.add(roadStrip({ x: 400, z: 1200, len: 5400, width: 46, elev: 1.5, lanes: 4, color: ROAD_DARK }));
-
-/* SEPULVEDA BLVD / CA-1 — N-S on east side, broken for Century overpass (z -1200) */
-detail.add(roadStrip({ x: 2750, z: -700, len: 1280, width: 46, rot: Math.PI/2, elev: 1.5, lanes: 4, color: ROAD_DARK }));
-detail.add(roadStrip({ x: 2750, z:  700, len: 1280, width: 46, rot: Math.PI/2, elev: 1.5, lanes: 4, color: ROAD_DARK }));
-
-/* I-405 SAN DIEGO FREEWAY — 8-lane divided, far east, broken for Century overpass */
-detail.add(roadStrip({ x: 3700, z: -1650, len:  540, width: 130, rot: Math.PI/2,
-  elev: 1.5, median: true, lanes: 8, color: ROAD_FREEWAY, dashColor: 0xf0d06a }));
-detail.add(roadStrip({ x: 3700, z:   150, len: 2700, width: 130, rot: Math.PI/2,
-  elev: 1.5, median: true, lanes: 8, color: ROAD_FREEWAY, dashColor: 0xf0d06a }));
-
-/* I-105 CENTURY FREEWAY — E-W, terminates at east side of LAX (6-lane divided) */
-detail.add(roadStrip({ x: 3400, z: 900, len: 2600, width: 110,
-  elev: 1.5, median: true, lanes: 6, color: ROAD_FREEWAY, dashColor: 0xf0d06a }));
-
-/* Aviation Blvd — N-S between the airport fence and I-405 */
-detail.add(roadStrip({ x: 3200, z: 0, len: 3000, width: 34, rot: Math.PI/2, elev: 1.5, lanes: 2, color: ROAD_LIGHT }));
-
-/* Lincoln Blvd — NW of airport, short segment */
-detail.add(roadStrip({ x: -2800, z: -1400, len: 1400, width: 34, rot: Math.PI/2, elev: 1.5, lanes: 2, color: ROAD_DARK }));
-
-/* ── World Way — terminal drop-off horseshoe (INSIDE apron, y must clear 2.0) ── */
-// North arm between T1-3 and Theme Building
-detail.add(roadStrip({ x: 100, z: -140, len: 540, width: 18, dashes: false, elev: 2.6, color: ROAD_LIGHT }));
-// South arm between T4-8 and Theme Building
-detail.add(roadStrip({ x: 100, z:  140, len: 540, width: 18, dashes: false, elev: 2.6, color: ROAD_LIGHT }));
-// East turn-around connector
-detail.add(roadStrip({ x: 370, z: 0, len: 300, width: 18, rot: Math.PI/2, dashes: false, elev: 2.6, color: ROAD_LIGHT }));
-// Approach spur from Sepulveda entering the horseshoe
-detail.add(roadStrip({ x: 1250, z: 0, len: 1760, width: 30, dashes: true, elev: 1.5, lanes: 4, color: ROAD_LIGHT }));
-
-/* ═══════════════════════════════════════════════
-   INTERCHANGES (layered overpasses + ramps)
-   ═══════════════════════════════════════════════ */
-
-/* Century Blvd OVER I-405 (Century is the elevated deck) */
-detail.add(overpass({ x: 3700, z: -1200, len: 280, width: 54, rot: 0, deckY: 22, supports: 3, rampLen: 110 }));
-
-/* Century Blvd OVER Sepulveda Blvd (smaller overpass) */
-detail.add(overpass({ x: 2750, z: -1200, len: 160, width: 54, rot: 0, deckY: 14, supports: 2, rampLen: 70 }));
-
-/* I-105 meeting I-405 / Century — ramp arcs connecting the two freeways */
-detail.add(rampArc({ x: 3700, z: 900, radius: 220, startAngle: Math.PI, endAngle: Math.PI * 1.5, width: 22, elev: 10, color: ROAD_LIGHT }));
-detail.add(rampArc({ x: 3700, z: 900, radius: 260, startAngle: 0,        endAngle: -Math.PI/2,     width: 22, elev: 10, color: ROAD_LIGHT }));
 
 /* ═══════════════════════════════════════════════
    LAX MONUMENT SIGN — the giant "LAX" block letters
@@ -2004,67 +2247,6 @@ function laxLetter(char, x, z, opts = {}) {
   return g;
 }
 
-function laxMonument(x, z) {
-  const g = new THREE.Group();
-
-  // black granite plinth
-  const plinth = box(320, 10, 86, 0x1a1917, 0.85);
-  plinth.position.y = 5;
-  plinth.castShadow = true;
-  plinth.receiveShadow = true;
-  g.add(plinth);
-  // plinth top trim
-  const trim = box(324, 1.2, 90, 0x2b2923, 0.8);
-  trim.position.y = 10.6;
-  trim.castShadow = false;
-  g.add(trim);
-
-  // "L  A  X"
-  const spacing = 98;
-  const letterY = 10;
-  const letters = [
-    laxLetter('L', -spacing, 0),
-    laxLetter('A', 0, 0),
-    laxLetter('X',  spacing, 0),
-  ];
-  letters.forEach(lt => { lt.position.y = letterY; g.add(lt); });
-
-  // subtitle plate
-  const subplate = box(260, 0.8, 12, 0xed8e2b, 0.3);
-  const smat = subplate.material;
-  smat.emissive = new THREE.Color(0xed8e2b);
-  smat.emissiveIntensity = 0.6;
-  subplate.position.set(0, 11.2, 32);
-  subplate.castShadow = false;
-  g.add(subplate);
-
-  // uplights front-facing
-  for (let i = 0; i < 11; i++) {
-    const lt = new THREE.Mesh(
-      new THREE.BoxGeometry(5, 2.5, 5),
-      new THREE.MeshStandardMaterial({
-        color: 0xffd894,
-        emissive: 0xed8e2b,
-        emissiveIntensity: 0.75,
-        roughness: 0.4,
-      })
-    );
-    lt.position.set(-145 + i * 29, 11.7, 41);
-    g.add(lt);
-  }
-
-  // label overhead
-  const lbl = labelStack('LAX', 'LOS ANGELES INTL · MONUMENT', 'callout-label', 'poi-sub');
-  lbl.position.set(0, 132, 0);
-  g.add(lbl);
-
-  g.position.set(x, 0, z);
-  return g;
-}
-
-// Place the monument on the east median between the airport and Sepulveda,
-// near Century Blvd — the real-world position of the LAX Pylon monument.
-detail.add(laxMonument(2620, -1160));
 
 /* ═══════════════════════════════════════════════
    CIVILIAN-SIDE DISTRICT TILES (neighborhoods)
@@ -2081,14 +2263,14 @@ function districtTile({ x, z, w, d, color, title, sub, size = 'large' }) {
   const rows = Math.max(2, Math.floor(d / 120));
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
-      if (Math.random() < 0.35) continue;
-      const bw = 32 + Math.random() * 26;
-      const bd = 22 + Math.random() * 18;
-      const bh = 6 + Math.random() * 12;
-      const bx = -w/2 + (i + 0.5) * (w / cols) + (Math.random() - 0.5) * 30;
-      const bz = -d/2 + (j + 0.5) * (d / rows) + (Math.random() - 0.5) * 30;
+      if (seededValue(i + 1, j + 1, w + d) < 0.34) continue;
+      const bw = 32 + seededValue(i, j, 1) * 26;
+      const bd = 22 + seededValue(i, j, 2) * 18;
+      const bh = 6 + seededValue(i, j, 3) * 12;
+      const bx = -w / 2 + (i + 0.5) * (w / cols) + (seededValue(i, j, 4) - 0.5) * 30;
+      const bz = -d / 2 + (j + 0.5) * (d / rows) + (seededValue(i, j, 5) - 0.5) * 30;
       const b = box(bw, bh, bd, i % 2 ? 0x6e634d : 0x5a5240, 0.9);
-      b.position.set(bx, bh/2 + 1.2, bz);
+      b.position.set(bx, bh / 2 + 1.2, bz);
       b.castShadow = false;
       g.add(b);
     }
@@ -2101,278 +2283,722 @@ function districtTile({ x, z, w, d, color, title, sub, size = 'large' }) {
   return g;
 }
 
-detail.add(districtTile({
-  x: 400, z: -1650, w: 3200, d: 540, color: DISTRICT_A,
-  title: 'WESTCHESTER', sub: 'RESIDENTIAL · PLAYA VISTA',
-}));
-detail.add(districtTile({
-  x: -2050, z: -1500, w: 1100, d: 780, color: DISTRICT_B,
-  title: 'PLAYA DEL REY', sub: 'COASTAL',
-}));
-detail.add(districtTile({
-  x: 500, z: 1650, w: 4000, d: 740, color: DISTRICT_C,
-  title: 'EL SEGUNDO', sub: 'AEROSPACE · OFFICES',
-}));
-detail.add(districtTile({
-  x: 3300, z: -1650, w: 900, d: 680, color: DISTRICT_D,
-  title: 'CENTURY CORRIDOR', sub: 'HOTEL ROW', size: 'small',
-}));
-
-// Dockweiler Beach label removed — clutter
-
-/* ═══════════════════════════════════════════════
-   ROAD NAMEPLATES (floating labels along each road)
-   ═══════════════════════════════════════════════ */
-function roadLabel(text, x, z, y = 14, cls = 'road-label') {
-  const lbl = labelEl(text, cls);
-  lbl.position.set(x, y, z);
-  return lbl;
-}
-// Road labels removed — they were cluttering the view
-
-/* ═══════════════════════════════════════════════
-   FACILITY LABELS — name the unlabeled asset clusters
-   ═══════════════════════════════════════════════ */
-function facilityLabel(title, sub, x, z, y = 70) {
-  const lbl = labelStack(title, sub, 'facility-label', 'facility-sub');
-  lbl.position.set(x, y, z);
-  return lbl;
-}
-
-// Facility labels removed — too much floating clutter
-
-// Parking structures — individual P-labels
-function parkingLabel(text, x, z) {
-  const lbl = labelEl(text, 'parking-label');
-  lbl.position.set(x, 36, z);
-  return lbl;
-}
-// Parking + rental-car labels removed — clutter
-
-/* ═══════════════════════════════════════════════
-   TAXIWAY IDENTIFIERS — letter markers on existing taxi strips
-   ═══════════════════════════════════════════════ */
-function twyLabel(text, x, z) {
-  const lbl = labelEl(text, 'taxi-label');
-  lbl.position.set(x, 10, z);
-  return lbl;
-}
-// Taxiway labels removed — clutter
-
-/* ═══════════════════════════════════════════════
-   ICONIC SPOTTER LANDMARKS (tiny, authentic)
-   In-N-Out Burger (9149 S. Sepulveda) — famous LAX plane-spotting
-   ═══════════════════════════════════════════════ */
-function spotterPin(title, sub, x, z, color = 0xc9432f) {
+function playaDelReyDistrict() {
   const g = new THREE.Group();
-  const b = box(22, 10, 22, color, 0.85);
-  b.position.y = 5;
-  b.castShadow = true;
-  g.add(b);
-  const roof = box(24, 1.2, 24, 0xe8dfc0, 0.7);
-  roof.position.y = 10.6;
-  g.add(roof);
-  const lbl = labelStack(title, sub, 'callout-label', 'poi-sub');
-  lbl.position.set(0, 26, 0);
-  g.add(lbl);
+  g.add(flatPad([
+    [-3000, -2570],
+    [-2445, -2570],
+    [-2330, -2445],
+    [-2290, -2160],
+    [-2350, -1885],
+    [-2550, -1780],
+    [-2855, -1808],
+    [-3000, -1915],
+  ], DISTRICT_B, 0.68, 0.99));
+
+  const inlandRoad = box(128, 0.45, 560, ROAD_LIGHT, 0.95);
+  inlandRoad.position.set(-2435, 0.22, -2190);
+  inlandRoad.castShadow = false;
+  g.add(inlandRoad);
+
+  [
+    { x: -2840, z: -2450, w: 86, d: 58, h: 13, color: 0x6c604c },
+    { x: -2740, z: -2340, w: 76, d: 52, h: 11, color: 0x5d5443 },
+    { x: -2650, z: -2220, w: 92, d: 62, h: 14, color: 0x6b624e },
+    { x: -2775, z: -2100, w: 66, d: 48, h: 9,  color: 0x5c5544 },
+    { x: -2675, z: -1980, w: 78, d: 54, h: 12, color: 0x706653 },
+    { x: -2550, z: -2388, w: 74, d: 48, h: 10, color: 0x665b48 },
+    { x: -2475, z: -2255, w: 68, d: 44, h: 9,  color: 0x5c5443 },
+    { x: -2460, z: -2075, w: 88, d: 58, h: 12, color: 0x6d624f },
+    { x: -2890, z: -1975, w: 72, d: 46, h: 10, color: 0x635945 },
+  ].forEach(spec => {
+    const b = box(spec.w, spec.h, spec.d, spec.color, 0.9);
+    b.position.set(spec.x, spec.h / 2 + 1.2, spec.z);
+    b.castShadow = false;
+    g.add(b);
+  });
+
+  const label = labelStack('PLAYA DEL REY', 'COASTAL', 'district-label', 'district-sub');
+  label.position.set(-2640, 23, -2145);
+  g.add(label);
+  return g;
+}
+
+function laxMonument() {
+  const g = new THREE.Group();
+
+  const plinth = box(360, 8, 92, 0x675d4f, 0.94);
+  plinth.position.y = 4;
+  plinth.castShadow = false;
+  g.add(plinth);
+
+  const topDeck = box(284, 2.2, 66, 0xc0af88, 0.98);
+  topDeck.position.y = 9.1;
+  topDeck.castShadow = false;
+  g.add(topDeck);
+
+  const planterL = planterBed(88, 24, 0x7c705c, 0x625843);
+  planterL.position.set(-110, 10.2, 0);
+  g.add(planterL);
+
+  const planterR = planterBed(88, 24, 0x7c705c, 0x625843);
+  planterR.position.set(110, 10.2, 0);
+  g.add(planterR);
+
+  const letters = new THREE.Group();
+  letters.position.y = 10.2;
+  letters.add(laxLetter('L', -98, 0, { h: 102, thick: 18, spread: 62 }));
+  letters.add(laxLetter('A',   0, 0, { h: 102, thick: 18, spread: 62 }));
+  letters.add(laxLetter('X',  98, 0, { h: 102, thick: 18, spread: 62 }));
+  g.add(letters);
+
+  [
+    [-96, -24], [0, -24], [96, -24],
+    [-96,  24], [0,  24], [96,  24],
+  ].forEach(([x, z]) => {
+    const pedestal = box(6, 2.4, 6, 0x564b3c, 0.8);
+    pedestal.position.set(x, 11.4, z);
+    pedestal.castShadow = false;
+    g.add(pedestal);
+
+    const lamp = litBox(4.8, 1.2, 4.8, 0xffe8bf, 0xffc781, 1.12);
+    lamp.position.set(x, 13.3, z);
+    g.add(lamp);
+  });
+
+  g.position.set(2675, 0, -120);
+  g.rotation.y = Math.PI / 2;
+  return g;
+}
+
+function spotterCorner() {
+  const g = new THREE.Group();
+
+  const viewStrip = box(22, 0.8, 190, 0xd9cfb5, 1);
+  viewStrip.position.set(-88, 0.4, 0);
+  viewStrip.castShadow = false;
+  g.add(viewStrip);
+
+  for (let i = 0; i < 7; i++) {
+    const rail = box(1.6, 7, 1.6, 0x4e4639, 0.85);
+    rail.position.set(-94, 3.5, -72 + i * 24);
+    rail.castShadow = false;
+    g.add(rail);
+  }
+
+  const lot = box(126, 0.75, 210, ROAD_DARK, 1);
+  lot.position.set(-8, 0.38, 0);
+  lot.castShadow = false;
+  g.add(lot);
+
+  for (let i = 0; i <= 6; i++) {
+    const z = -82 + i * 27.4;
+    const westLine = box(0.35, 0.06, 20, C.white, 0.45);
+    westLine.position.set(-34, 0.79, z);
+    westLine.castShadow = false;
+    g.add(westLine);
+
+    const eastLine = box(0.35, 0.06, 20, C.white, 0.45);
+    eastLine.position.set(18, 0.79, z);
+    eastLine.castShadow = false;
+    g.add(eastLine);
+  }
+
+  const centerLine = box(0.3, 0.05, 190, 0x9d9686, 0.5);
+  centerLine.position.set(-8, 0.79, 0);
+  centerLine.castShadow = false;
+  g.add(centerLine);
+
+  const restaurant = box(68, 14, 58, 0xc94c3a, 0.72);
+  restaurant.position.set(70, 7, 0);
+  g.add(restaurant);
+
+  const restaurantRoof = box(72, 1.6, 62, 0xeadfc0, 0.55);
+  restaurantRoof.position.set(70, 14.8, 0);
+  g.add(restaurantRoof);
+
+  const canopy = box(40, 1.3, 14, 0xf4e8c8, 0.42);
+  canopy.position.set(34, 9.5, -22);
+  g.add(canopy);
+  [-1, 1].forEach(side => {
+    const post = box(1.8, 8.2, 1.8, 0xf0ead6, 0.6);
+    post.position.set(34 + side * 18, 4.1, -22);
+    g.add(post);
+  });
+
+  const viewingCurb = box(16, 0.5, 158, 0xbeb39d, 1);
+  viewingCurb.position.set(-58, 0.7, 0);
+  viewingCurb.castShadow = false;
+  g.add(viewingCurb);
+
+  [
+    { x: -33, z: -68, color: 0x9c3d2f },
+    { x: -33, z: -10, color: 0x25394f },
+    { x: -33, z:  44, color: 0xb9b0a0 },
+    { x:  18, z: -42, color: 0x7f6d57 },
+    { x:  18, z:  18, color: 0x2e4b62 },
+    { x:  18, z:  72, color: 0xa24f3f },
+  ].forEach(spec => {
+    const car = makeLowPolyCar({ bodyColor: spec.color, roofColor: 0xe9dec8, scale: 0.78 });
+    car.position.set(spec.x, 0.76, spec.z);
+    car.rotation.y = -Math.PI / 2;
+    g.add(car);
+  });
+
+  g.position.set(3060, 0, 360);
+  return g;
+}
+
+function terminalLoopRoads() {
+  const g = new THREE.Group();
+  const roadBounds = { minX: -430, maxX: 860, minZ: -260, maxZ: 170 };
+  const visiblePathsByName = {
+    'World Way': [],
+    'Center Way': [],
+    'West Way': [],
+    'East Way': [],
+  };
+  const terminalRoadNames = new Set(['World Way', 'Center Way', 'West Way', 'East Way', 'Theme Way']);
+
+  // Use the OSM road centerlines that already match the updated terminal
+  // footprints, then clip each segment with a width-aware pad so the road
+  // surfaces cannot paint through the terminal buildings.
+  const roadStyle = road => {
+    const laneCount = Math.max(1, Number(road.l) || 2);
+    const isMajorLoop = road.n === 'World Way';
+    const outerWidth = Math.min(
+      isMajorLoop ? 24 : 16,
+      (isMajorLoop ? 6.5 : 5.5) + laneCount * (isMajorLoop ? 2.4 : 1.9),
+    );
+    const innerWidth = Math.max(
+      outerWidth - (isMajorLoop ? 4.8 : 3.8),
+      outerWidth * 0.62,
+    );
+    return {
+      outerWidth,
+      innerWidth,
+      y: isMajorLoop ? 1.14 : 1.2,
+      edgeWidth: isMajorLoop ? 2.1 : 1.5,
+      stripeWidth: isMajorLoop ? Math.max(0.75, Math.min(1.1, outerWidth * 0.045)) : 0,
+      pad: outerWidth * 0.56 + 1.8,
+      minLength: isMajorLoop ? 16 : 12,
+    };
+  };
+
+  window.OSM_ROAD.forEach(road => {
+    if (!terminalRoadNames.has(road.n)) return;
+    const inBounds = road.p.some((_, i) => (
+      i % 2 === 0 &&
+      road.p[i] >= roadBounds.minX &&
+      road.p[i] <= roadBounds.maxX &&
+      road.p[i + 1] >= roadBounds.minZ &&
+      road.p[i + 1] <= roadBounds.maxZ
+    ));
+    if (!inBounds) return;
+
+    const spec = roadStyle(road);
+    const clippedPaths = clipVisibleFlatPath(road.p, {
+      bounds: roadBounds,
+      pad: spec.pad,
+      minLength: spec.minLength,
+      step: 4,
+    });
+
+    clippedPaths.forEach(path => {
+      g.add(terminalRoadSurface(path, spec));
+      if (visiblePathsByName[road.n]) visiblePathsByName[road.n].push(path);
+    });
+  });
+
+  // Keep the terminal loop static so the diagram reads cleanly from the top view.
+
+  return g;
+}
+
+function hotelBlock({ x, z, w, d, h, color, accent }) {
+  const g = new THREE.Group();
+
+  const podium = box(w + 28, 8, d + 20, darken(color, 0.84), 0.86);
+  podium.position.y = 4;
+  podium.castShadow = false;
+  g.add(podium);
+
+  const tower = box(w, h, d, color, 0.78);
+  tower.position.y = 8 + h / 2;
+  g.add(tower);
+
+  const accentBand = box(10, h + 2, d + 4, accent, 0.58);
+  accentBand.position.set(-w / 2 + 10, 8 + (h + 2) / 2, 0);
+  g.add(accentBand);
+
+  const crown = box(w - 14, 2.4, d - 12, darken(color, 0.68), 0.78);
+  crown.position.y = 8 + h + 1.2;
+  g.add(crown);
+
+  const mech = box(Math.max(22, w * 0.34), 6.5, Math.max(16, d * 0.28), darken(color, 0.52), 0.82);
+  mech.position.set(0, 8 + h + 4.45, 0);
+  g.add(mech);
+
+  const canopy = box(Math.max(28, w * 0.58), 1.4, 14, 0xf1e7c9, 0.45);
+  canopy.position.set(0, 7.8, d / 2 + 7);
+  g.add(canopy);
+
+  const entryPad = box(Math.max(34, w * 0.8), 0.5, 24, 0xd6c8aa, 0.98);
+  entryPad.position.set(0, 0.25, d / 2 + 18);
+  entryPad.castShadow = false;
+  g.add(entryPad);
+
   g.position.set(x, 0, z);
   return g;
 }
-// In-N-Out next to 25R approach
-detail.add(spotterPin('IN-N-OUT', 'PLANE SPOTTING ★', 2430, 520));
-// The Proud Bird (near 25L approach, south side)
-detail.add(spotterPin('THE PROUD BIRD', 'AVIATION THEMED', 2450, 1080, 0xde7329));
 
-/* ═══════════════════════════════════════════════
-   RUNWAY THRESHOLD CALLOUTS (just approach-end IDs as pills)
-   ═══════════════════════════════════════════════ */
+function makeStaticAirliner({
+  bodyColor = 0xf1ebdb,
+  stripeColor = 0x27455f,
+  tailColor = 0xc9432f,
+  scale = 1,
+}) {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.38, metalness: 0.16 });
+  const stripeMat = new THREE.MeshStandardMaterial({ color: stripeColor, roughness: 0.45, metalness: 0.1 });
+  const tailMat = new THREE.MeshStandardMaterial({ color: tailColor, roughness: 0.5, metalness: 0.08 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x1a2230, roughness: 0.18, metalness: 0.65 });
+  const engineMat = new THREE.MeshStandardMaterial({ color: 0x41403b, roughness: 0.34, metalness: 0.48 });
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x10100f, roughness: 0.95 });
+  const gearMat = new THREE.MeshStandardMaterial({ color: 0x8c877d, roughness: 0.56, metalness: 0.52 });
+
+  const FL = 42 * scale;
+  const FR = 2.6 * scale;
+
+  const fuselage = new THREE.Mesh(new THREE.CylinderGeometry(FR, FR, FL, 20), bodyMat);
+  fuselage.rotation.z = Math.PI / 2;
+  fuselage.castShadow = true;
+  g.add(fuselage);
+
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(FR, 7 * scale, 20), bodyMat);
+  nose.rotation.z = Math.PI / 2;
+  nose.position.x = -(FL / 2 + 3.4 * scale);
+  nose.castShadow = true;
+  g.add(nose);
+
+  const tailCone = new THREE.Mesh(new THREE.ConeGeometry(FR, 5.5 * scale, 20), bodyMat);
+  tailCone.rotation.z = -Math.PI / 2;
+  tailCone.position.x = FL / 2 + 2.7 * scale;
+  tailCone.castShadow = true;
+  g.add(tailCone);
+
+  const cockpit = new THREE.Mesh(new THREE.BoxGeometry(5.2 * scale, 1.8 * scale, 3.4 * scale), glassMat);
+  cockpit.position.set(-(FL / 2) + 1.2 * scale, 1.1 * scale, 0);
+  g.add(cockpit);
+
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 10; i++) {
+      const window = new THREE.Mesh(new THREE.BoxGeometry(0.9 * scale, 0.42 * scale, 0.1 * scale), glassMat);
+      window.position.set(-9 * scale + i * 2.05 * scale, 0.75 * scale, side * (FR + 0.04));
+      g.add(window);
+    }
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(FL + 10 * scale, 0.28 * scale, 0.08 * scale), stripeMat);
+    stripe.position.set(0, -0.12 * scale, side * (FR + 0.02));
+    g.add(stripe);
+  }
+
+  for (const side of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(10 * scale, 0.42 * scale, 24 * scale), bodyMat);
+    wing.position.set(-1.2 * scale, -0.2 * scale, side * 12 * scale);
+    wing.rotation.y = side * 0.12;
+    wing.castShadow = true;
+    g.add(wing);
+
+    const wingTip = new THREE.Mesh(new THREE.BoxGeometry(1.6 * scale, 3.2 * scale, 0.45 * scale), tailMat);
+    wingTip.position.set(-2.4 * scale, 1.55 * scale, side * 24 * scale);
+    wingTip.castShadow = true;
+    g.add(wingTip);
+
+    const engine = new THREE.Mesh(new THREE.CylinderGeometry(1.35 * scale, 1.18 * scale, 5.2 * scale, 18), engineMat);
+    engine.rotation.z = Math.PI / 2;
+    engine.position.set(-3.5 * scale, -1.4 * scale, side * 9.5 * scale);
+    engine.castShadow = true;
+    g.add(engine);
+  }
+
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(4.6 * scale, 7.5 * scale, 0.6 * scale), tailMat);
+  fin.position.set(FL / 2 - 3 * scale, 5.4 * scale, 0);
+  fin.castShadow = true;
+  g.add(fin);
+
+  const hstab = new THREE.Mesh(new THREE.BoxGeometry(3.6 * scale, 0.3 * scale, 10 * scale), bodyMat);
+  hstab.position.set(FL / 2 - 3.2 * scale, 5.6 * scale, 0);
+  hstab.castShadow = true;
+  g.add(hstab);
+
+  for (const side of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * scale, 0.22 * scale, 2.8 * scale, 10), gearMat);
+    leg.position.set(-1.4 * scale, -FR - 1.25 * scale, side * 4.2 * scale);
+    g.add(leg);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.8 * scale, 0.8 * scale, 0.55 * scale, 16), tireMat);
+    wheel.rotation.x = Math.PI / 2;
+    wheel.position.set(-1.4 * scale, -FR - 2.55 * scale, side * 4.2 * scale);
+    g.add(wheel);
+  }
+
+  const noseLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.18 * scale, 0.18 * scale, 2.3 * scale, 10), gearMat);
+  noseLeg.position.set(-(FL / 2) + 4.5 * scale, -FR - 1.0 * scale, 0);
+  g.add(noseLeg);
+  const noseWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.6 * scale, 0.6 * scale, 0.5 * scale, 16), tireMat);
+  noseWheel.rotation.x = Math.PI / 2;
+  noseWheel.position.set(-(FL / 2) + 4.5 * scale, -FR - 2.15 * scale, 0);
+  g.add(noseWheel);
+
+  const bounds = new THREE.Box3().setFromObject(g);
+  const lift = -bounds.min.y;
+  g.children.forEach(child => { child.position.y += lift; });
+  return g;
+}
+
+function supportCluster() {
+  const g = new THREE.Group();
+  const tug = makeLowPolyCar({ bodyColor: 0xd8d1c3, roofColor: 0xbf4e37, scale: 0.56 });
+  tug.position.set(-14, 0, 8);
+  g.add(tug);
+
+  const cartA = box(8, 2.4, 4.6, 0x7e7768, 0.86);
+  cartA.position.set(3, 1.2, -4);
+  cartA.castShadow = false;
+  g.add(cartA);
+  const cartB = box(8, 2.4, 4.6, 0x8a8170, 0.86);
+  cartB.position.set(14, 1.2, -4);
+  cartB.castShadow = false;
+  g.add(cartB);
+
+  const belt = box(10, 1.2, 4.6, 0xc4b69a, 0.82);
+  belt.position.set(25, 2.4, 7);
+  belt.rotation.z = -0.34;
+  belt.castShadow = false;
+  g.add(belt);
+  return g;
+}
+
+function runwayLength(pts) {
+  let total = 0;
+  for (let i = 0; i < pts.length - 2; i += 2) {
+    total += Math.hypot(pts[i + 2] - pts[i], pts[i + 3] - pts[i + 1]);
+  }
+  return total;
+}
+
+function addApproachSystem(threshold, adjacent) {
+  const g = new THREE.Group();
+  const inward = adjacent.clone().sub(threshold).normalize();
+  const outward = inward.clone().multiplyScalar(-1);
+  const right = new THREE.Vector3(inward.z, 0, -inward.x).normalize();
+  const heading = -Math.atan2(inward.z, inward.x);
+
+  const addLightBar = (dist, offsets) => {
+    offsets.forEach(offset => {
+      const pos = threshold.clone()
+        .add(outward.clone().multiplyScalar(dist))
+        .add(right.clone().multiplyScalar(offset));
+
+      const base = box(2.2, 1.5, 2.2, 0x564c40, 0.82);
+      base.position.copy(pos).add(new THREE.Vector3(0, 0.75, 0));
+      base.castShadow = false;
+      g.add(base);
+
+      const lamp = litBox(3.2, 0.8, 1.4, 0xffedc7, 0xffc983, 1.08);
+      lamp.position.copy(pos).add(new THREE.Vector3(0, 1.85, 0));
+      lamp.rotation.y = heading;
+      g.add(lamp);
+    });
+  };
+
+  [
+    { dist: 42,  offsets: [0] },
+    { dist: 84,  offsets: [0] },
+    { dist: 126, offsets: [-8, 0, 8] },
+    { dist: 168, offsets: [-12, -4, 4, 12] },
+    { dist: 210, offsets: [-18, -9, 0, 9, 18] },
+  ].forEach(bar => addLightBar(bar.dist, bar.offsets));
+
+  const papiOrigin = threshold.clone()
+    .add(outward.clone().multiplyScalar(28))
+    .add(right.clone().multiplyScalar(34));
+  for (let i = 0; i < 4; i++) {
+    const papiPos = papiOrigin.clone().add(right.clone().multiplyScalar(i * 6));
+    const papiBase = box(3.6, 1.5, 3, 0x50463a, 0.82);
+    papiBase.position.copy(papiPos).add(new THREE.Vector3(0, 0.75, 0));
+    papiBase.castShadow = false;
+    g.add(papiBase);
+
+    const papiLamp = litBox(4.2, 1.0, 2.2, i < 2 ? 0xffdfa0 : 0xfff0c9, 0xffcf86, 0.96);
+    papiLamp.position.copy(papiPos).add(new THREE.Vector3(0, 1.7, 0));
+    papiLamp.rotation.y = heading;
+    g.add(papiLamp);
+  }
+
+  lightingDetail.add(g);
+}
+
+landsideDetail.add(terminalLoopRoads());
+landsideDetail.add(laxMonument());
+landsideDetail.add(spotterCorner());
+
+coastalDetail.add(districtTile({
+  x: 400, z: -2400, w: 3600, d: 540, color: DISTRICT_A,
+  title: 'WESTCHESTER', sub: 'RESIDENTIAL · PLAYA VISTA',
+}));
+coastalDetail.add(playaDelReyDistrict());
+coastalDetail.add(districtTile({
+  x: 500, z: 2600, w: 4000, d: 740, color: DISTRICT_C,
+  title: 'EL SEGUNDO', sub: 'AEROSPACE · OFFICES',
+}));
+landsideDetail.add(districtTile({
+  x: 3200, z: -1200, w: 900, d: 680, color: DISTRICT_D,
+  title: 'CENTURY CORRIDOR', sub: 'HOTEL ROW', size: 'small',
+}));
+
+[
+  { x: 3490, z: -420, w: 220, d: 158, levels: 3, rotation: 0.02 },
+  { x: 3510, z: 110,  w: 244, d: 170, levels: 4, rotation: -0.03 },
+  { x: 3525, z: 635,  w: 268, d: 182, levels: 5, rotation: 0.025 },
+].forEach(spec => {
+  landsideDetail.add(parkingStructure({
+    x: spec.x,
+    z: spec.z,
+    w: spec.w,
+    d: spec.d,
+    levels: spec.levels,
+    rotation: spec.rotation,
+  }));
+});
+
+[
+  { x: 2865, z: -1245, w: 92,  d: 76, h: 52, color: 0x7a7466, accent: 0xd5cab2 },
+  { x: 3070, z: -1160, w: 110, d: 86, h: 72, color: 0x6d675b, accent: 0xe0d7c0 },
+  { x: 3305, z: -1275, w: 84,  d: 70, h: 60, color: 0x867d6f, accent: 0xc9bda2 },
+  { x: 3525, z: -1145, w: 118, d: 88, h: 82, color: 0x746d61, accent: 0xe8dcc0 },
+].forEach(spec => landsideDetail.add(hotelBlock(spec)));
+
+[
+  { x: -720, z: 160, heading: 0.05, bodyColor: 0xf0ebde, stripeColor: C.teal,   tailColor: 0x1f4e63, scale: 1.02, support: [-42, -28] },
+  { x: -420, z: 350, heading: 0.04, bodyColor: 0xf1ebdf, stripeColor: C.yellow, tailColor: 0xb35b30, scale: 0.98, support: [-34, -24] },
+  { x: -165, z: 145, heading: 0.02, bodyColor: 0xf4efe2, stripeColor: C.orange, tailColor: 0xc9432f, scale: 0.94, support: [-30, 24] },
+  { x: 255,  z: 255, heading: 0.03, bodyColor: 0xefeadb, stripeColor: C.red,    tailColor: 0x2a4964, scale: 0.96, support: [34, -22] },
+  { x: 500,  z: 210, heading: 0.02, bodyColor: 0xf2ece0, stripeColor: 0x2d4a60, tailColor: C.yellow, scale: 0.98, support: [36, 18] },
+].forEach(spec => {
+  const airliner = makeStaticAirliner({
+    bodyColor: spec.bodyColor,
+    stripeColor: spec.stripeColor,
+    tailColor: spec.tailColor,
+    scale: spec.scale,
+  });
+  airliner.position.set(spec.x, 2.0, spec.z);
+  airliner.rotation.y = spec.heading;
+  airsideDetail.add(airliner);
+
+  const service = supportCluster();
+  service.position.set(spec.x + spec.support[0], 2.0, spec.z + spec.support[1]);
+  service.rotation.y = spec.heading + 0.18;
+  airsideDetail.add(service);
+});
+
+const primaryRunways = new Map();
+for (const rwy of window.OSM_RWY) {
+  if (!rwy.ref) continue;
+  const len = runwayLength(rwy.pts);
+  const prev = primaryRunways.get(rwy.ref);
+  if (!prev || len > prev.length) primaryRunways.set(rwy.ref, { rwy, length: len });
+}
+for (const { rwy } of primaryRunways.values()) {
+  const pts = rwy.pts;
+  addApproachSystem(
+    new THREE.Vector3(pts[0], 0, pts[1]),
+    new THREE.Vector3(pts[2], 0, pts[3]),
+  );
+  addApproachSystem(
+    new THREE.Vector3(pts[pts.length - 2], 0, pts[pts.length - 1]),
+    new THREE.Vector3(pts[pts.length - 4], 0, pts[pts.length - 3]),
+  );
+}
 
 /* ═══════════════════════════════════════════════
    CLICKABLE AIRPLANE + THIRD-PERSON POV
    ═══════════════════════════════════════════════ */
 function makeAirplane() {
   const g = new THREE.Group();
-  const S = 1.85; // overall scale — easier to spot and click
+  const S = 1.92;
 
-  const bodyMat   = new THREE.MeshStandardMaterial({ color: 0xf5efd9, roughness: 0.38, metalness: 0.18 });
-  const accentMat = new THREE.MeshStandardMaterial({ color: 0x26344a, roughness: 0.48 });
-  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xc9432f, roughness: 0.5 });
-  const glassMat  = new THREE.MeshStandardMaterial({ color: 0x121c28, roughness: 0.15, metalness: 0.85 });
-  const engineMat = new THREE.MeshStandardMaterial({ color: 0x36342e, roughness: 0.35, metalness: 0.55 });
-  const dark      = new THREE.MeshStandardMaterial({ color: 0x0a0a08, roughness: 0.9 });
-  const gearMat   = new THREE.MeshStandardMaterial({ color: 0x8a8780, roughness: 0.5, metalness: 0.6 });
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf3ecda, roughness: 0.36, metalness: 0.18 });
+  const accentMat = new THREE.MeshStandardMaterial({ color: 0x223247, roughness: 0.46, metalness: 0.08 });
+  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xbf392e, roughness: 0.48, metalness: 0.06 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x131d29, roughness: 0.14, metalness: 0.82 });
+  const engineMat = new THREE.MeshStandardMaterial({ color: 0x2c2d30, roughness: 0.33, metalness: 0.52 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x0f100f, roughness: 0.9 });
+  const gearMat = new THREE.MeshStandardMaterial({ color: 0x8a857e, roughness: 0.5, metalness: 0.58 });
 
-  const FL = 30 * S;   // fuselage length
-  const FR = 2.0 * S;  // fuselage radius
+  const FL = 34 * S;
+  const FR = 1.72 * S;
 
-  // ─── Fuselage ───
-  const fuse = new THREE.Mesh(new THREE.CylinderGeometry(FR, FR, FL, 28), bodyMat);
-  fuse.rotation.z = Math.PI / 2;
-  fuse.castShadow = true;
-  g.add(fuse);
+  const fuselage = new THREE.Mesh(new THREE.CylinderGeometry(FR * 0.98, FR, FL, 30), bodyMat);
+  fuselage.rotation.z = Math.PI / 2;
+  fuselage.castShadow = true;
+  g.add(fuselage);
 
-  // Pointed nose (signature G650 silhouette)
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(FR, 8 * S, 28), bodyMat);
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(FR * 0.96, 8.4 * S, 28), bodyMat);
   nose.rotation.z = Math.PI / 2;
-  nose.position.x = -(FL / 2 + 4 * S);
+  nose.position.x = -(FL / 2 + 4.1 * S);
   nose.castShadow = true;
   g.add(nose);
 
-  // Tapered tail cone
-  const tailCone = new THREE.Mesh(new THREE.ConeGeometry(FR, 7 * S, 28), bodyMat);
+  const noseTip = new THREE.Mesh(new THREE.ConeGeometry(FR * 0.26, 1.3 * S, 18), darkMat);
+  noseTip.rotation.z = Math.PI / 2;
+  noseTip.position.x = -(FL / 2 + 8.4 * S);
+  g.add(noseTip);
+
+  const tailCone = new THREE.Mesh(new THREE.ConeGeometry(FR * 0.94, 7.5 * S, 28), bodyMat);
   tailCone.rotation.z = -Math.PI / 2;
-  tailCone.position.x = FL / 2 + 3.5 * S;
+  tailCone.position.x = FL / 2 + 3.7 * S;
   tailCone.castShadow = true;
   g.add(tailCone);
 
-  // ─── Cockpit ───
-  const cockpit = new THREE.Mesh(new THREE.BoxGeometry(5 * S, 1.7 * S, 3.5 * S), glassMat);
-  cockpit.position.set(-(FL / 2) + 0.8 * S, 1 * S, 0);
-  g.add(cockpit);
-  const cockFairing = new THREE.Mesh(new THREE.BoxGeometry(5 * S, 0.5 * S, 3.6 * S), accentMat);
-  cockFairing.position.set(-(FL / 2) + 0.8 * S, 2 * S, 0);
-  g.add(cockFairing);
+  const canopy = new THREE.Mesh(new THREE.CylinderGeometry(1.15 * S, 0.92 * S, 5.6 * S, 14), glassMat);
+  canopy.rotation.z = Math.PI / 2;
+  canopy.scale.set(1, 0.82, 0.72);
+  canopy.position.set(-(FL / 2) + 4.3 * S, 1.35 * S, 0);
+  g.add(canopy);
 
-  // ─── Oval passenger windows (signature G650 panoramic windows) ───
+  const canopyFairing = new THREE.Mesh(new THREE.BoxGeometry(4.8 * S, 0.34 * S, 2.05 * S), accentMat);
+  canopyFairing.position.set(-(FL / 2) + 4.8 * S, 0.6 * S, 0);
+  canopyFairing.castShadow = true;
+  g.add(canopyFairing);
+
   for (const side of [-1, 1]) {
-    for (let i = 0; i < 14; i++) {
-      const w = new THREE.Mesh(
-        new THREE.BoxGeometry(1.0 * S, 0.55 * S, 0.14 * S),
-        glassMat
-      );
-      w.position.set(-8 * S + i * 1.2 * S, 0.85 * S, side * (FR + 0.03));
-      g.add(w);
+    for (let i = 0; i < 11; i++) {
+      const window = new THREE.Mesh(new THREE.BoxGeometry(0.72 * S, 0.32 * S, 0.12 * S), glassMat);
+      window.position.set(-(FL / 2) + 9.5 * S + i * 1.7 * S, 0.82 * S, side * (FR + 0.03));
+      g.add(window);
     }
+
+    const redStripe = new THREE.Mesh(new THREE.BoxGeometry(FL + 8 * S, 0.18 * S, 0.08 * S), stripeMat);
+    redStripe.position.set(0.8 * S, -0.3 * S, side * (FR + 0.01));
+    g.add(redStripe);
+
+    const navyStripe = new THREE.Mesh(new THREE.BoxGeometry(FL + 6.5 * S, 0.12 * S, 0.07 * S), accentMat);
+    navyStripe.position.set(0.6 * S, -0.02 * S, side * (FR + 0.035));
+    g.add(navyStripe);
   }
 
-  // Fuselage stripe
-  for (const side of [-1, 1]) {
-    const red = new THREE.Mesh(
-      new THREE.BoxGeometry(FL + 14 * S, 0.24 * S, 0.1 * S),
-      stripeMat
-    );
-    red.position.set(0, -0.15 * S, side * (FR + 0.015));
-    g.add(red);
-    const navy = new THREE.Mesh(
-      new THREE.BoxGeometry(FL + 14 * S, 0.14 * S, 0.08 * S),
-      accentMat
-    );
-    navy.position.set(0, 0.12 * S, side * (FR + 0.02));
-    g.add(navy);
-  }
+  const bellyFairing = new THREE.Mesh(new THREE.BoxGeometry(11 * S, 0.55 * S, 2.35 * S), bodyMat);
+  bellyFairing.position.set(3.8 * S, -1.45 * S, 0);
+  bellyFairing.castShadow = true;
+  g.add(bellyFairing);
 
-  // ─── Swept wings with winglets ───
-  function buildWing(side) {
-    const wg = new THREE.Group();
-    const WL = 17 * S;
+  function makeWing(side) {
+    const wing = new THREE.Group();
 
-    // Tapered wing (root to tip)
-    const wing = new THREE.Mesh(
-      new THREE.BoxGeometry(6 * S, 0.45 * S, WL),
-      bodyMat
-    );
-    wing.position.z = side * WL / 2;
-    wing.castShadow = true;
-    wg.add(wing);
+    const root = new THREE.Mesh(new THREE.BoxGeometry(8.8 * S, 0.32 * S, 11.5 * S), bodyMat);
+    root.position.set(1.8 * S, 0, side * 6.1 * S);
+    root.castShadow = true;
+    wing.add(root);
 
-    // Winglet
-    const winglet = new THREE.Mesh(
-      new THREE.BoxGeometry(3 * S, 2.8 * S, 0.45 * S),
-      bodyMat
-    );
-    winglet.position.set(-0.3 * S, 1.5 * S, side * WL);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(4.8 * S, 0.22 * S, 8.4 * S), bodyMat);
+    tip.position.set(5.6 * S, -0.08 * S, side * 13.8 * S);
+    tip.castShadow = true;
+    wing.add(tip);
+
+    const winglet = new THREE.Mesh(new THREE.BoxGeometry(1.8 * S, 2.4 * S, 0.32 * S), bodyMat);
+    winglet.position.set(7.2 * S, 1.15 * S, side * 17.7 * S);
     winglet.castShadow = true;
-    wg.add(winglet);
+    wing.add(winglet);
 
-    // Winglet tip stripe (red)
-    const wTip = new THREE.Mesh(
-      new THREE.BoxGeometry(3.05 * S, 0.55 * S, 0.47 * S),
-      stripeMat
-    );
-    wTip.position.set(-0.3 * S, 2.7 * S, side * WL);
-    wg.add(wTip);
+    const wingletStripe = new THREE.Mesh(new THREE.BoxGeometry(1.9 * S, 0.42 * S, 0.35 * S), stripeMat);
+    wingletStripe.position.set(7.2 * S, 2.15 * S, side * 17.7 * S);
+    wing.add(wingletStripe);
 
-    // Sweep back
-    wg.position.set(1 * S, -0.9 * S, side * FR * 0.55);
-    wg.rotation.y = side * 0.28;
-    return wg;
+    wing.position.set(-0.6 * S, -0.75 * S, side * FR * 0.72);
+    wing.rotation.y = side * 0.17;
+    return wing;
   }
-  g.add(buildWing(-1));
-  g.add(buildWing( 1));
+  g.add(makeWing(-1));
+  g.add(makeWing(1));
 
-  // ─── T-Tail (signature G650) ───
-  const fin = new THREE.Mesh(new THREE.BoxGeometry(5 * S, 7 * S, 0.55 * S), bodyMat);
-  fin.position.set(FL / 2 - 2.5 * S, 5.8 * S, 0);
-  fin.rotation.z = 0.12;
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(4.6 * S, 7.2 * S, 0.5 * S), bodyMat);
+  fin.position.set(FL / 2 - 2.5 * S, 5.6 * S, 0);
+  fin.rotation.z = 0.08;
   fin.castShadow = true;
   g.add(fin);
 
-  const finStripe = new THREE.Mesh(new THREE.BoxGeometry(3 * S, 4 * S, 0.58 * S), stripeMat);
-  finStripe.position.set(FL / 2 - 1.5 * S, 7 * S, 0);
-  finStripe.rotation.z = 0.12;
+  const finStripe = new THREE.Mesh(new THREE.BoxGeometry(2.8 * S, 4.1 * S, 0.54 * S), stripeMat);
+  finStripe.position.set(FL / 2 - 1.7 * S, 6.6 * S, 0);
+  finStripe.rotation.z = 0.08;
   g.add(finStripe);
 
-  // Horizontal stabilizer at TOP of fin (T-tail)
-  const hstab = new THREE.Mesh(new THREE.BoxGeometry(3 * S, 0.38 * S, 11.5 * S), bodyMat);
-  hstab.position.set(FL / 2 - 1.2 * S, 9.2 * S, 0);
-  hstab.castShadow = true;
-  g.add(hstab);
+  const tailRoot = new THREE.Mesh(new THREE.BoxGeometry(3 * S, 0.24 * S, 4.8 * S), bodyMat);
+  tailRoot.position.set(FL / 2 - 1.8 * S, 8.1 * S, 0);
+  tailRoot.castShadow = true;
+  g.add(tailRoot);
 
-  // ─── Rear-mounted engines (G650 signature) ───
   for (const side of [-1, 1]) {
-    const pylon = new THREE.Mesh(
-      new THREE.BoxGeometry(4.5 * S, 1.9 * S, 0.7 * S),
-      bodyMat
-    );
-    pylon.position.set(FL / 2 - 5 * S, 1.3 * S, side * (FR + 0.4 * S));
+    const hstab = new THREE.Mesh(new THREE.BoxGeometry(3.5 * S, 0.22 * S, 6.2 * S), bodyMat);
+    hstab.position.set(FL / 2 - 0.8 * S, 8.15 * S, side * 3.2 * S);
+    hstab.rotation.y = side * 0.24;
+    hstab.castShadow = true;
+    g.add(hstab);
+  }
+
+  for (const side of [-1, 1]) {
+    const pylon = new THREE.Mesh(new THREE.BoxGeometry(3.1 * S, 1.15 * S, 0.62 * S), bodyMat);
+    pylon.position.set(FL / 2 - 5.2 * S, 1.45 * S, side * (FR + 0.92 * S));
     pylon.castShadow = true;
     g.add(pylon);
 
-    const eng = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.55 * S, 1.4 * S, 6.2 * S, 24),
-      engineMat
-    );
-    eng.rotation.z = Math.PI / 2;
-    eng.position.set(FL / 2 - 5 * S, 1.5 * S, side * (FR + 2 * S));
-    eng.castShadow = true;
-    g.add(eng);
+    const nacelle = new THREE.Mesh(new THREE.CylinderGeometry(1.18 * S, 0.98 * S, 6.5 * S, 24), engineMat);
+    nacelle.rotation.z = Math.PI / 2;
+    nacelle.position.set(FL / 2 - 4.8 * S, 0.8 * S, side * (FR + 2.12 * S));
+    nacelle.castShadow = true;
+    g.add(nacelle);
 
-    // Intake (dark)
-    const intake = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.25 * S, 1.25 * S, 0.5 * S, 24),
-      dark
-    );
+    const intake = new THREE.Mesh(new THREE.CylinderGeometry(1.03 * S, 1.03 * S, 0.48 * S, 24), darkMat);
     intake.rotation.z = Math.PI / 2;
-    intake.position.set(FL / 2 - 5 * S - 3.2 * S, 1.5 * S, side * (FR + 2 * S));
+    intake.position.set(FL / 2 - 8.02 * S, 0.8 * S, side * (FR + 2.12 * S));
     g.add(intake);
 
-    // Exhaust
-    const exhaust = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.25 * S, 0.95 * S, 0.7 * S, 24),
-      dark
-    );
+    const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.92 * S, 0.74 * S, 0.62 * S, 24), darkMat);
     exhaust.rotation.z = Math.PI / 2;
-    exhaust.position.set(FL / 2 - 5 * S + 3.3 * S, 1.5 * S, side * (FR + 2 * S));
+    exhaust.position.set(FL / 2 - 1.56 * S, 0.8 * S, side * (FR + 2.12 * S));
     g.add(exhaust);
   }
 
-  // ─── Landing gear ───
   for (const side of [-1, 1]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.24 * S, 0.24 * S, 2.7 * S, 10), gearMat);
-    leg.position.set(1 * S, -FR - 1.3 * S, side * 2.6 * S);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18 * S, 0.18 * S, 2.35 * S, 10), gearMat);
+    leg.position.set(4.5 * S, -FR - 0.95 * S, side * 2.15 * S);
     g.add(leg);
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.68 * S, 0.68 * S, 0.6 * S, 18), dark);
-    wheel.position.set(1 * S, -FR - 2.7 * S, side * 2.6 * S);
-    wheel.rotation.x = Math.PI / 2;
-    g.add(wheel);
+
+    const axle = new THREE.Mesh(new THREE.BoxGeometry(0.9 * S, 0.12 * S, 1.3 * S), gearMat);
+    axle.position.set(4.5 * S, -FR - 2.05 * S, side * 2.15 * S);
+    g.add(axle);
+
+    for (const wheelOffset of [-0.42, 0.42]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.46 * S, 0.46 * S, 0.34 * S, 16), darkMat);
+      wheel.rotation.x = Math.PI / 2;
+      wheel.position.set(4.5 * S, -FR - 2.25 * S, side * (2.15 * S + wheelOffset * S));
+      g.add(wheel);
+    }
   }
-  const nLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * S, 0.22 * S, 2.5 * S, 10), gearMat);
-  nLeg.position.set(-FL / 2 + 2.5 * S, -FR - 1.2 * S, 0);
-  g.add(nLeg);
-  const nWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.55 * S, 0.55 * S, 0.55 * S, 18), dark);
-  nWheel.position.set(-FL / 2 + 2.5 * S, -FR - 2.5 * S, 0);
-  nWheel.rotation.x = Math.PI / 2;
-  g.add(nWheel);
+
+  const noseLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.16 * S, 0.16 * S, 2.1 * S, 10), gearMat);
+  noseLeg.position.set(-(FL / 2) + 6.2 * S, -FR - 0.82 * S, 0);
+  g.add(noseLeg);
+
+  const noseAxle = new THREE.Mesh(new THREE.BoxGeometry(0.72 * S, 0.12 * S, 1.05 * S), gearMat);
+  noseAxle.position.set(-(FL / 2) + 6.2 * S, -FR - 1.78 * S, 0);
+  g.add(noseAxle);
+
+  for (const wheelOffset of [-0.32, 0.32]) {
+    const noseWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.36 * S, 0.36 * S, 0.3 * S, 16), darkMat);
+    noseWheel.rotation.x = Math.PI / 2;
+    noseWheel.position.set(-(FL / 2) + 6.2 * S, -FR - 2.0 * S, wheelOffset * S);
+    g.add(noseWheel);
+  }
 
   g.userData.clickable = true;
   g.name = 'airplane';
@@ -2380,8 +3006,14 @@ function makeAirplane() {
 }
 
 const airplane = makeAirplane();
-airplane.position.set(0, 7, 350);
-airplane.rotation.y = Math.PI;  // face east
+const airplaneBounds = new THREE.Box3().setFromObject(airplane);
+const AIRPLANE_Y = -airplaneBounds.min.y + 0.4;
+const GUIDE_Y = 3.4;
+airplane.position.set(-325, AIRPLANE_Y, 516);
+// Align with the first leg of Taxiway C (east-bound, tilted slightly north
+// because the real taxiway isn't perfectly on cardinal east). See headingTo()
+// below — this is headingTo(+1138, -140) precomputed so it's available here.
+airplane.rotation.y = Math.PI + Math.atan2(140, 1138);  // ≈ 3.264 rad (east-NE)
 scene.add(airplane);
 
 // Pulsing marker — sits BELOW the plane so the fuselage isn't blocked.
@@ -2396,14 +3028,14 @@ planeMarkerWrap.innerHTML = `
 `;
 const planeMarker = new CSS2DObject(planeMarkerWrap);
 // Offset away from the plane so it doesn't block content
-planeMarker.position.set(0, -58, 32);
+planeMarker.position.set(0, -70, 45);
 airplane.add(planeMarker);
 
 // Leader line connecting the plane to the marker
 const markerLine = new THREE.Line(
   new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, -58, 32),
+    new THREE.Vector3(0, -70, 45),
   ]),
   new THREE.LineBasicMaterial({ color: 0xed8e2b, transparent: true, opacity: 0.6 }),
 );
@@ -2462,6 +3094,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 function enterPov() {
+  ensureTutorialAudio();
   povActive = true;
   planeMarker.element.style.opacity = '0';
   markerLine.visible = false;
@@ -2473,8 +3106,8 @@ function enterPov() {
   povSaved.maxD = controls.maxDistance;
 
   // reset plane to start, ready for tutorial
-  airplane.position.set(0, AIRPLANE_Y, 350);
-  airplane.rotation.set(0, Math.PI, 0);
+  airplane.position.set(-325, AIRPLANE_Y, 516);
+  airplane.rotation.set(0, Math.PI + Math.atan2(140, 1138), 0);  // aligned with Taxiway C leg 1
 
   // behind the plane, rotated to match its current heading
   const behindOffset = new THREE.Vector3(76, 28, 0);
@@ -2501,7 +3134,7 @@ function exitPov() {
     stopTutorial();
     exitMapView();
     keysDown.clear();
-    airplane.position.set(0, AIRPLANE_Y, 350);
+    airplane.position.set(-325, AIRPLANE_Y, 516);
     airplane.rotation.set(0, Math.PI, 0);
 
     controls.enabled = false;
@@ -2543,62 +3176,103 @@ function animateCamera(toPos, toTarget, duration, done) {
 /* ═══════════════════════════════════════════════
    TAXI TUTORIAL — WASD → Runway 7L
    ═══════════════════════════════════════════════ */
-const PATH_Y = 3;
-const AIRPLANE_Y = 7;
+// Runway 25R (07L/25R) heading: from east threshold (1946,437) toward west (-1418,850).
+// Runway centerline: z(x) = 437 + (1946 - x) * tan(RUNWAY_TILT), tan ≈ 0.1237.
+// Proper aviation: taxi on the PARALLEL Taxiway C (north of 25R) to the east end,
+// turn right onto C1 connector, curve right onto 25R at the east threshold already
+// pointing west — never taxi on the active runway.
+const RWY_ALIGN = RUNWAY_TILT;
 
-// East threshold of runway 7L/25R ≈ (2214, 742). Runway tilt is -0.11 rad,
-// so "west down the runway" (takeoff heading from east end) = rotation.y of -0.11.
-const RWY_ALIGN = -0.11;
+// Heading helper: returns the rotation.y value that points the plane along
+// the vector (dx, dz). The airplane model has its nose at −X, so after a
+// Y-rotation of θ the nose points (-cos θ, sin θ). Solving for θ gives:
+//   θ = PI + atan2(-dz, dx)
+// Returning values near PI for east-bound motion keeps the lerp short and
+// avoids wraparound spins when interpolating from the initial π heading.
+const headingTo = (dx, dz) => Math.PI + Math.atan2(-dz, dx);
+const shortestAngleDelta = (from, to) =>
+  THREE.MathUtils.euclideanModulo((to - from) + Math.PI, Math.PI * 2) - Math.PI;
+const lerpAngle = (from, to, t) => from + shortestAngleDelta(from, to) * t;
 
-// Route goes east from the south apron of TBIT, past terminals 4-8,
-// then south onto the east end of Runway 7L/25R for takeoff alignment.
 const WAYPOINTS = [
-  new THREE.Vector3(    0, PATH_Y, 350),   // W0: south apron of TBIT, facing east
-  new THREE.Vector3( 2100, PATH_Y, 350),   // W1: east past T4–T8 and east parking
-  new THREE.Vector3( 2100, PATH_Y, 730),   // W2: on Runway 7L near east threshold
+  new THREE.Vector3( -325, AIRPLANE_Y, 516),  // WP0: TBIT apron — start (west end of Taxiway C)
+  new THREE.Vector3(  813, AIRPLANE_Y, 376),  // WP1: Taxiway C — past T7/T8
+  new THREE.Vector3( 1578, AIRPLANE_Y, 293),  // WP2: Taxiway C — past mid-field terminals
+  new THREE.Vector3( 1898, AIRPLANE_Y, 225),  // WP3: Taxiway C — east end (hold short of C1)
+  new THREE.Vector3( 1920, AIRPLANE_Y, 420),  // WP4: C1 connector — at runway edge
+  new THREE.Vector3( 1946, AIRPLANE_Y, 437),  // WP5: Runway 25R — east threshold (takeoff start)
 ];
+const GUIDE_POINTS = WAYPOINTS.map(p => new THREE.Vector3(p.x, GUIDE_Y, p.z));
+
+// Precomputed segment headings — each taxi leg is slightly off cardinal east/south
+// because the real Taxiway C and C1 connector don't run perfectly on the grid.
+const HDG_LEG1 = headingTo(WAYPOINTS[1].x - WAYPOINTS[0].x, WAYPOINTS[1].z - WAYPOINTS[0].z);
+const HDG_LEG2 = headingTo(WAYPOINTS[2].x - WAYPOINTS[1].x, WAYPOINTS[2].z - WAYPOINTS[1].z);
+const HDG_LEG3 = headingTo(WAYPOINTS[3].x - WAYPOINTS[2].x, WAYPOINTS[3].z - WAYPOINTS[2].z);
+const HDG_C1   = headingTo(WAYPOINTS[4].x - WAYPOINTS[3].x, WAYPOINTS[4].z - WAYPOINTS[3].z);
+// HDG_RWY already known — use RUNWAY_TILT directly.
+
+const LINEUP_CONTROL = new THREE.Vector3(1960, AIRPLANE_Y, 446);
+const LINEUP_GUIDE_CONTROL = new THREE.Vector3(LINEUP_CONTROL.x, GUIDE_Y, LINEUP_CONTROL.z);
+const DEPARTURE_TURN_CONTROL_1 = new THREE.Vector3(-720, 205, 767);
+const DEPARTURE_TURN_CONTROL_2 = new THREE.Vector3(-1042, 260, 580);
 
 const TUTORIAL = [
-  // ── TAXI (steps 1–4) ──
-  { key:'w', duration:10.0, title:'Taxi East', phase:'taxi',
-    hint:'Hold W — long taxi past T4, T5, T6, T7, T8',
-    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 350), toRot: Math.PI },
-  { key:'d', duration:3.0,  title:'Turn Right · Face South', phase:'taxi',
-    hint:'Hold D — 90° right, toward Runway 7L',
-    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 350), toRot: Math.PI / 2 },
-  { key:'w', duration:5.0,  title:'Taxi onto the Runway', phase:'taxi',
-    hint:'Hold W — south onto the east end of Runway 7L',
-    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 730), toRot: Math.PI / 2 },
-  { key:'d', duration:5.0,  title:'Align for Takeoff', phase:'taxi',
-    hint:'Hold D — pivot west, nose down the runway centerline',
-    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 730), toRot: RWY_ALIGN },
+  // ── TAXI (steps 0–5) — each leg's rotation matches its travel direction
+  //    so the plane never looks crabbed against the taxiway. Most turns happen
+  //    in place; the runway entry follows a short guided arc onto centerline.
+  { key:'w', duration:7.0, title:'Push Back · Roll onto Charlie', phase:'taxi',
+    hint:'Hold W — push back from TBIT and start rolling east on Taxiway C',
+    toPos: WAYPOINTS[1], toRot: HDG_LEG1 },
+  { key:'w', duration:6.0, title:'Past T7/T8 · Continue East', phase:'taxi',
+    hint:'Hold W — continue east on Charlie, passing T7 and T8 to the south',
+    toPos: WAYPOINTS[2], toRot: HDG_LEG2 },
+  { key:'w', duration:4.0, title:'Approach East End · Hold Short', phase:'taxi',
+    hint:'Hold W — roll to the east end of Charlie, hold short of C1',
+    toPos: WAYPOINTS[3], toRot: HDG_LEG3 },
+  { key:'d', duration:2.4, title:'Turn Right · Onto C1 Connector', phase:'taxi',
+    hint:'Hold D — pivot 90° right in place, nose now points south down C1',
+    toPos: WAYPOINTS[3], toRot: HDG_C1, cameraYawBlend: 0.0 },   // rotate in place (no forward motion)
+  { key:'w', duration:3.2, title:'Taxi South · Down C1', phase:'taxi',
+    hint:'Hold W — taxi south along C1 to the 25R east threshold',
+    toPos: WAYPOINTS[4], toRot: HDG_C1 },
+  { key:'d', duration:2.4, title:'Line Up · Runway 25R', phase:'taxi',
+    hint:'Hold D — follow the right-hand turn onto the 25R centerline, nose now points west',
+    toPos: WAYPOINTS[5], toRot: RWY_ALIGN, controlPos: LINEUP_CONTROL,
+    rotationMode:'target', cameraYawBlend: 0.2 },
 
-  // ── TAKEOFF (steps 5–9) ──
-  { key:'w', duration:3.0, title:'Full Throttle', phase:'takeoff',
-    hint:'Hold W — engines spool to 100% · brakes still set',
-    toPos: new THREE.Vector3(2100, AIRPLANE_Y, 730), toRot: RWY_ALIGN },
-  { key:'w', duration:5.0, title:'Takeoff Roll', phase:'takeoff',
-    hint:'Hold W — release brakes, accelerate past V1',
-    toPos: new THREE.Vector3(900, AIRPLANE_Y, 595), toRot: RWY_ALIGN },
-  { key:'s', duration:2.5, title:'Rotate', phase:'takeoff',
-    hint:'Hold S — pull back · nose up · positive rate',
-    toPos: new THREE.Vector3(450, 28, 548), toRot: RWY_ALIGN, toPitch: -0.28 },
+  // ── TAKEOFF (steps 6–10) — centered on runway, tilt matches runway heading ──
+  { key:'w', duration:3.0, title:'Full Throttle · Brakes Set', phase:'takeoff',
+    hint:'Hold W — engines to 100%, hold brakes at the 25R threshold',
+    toPos: new THREE.Vector3(1946, AIRPLANE_Y, 437), toRot: RWY_ALIGN },
+  { key:'w', duration:6.0, title:'Takeoff Roll · 25R', phase:'takeoff',
+    hint:'Hold W — release brakes, accelerate westbound on runway centerline',
+    toPos: new THREE.Vector3(400, AIRPLANE_Y, 628), toRot: RWY_ALIGN },
+  { key:'s', duration:2.5, title:'Rotate · V-R', phase:'takeoff',
+    hint:'Hold S — pull back · nose up · positive rate of climb',
+    toPos: new THREE.Vector3(100, 28, 665), toRot: RWY_ALIGN, toPitch: -0.28 },
   { key:'w', duration:3.5, title:'Initial Climb', phase:'takeoff',
     hint:'Hold W — climb out, maintain takeoff attitude',
-    toPos: new THREE.Vector3(-200, 140, 475), toRot: RWY_ALIGN, toPitch: -0.22 },
+    toPos: new THREE.Vector3(-500, 140, 740), toRot: RWY_ALIGN, toPitch: -0.22 },
   { key:'d', duration:6.0, title:'Departure Turn', phase:'takeoff',
-    hint:'Hold D — bank right, carve a smooth arc onto the departure heading',
-    toPos:      new THREE.Vector3(-700, 260, 180),
-    controlPos: new THREE.Vector3(-465, 200, 446),  // quadratic bezier control → curved arc
-    toRot: -0.85, toPitch: -0.1, toRoll: -0.32 },
+    hint:'Hold D — bank right, climb out on departure heading',
+    toPos:      new THREE.Vector3(-1200, 300, 400),
+    controlPos1: DEPARTURE_TURN_CONTROL_1,
+    controlPos2: DEPARTURE_TURN_CONTROL_2,
+    toRot: -0.85, toPitch: -0.1, toRoll: -0.32, cameraYawBlend: 0.6 },
 ];
 
 /* ——— Illuminated multi-segment path ——— */
 const pathGroup = new THREE.Group();
 const pathCurve = new THREE.CurvePath();
-for (let i = 0; i < WAYPOINTS.length - 1; i++) {
-  pathCurve.add(new THREE.LineCurve3(WAYPOINTS[i], WAYPOINTS[i + 1]));
+for (let i = 0; i < GUIDE_POINTS.length - 2; i++) {
+  pathCurve.add(new THREE.LineCurve3(GUIDE_POINTS[i], GUIDE_POINTS[i + 1]));
 }
+pathCurve.add(new THREE.QuadraticBezierCurve3(
+  GUIDE_POINTS[4],
+  LINEUP_GUIDE_CONTROL,
+  GUIDE_POINTS[5],
+));
 
 const tubeInnerMat = new THREE.MeshBasicMaterial({
   color: 0xffc070, transparent: true, opacity: 0.95, depthWrite: false,
@@ -2615,12 +3289,12 @@ for (const seg of pathCurve.curves) {
 }
 
 // Corner nodes (visual waypoint markers)
-for (let i = 1; i < WAYPOINTS.length - 1; i++) {
+for (let i = 1; i < GUIDE_POINTS.length - 1; i++) {
   const node = new THREE.Mesh(
     new THREE.SphereGeometry(1.8, 16, 12),
     new THREE.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 0.95, depthWrite: false })
   );
-  node.position.copy(WAYPOINTS[i]);
+  node.position.copy(GUIDE_POINTS[i]);
   pathGroup.add(node);
 }
 
@@ -2630,7 +3304,7 @@ const pathRing = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ color: 0xffc070, transparent: true, opacity: 0.95, depthWrite: false })
 );
 pathRing.rotation.x = Math.PI / 2;
-pathRing.position.copy(WAYPOINTS[WAYPOINTS.length - 1]);
+pathRing.position.copy(GUIDE_POINTS[GUIDE_POINTS.length - 1]);
 pathGroup.add(pathRing);
 
 const pathRingGlow = new THREE.Mesh(
@@ -2641,7 +3315,7 @@ const pathRingGlow = new THREE.Mesh(
   })
 );
 pathRingGlow.rotation.x = Math.PI / 2;
-pathRingGlow.position.copy(WAYPOINTS[WAYPOINTS.length - 1]);
+pathRingGlow.position.copy(GUIDE_POINTS[GUIDE_POINTS.length - 1]);
 pathGroup.add(pathRingGlow);
 
 // Heading arrow inside the ring (shows takeoff direction down 7L)
@@ -2657,9 +3331,9 @@ const pathArrow = new THREE.Mesh(
 );
 pathArrow.rotation.x = -Math.PI / 2;
 // Point the arrow down the runway (east along 7L)
-pathArrow.rotation.z = -(Math.PI / 2) + (-0.11);
-pathArrow.position.copy(WAYPOINTS[WAYPOINTS.length - 1]);
-pathArrow.position.y = PATH_Y + 0.1;
+pathArrow.rotation.z = -(Math.PI / 2) + RUNWAY_TILT;
+pathArrow.position.copy(GUIDE_POINTS[GUIDE_POINTS.length - 1]);
+pathArrow.position.y = GUIDE_Y + 0.1;
 pathGroup.add(pathArrow);
 
 // Traveling pulse
@@ -2861,7 +3535,7 @@ scene.add(mapGroup);
 
 /* ─── Sky/fog originals for restoration ─── */
 const SKY_ORIG = new THREE.Color(0x141311);
-const FOG_ORIG = { near: 4500, far: 11000 };
+const FOG_ORIG = { near: 8000, far: 18000 };
 const SKY_HAZE = new THREE.Color(0xd68a58);  // warm haze for map fog
 
 let mapActive = false;
@@ -2934,6 +3608,421 @@ function updateMapFX(dt) {
   stars.rotation.y = now * 0.000005;
 }
 
+/* ——— Tutorial audio ——— */
+const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+let tutorialAudioCtx = null;
+let tutorialAudio = null;
+const tutorialAudioPrevPos = new THREE.Vector3();
+let tutorialAudioPrevYaw = 0;
+let tutorialAudioTrackingReady = false;
+
+function clamp01(v) {
+  return Math.min(1, Math.max(0, v));
+}
+
+function resetTutorialAudioTracking() {
+  tutorialAudioPrevPos.copy(airplane.position);
+  tutorialAudioPrevYaw = airplane.rotation.y;
+  tutorialAudioTrackingReady = true;
+}
+
+function createNoiseBuffer(ctx, seconds = 2.5) {
+  const length = Math.floor(ctx.sampleRate * seconds);
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  let brown = 0;
+  for (let i = 0; i < length; i++) {
+    const white = Math.random() * 2 - 1;
+    brown = (brown + 0.018 * white) / 1.018;
+    data[i] = (white * 0.55 + brown * 0.9) * 0.58;
+  }
+  return buffer;
+}
+
+function createLoopingNoise(ctx, buffer) {
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+  src.start();
+  return src;
+}
+
+function createTutorialSoundscape(ctx) {
+  const noiseBuffer = createNoiseBuffer(ctx);
+  const master = ctx.createGain();
+  master.gain.value = 0.0001;
+
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -22;
+  compressor.knee.value = 20;
+  compressor.ratio.value = 4;
+  compressor.attack.value = 0.005;
+  compressor.release.value = 0.18;
+  master.connect(compressor);
+  compressor.connect(ctx.destination);
+
+  const engineBus = ctx.createGain();
+  engineBus.gain.value = 1;
+  engineBus.connect(master);
+
+  const noiseBus = ctx.createGain();
+  noiseBus.gain.value = 1;
+  noiseBus.connect(master);
+
+  const engineLP = ctx.createBiquadFilter();
+  engineLP.type = 'lowpass';
+  engineLP.frequency.value = 360;
+  engineLP.Q.value = 0.8;
+  engineLP.connect(engineBus);
+
+  const engineFund = ctx.createOscillator();
+  engineFund.type = 'sawtooth';
+  engineFund.frequency.value = 52;
+  const engineFundGain = ctx.createGain();
+  engineFundGain.gain.value = 0.012;
+  engineFund.connect(engineFundGain);
+  engineFundGain.connect(engineLP);
+
+  const engineBody = ctx.createOscillator();
+  engineBody.type = 'triangle';
+  engineBody.frequency.value = 82;
+  const engineBodyGain = ctx.createGain();
+  engineBodyGain.gain.value = 0.008;
+  engineBody.connect(engineBodyGain);
+  engineBodyGain.connect(engineLP);
+
+  const engineSub = ctx.createOscillator();
+  engineSub.type = 'sine';
+  engineSub.frequency.value = 28;
+  const engineSubGain = ctx.createGain();
+  engineSubGain.gain.value = 0.01;
+  engineSub.connect(engineSubGain);
+  engineSubGain.connect(engineLP);
+
+  const engineLfo = ctx.createOscillator();
+  engineLfo.type = 'sine';
+  engineLfo.frequency.value = 5.4;
+  const engineLfoGain = ctx.createGain();
+  engineLfoGain.gain.value = 4.5;
+  engineLfo.connect(engineLfoGain);
+  engineLfoGain.connect(engineFund.detune);
+  engineLfoGain.connect(engineBody.detune);
+
+  const engineNoise = createLoopingNoise(ctx, noiseBuffer);
+  const engineNoiseHP = ctx.createBiquadFilter();
+  engineNoiseHP.type = 'highpass';
+  engineNoiseHP.frequency.value = 42;
+  const engineNoiseLP = ctx.createBiquadFilter();
+  engineNoiseLP.type = 'lowpass';
+  engineNoiseLP.frequency.value = 210;
+  engineNoiseLP.Q.value = 0.7;
+  const engineNoiseGain = ctx.createGain();
+  engineNoiseGain.gain.value = 0.003;
+  engineNoise.connect(engineNoiseHP);
+  engineNoiseHP.connect(engineNoiseLP);
+  engineNoiseLP.connect(engineNoiseGain);
+  engineNoiseGain.connect(engineBus);
+
+  const rollNoise = createLoopingNoise(ctx, noiseBuffer);
+  const rollHP = ctx.createBiquadFilter();
+  rollHP.type = 'highpass';
+  rollHP.frequency.value = 110;
+  const rollLP = ctx.createBiquadFilter();
+  rollLP.type = 'lowpass';
+  rollLP.frequency.value = 460;
+  rollLP.Q.value = 0.75;
+  const rollGain = ctx.createGain();
+  rollGain.gain.value = 0.0001;
+  rollNoise.connect(rollHP);
+  rollHP.connect(rollLP);
+  rollLP.connect(rollGain);
+  rollGain.connect(noiseBus);
+
+  const scrubNoise = createLoopingNoise(ctx, noiseBuffer);
+  const scrubBP = ctx.createBiquadFilter();
+  scrubBP.type = 'bandpass';
+  scrubBP.frequency.value = 950;
+  scrubBP.Q.value = 1.25;
+  const scrubGain = ctx.createGain();
+  scrubGain.gain.value = 0.0001;
+  scrubNoise.connect(scrubBP);
+  scrubBP.connect(scrubGain);
+  scrubGain.connect(noiseBus);
+
+  const windNoise = createLoopingNoise(ctx, noiseBuffer);
+  const windHP = ctx.createBiquadFilter();
+  windHP.type = 'highpass';
+  windHP.frequency.value = 1400;
+  windHP.Q.value = 0.65;
+  const windGain = ctx.createGain();
+  windGain.gain.value = 0.0001;
+  windNoise.connect(windHP);
+  windHP.connect(windGain);
+  windGain.connect(noiseBus);
+
+  [engineFund, engineBody, engineSub, engineLfo].forEach(node => node.start());
+
+  function smooth(param, value, time = 0.16) {
+    param.cancelScheduledValues(ctx.currentTime);
+    param.setTargetAtTime(value, ctx.currentTime, time);
+  }
+
+  function playTone({
+    when = ctx.currentTime,
+    from = 440,
+    to = from,
+    type = 'sine',
+    gain = 0.01,
+    attack = 0.008,
+    release = 0.14,
+  } = {}) {
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = Math.max(from, to) * 3;
+    const amp = ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(Math.max(12, from), when);
+    if (Math.abs(to - from) > 0.001) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(12, to), when + release);
+    }
+    amp.gain.setValueAtTime(0.0001, when);
+    amp.gain.linearRampToValueAtTime(gain, when + attack);
+    amp.gain.exponentialRampToValueAtTime(0.0001, when + release);
+
+    osc.connect(filter);
+    filter.connect(amp);
+    amp.connect(master);
+    osc.start(when);
+    osc.stop(when + release + 0.05);
+  }
+
+  function playNoiseBurst({
+    when = ctx.currentTime,
+    from = 500,
+    to = from,
+    gain = 0.008,
+    attack = 0.004,
+    release = 0.16,
+    q = 1,
+  } = {}) {
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.Q.value = q;
+    filter.frequency.setValueAtTime(Math.max(20, from), when);
+    if (Math.abs(to - from) > 0.001) {
+      filter.frequency.exponentialRampToValueAtTime(Math.max(20, to), when + release);
+    }
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0.0001, when);
+    amp.gain.linearRampToValueAtTime(gain, when + attack);
+    amp.gain.exponentialRampToValueAtTime(0.0001, when + release);
+
+    src.connect(filter);
+    filter.connect(amp);
+    amp.connect(master);
+    src.start(when);
+    src.stop(when + release + 0.03);
+  }
+
+  return {
+    resume() {
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    },
+    cue(kind) {
+      const when = ctx.currentTime + 0.01;
+      if (kind === 'start') {
+        playTone({ when, from: 460, to: 620, gain: 0.007, release: 0.12 });
+        playTone({ when: when + 0.13, from: 600, to: 760, gain: 0.006, release: 0.1 });
+      } else if (kind === 'step') {
+        playNoiseBurst({ when, from: 1350, to: 1050, gain: 0.0025, release: 0.045, q: 2.2 });
+        playTone({ when, from: 560, to: 660, gain: 0.0032, release: 0.055 });
+      } else if (kind === 'takeoff') {
+        playTone({ when, from: 125, to: 178, type: 'triangle', gain: 0.0065, release: 0.24 });
+        playNoiseBurst({ when, from: 180, to: 640, gain: 0.006, release: 0.22, q: 0.75 });
+      } else if (kind === 'rotate') {
+        playTone({ when, from: 230, to: 360, type: 'triangle', gain: 0.007, release: 0.28 });
+        playNoiseBurst({ when, from: 920, to: 2400, gain: 0.01, release: 0.34, q: 0.9 });
+      } else if (kind === 'complete') {
+        playTone({ when, from: 310, to: 240, gain: 0.005, release: 0.22 });
+        playNoiseBurst({ when, from: 760, to: 1680, gain: 0.005, release: 0.2, q: 1.1 });
+      }
+    },
+    update({
+      active = true,
+      mix = 0.7,
+      thrust = 0.2,
+      speed = 0,
+      turn = 0,
+      wind = 0.05,
+      ground = 1,
+    } = {}) {
+      thrust = clamp01(thrust);
+      speed = clamp01(speed);
+      turn = clamp01(turn);
+      wind = clamp01(wind);
+      ground = clamp01(ground);
+      mix = clamp01(mix);
+
+      smooth(master.gain, active ? (0.24 * mix) : 0.0001, 0.18);
+
+      const engineBase = 44 + thrust * 58;
+      smooth(engineFund.frequency, engineBase, 0.12);
+      smooth(engineBody.frequency, engineBase * 1.55, 0.14);
+      smooth(engineSub.frequency, Math.max(22, engineBase * 0.54), 0.16);
+      smooth(engineLP.frequency, 170 + thrust * 430 + wind * 180, 0.16);
+
+      smooth(engineFundGain.gain, 0.007 + thrust * 0.017, 0.14);
+      smooth(engineBodyGain.gain, 0.004 + thrust * 0.013, 0.16);
+      smooth(engineSubGain.gain, 0.008 + thrust * 0.01, 0.18);
+      smooth(engineNoiseLP.frequency, 130 + thrust * 360 + speed * 80, 0.18);
+      smooth(engineNoiseGain.gain, 0.002 + thrust * 0.014, 0.18);
+
+      const groundRoll = ground * speed;
+      smooth(rollLP.frequency, 200 + speed * 980, 0.12);
+      smooth(rollGain.gain, 0.0001 + groundRoll * (0.026 + thrust * 0.013), 0.1);
+
+      const scrubAmount = ground * Math.max(turn - 0.03, 0);
+      smooth(scrubBP.frequency, 520 + turn * 1900, 0.08);
+      smooth(scrubGain.gain, 0.0001 + scrubAmount * 0.022, 0.08);
+
+      smooth(windHP.frequency, 1150 + wind * 2600, 0.16);
+      smooth(windGain.gain, 0.0001 + wind * (0.016 + (1 - ground) * 0.015), 0.18);
+    },
+  };
+}
+
+function ensureTutorialAudio() {
+  if (!AudioContextCtor) return null;
+  if (!tutorialAudioCtx) {
+    tutorialAudioCtx = new AudioContextCtor();
+    tutorialAudio = createTutorialSoundscape(tutorialAudioCtx);
+  }
+  tutorialAudio.resume();
+  return tutorialAudio;
+}
+
+function measureTutorialMotion(dt) {
+  if (!tutorialAudioTrackingReady || dt <= 0) {
+    resetTutorialAudioTracking();
+    return { speed: 0, turn: 0 };
+  }
+
+  const dist = tutorialAudioPrevPos.distanceTo(airplane.position);
+  const yawDelta = Math.abs(shortestAngleDelta(tutorialAudioPrevYaw, airplane.rotation.y));
+  tutorialAudioPrevPos.copy(airplane.position);
+  tutorialAudioPrevYaw = airplane.rotation.y;
+
+  if (dist > 700) {
+    resetTutorialAudioTracking();
+    return { speed: 0, turn: 0 };
+  }
+
+  const seconds = Math.max(dt, 1 / 120);
+  return {
+    speed: clamp01((dist / seconds) / 290),
+    turn: clamp01((yawDelta / seconds) / 1.6),
+  };
+}
+
+function updateTutorialAudio(dt) {
+  if (!tutorialAudio) return;
+
+  if (!povActive) {
+    tutorialAudio.update({ active: false });
+    tutorialAudioTrackingReady = false;
+    return;
+  }
+
+  const motion = measureTutorialMotion(dt);
+  const altitude = clamp01((airplane.position.y - AIRPLANE_Y) / 260);
+  let mix = {
+    active: true,
+    mix: 0.45,
+    thrust: 0.18,
+    speed: 0,
+    turn: motion.turn,
+    wind: 0.02,
+    ground: 1,
+  };
+
+  if (tutActive && tutStep < TUTORIAL.length) {
+    const step = TUTORIAL[tutStep];
+    const holding = keysDown.has(step.key);
+    const heldBoost = holding ? 1 : 0.35;
+
+    if (step.phase === 'taxi') {
+      const turning = step.key === 'd';
+      mix.mix = 0.72;
+      mix.thrust = turning
+        ? 0.26 + tutProgress * 0.06
+        : 0.32 + motion.speed * 0.16 + heldBoost * 0.03;
+      mix.speed = turning
+        ? Math.max(motion.speed * 0.35, tutProgress * 0.08)
+        : Math.max(motion.speed, tutProgress * 0.18);
+      mix.turn = Math.max(motion.turn, turning ? 0.55 * heldBoost : 0.12);
+      mix.wind = 0.03 + motion.speed * 0.08;
+      mix.ground = 1;
+    } else if (tutStep === 6) {
+      mix.mix = 0.82;
+      mix.thrust = 0.64 + tutProgress * 0.18 * heldBoost;
+      mix.speed = 0.02;
+      mix.turn = 0.05;
+      mix.wind = 0.08;
+      mix.ground = 1;
+    } else if (tutStep === 7) {
+      mix.mix = 0.94;
+      mix.thrust = 0.78 + tutProgress * 0.12;
+      mix.speed = Math.max(motion.speed, 0.24 + tutProgress * 0.55);
+      mix.turn = 0.06;
+      mix.wind = 0.18 + tutProgress * 0.26;
+      mix.ground = 1;
+    } else if (tutStep === 8) {
+      mix.mix = 0.96;
+      mix.thrust = 0.84;
+      mix.speed = Math.max(motion.speed, 0.48);
+      mix.turn = Math.max(motion.turn, 0.08);
+      mix.wind = 0.35 + tutProgress * 0.18;
+      mix.ground = clamp01(1 - tutProgress * 1.25);
+    } else if (tutStep === 9) {
+      mix.mix = 0.88;
+      mix.thrust = 0.76;
+      mix.speed = Math.max(motion.speed, 0.46);
+      mix.turn = Math.max(motion.turn, 0.05);
+      mix.wind = 0.44;
+      mix.ground = 0;
+    } else {
+      mix.mix = 0.9;
+      mix.thrust = 0.74;
+      mix.speed = Math.max(motion.speed, 0.42);
+      mix.turn = Math.max(motion.turn, 0.36);
+      mix.wind = 0.5;
+      mix.ground = 0;
+    }
+  } else if (pullUpActive) {
+    mix.mix = 0.95;
+    mix.thrust = 0.82;
+    mix.speed = 0.58;
+    mix.turn = 0.12;
+    mix.wind = 0.62;
+    mix.ground = 0;
+  } else if (mapActive) {
+    mix.mix = 0.68;
+    mix.thrust = 0.58;
+    mix.speed = 0.28;
+    mix.turn = 0.03;
+    mix.wind = 0.34;
+    mix.ground = 0;
+  }
+
+  mix.wind = Math.max(mix.wind, altitude * 0.45);
+  if (altitude > 0.24) mix.ground = 0;
+  tutorialAudio.update(mix);
+}
+
 /* ——— Tutorial state ——— */
 let tutActive = false;
 let tutStep = 0;
@@ -2948,6 +4037,7 @@ const keysDown = new Set();
 window.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (['w','a','s','d'].includes(k)) {
+    ensureTutorialAudio();
     keysDown.add(k);
     e.preventDefault();
   }
@@ -2988,11 +4078,12 @@ function refreshTutUI() {
 }
 
 function startTutorial() {
+  const sound = ensureTutorialAudio();
   tutActive = true;
   tutStep = 0;
   tutProgress = 0;
-  airplane.position.set(0, AIRPLANE_Y, 350);
-  airplane.rotation.set(0, Math.PI, 0);
+  airplane.position.set(-325, AIRPLANE_Y, 516);
+  airplane.rotation.set(0, Math.PI + Math.atan2(140, 1138), 0);  // aligned with Taxiway C leg 1
   tutStepStart.copy(airplane.position);
   tutStepStartRot   = airplane.rotation.y;
   tutStepStartPitch = airplane.rotation.z;
@@ -3007,6 +4098,8 @@ function startTutorial() {
   tutEl.classList.add('show');
   document.body.classList.add('tutorial-active');
   document.body.classList.remove('tutorial-complete');
+  resetTutorialAudioTracking();
+  sound?.cue('start');
   refreshTutUI();
 }
 
@@ -3016,6 +4109,8 @@ function stopTutorial() {
   tutEl.classList.remove('show');
   document.body.classList.remove('tutorial-active');
   document.body.classList.remove('tutorial-complete');
+  tutorialAudioTrackingReady = false;
+  tutorialAudio?.update({ active: false });
 }
 
 /* ───── Pull-up climb (visible flying phase before cloud wash) ─────
@@ -3092,6 +4187,7 @@ function performMapSwap() {
 
   ascentStart = performance.now();
   ascentActive = true;
+  resetTutorialAudioTracking();
 }
 
 function completeTutorial() {
@@ -3118,6 +4214,8 @@ function completeTutorial() {
   pullUpStartRotZ = airplane.rotation.z;
   pullUpStartRotX = airplane.rotation.x;
   controls.enabled = false;
+  tutorialAudio?.cue('complete');
+  resetTutorialAudioTracking();
 
   // 900ms into the climb, start the cloud wash
   setTimeout(() => fadeOverlay.classList.add('active'), 900);
@@ -3129,6 +4227,15 @@ function completeTutorial() {
   }, 2000);
 }
 
+function tutorialCameraYaw() {
+  if (!tutActive || tutStep >= TUTORIAL.length) return airplane.rotation.y;
+  const step = TUTORIAL[tutStep];
+  if (typeof step.cameraYawBlend === 'number') {
+    return lerpAngle(tutStepStartRot, airplane.rotation.y, step.cameraYawBlend);
+  }
+  return airplane.rotation.y;
+}
+
 function updateTutorial(dt) {
   if (!tutActive) return;
   if (tutStep >= TUTORIAL.length) return;
@@ -3138,11 +4245,30 @@ function updateTutorial(dt) {
     tutProgress += dt / step.duration;
     if (tutProgress > 1) tutProgress = 1;
 
+    const rotationMode = step.rotationMode ?? 'tangent';
     const toPitch = step.toPitch ?? 0;
     const toRoll  = step.toRoll  ?? 0;
+    let tangentX = 0;
+    let tangentZ = 0;
 
-    // Curved arc via quadratic bezier when controlPos is given, otherwise linear
-    if (step.controlPos) {
+    // Support quadratic and cubic path segments so key turns can follow a real arc.
+    if (step.controlPos1 && step.controlPos2) {
+      const u = 1 - tutProgress, t = tutProgress;
+      const p0 = tutStepStart, p1 = step.controlPos1, p2 = step.controlPos2, p3 = step.toPos;
+      airplane.position.set(
+        u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
+        u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y,
+        u*u*u*p0.z + 3*u*u*t*p1.z + 3*u*t*t*p2.z + t*t*t*p3.z,
+      );
+      tangentX =
+        3*u*u*(p1.x - p0.x) +
+        6*u*t*(p2.x - p1.x) +
+        3*t*t*(p3.x - p2.x);
+      tangentZ =
+        3*u*u*(p1.z - p0.z) +
+        6*u*t*(p2.z - p1.z) +
+        3*t*t*(p3.z - p2.z);
+    } else if (step.controlPos) {
       const u = 1 - tutProgress, t = tutProgress;
       const p0 = tutStepStart, p1 = step.controlPos, p2 = step.toPos;
       airplane.position.set(
@@ -3150,11 +4276,21 @@ function updateTutorial(dt) {
         u*u*p0.y + 2*u*t*p1.y + t*t*p2.y,
         u*u*p0.z + 2*u*t*p1.z + t*t*p2.z,
       );
+      tangentX = 2*u*(p1.x - p0.x) + 2*t*(p2.x - p1.x);
+      tangentZ = 2*u*(p1.z - p0.z) + 2*t*(p2.z - p1.z);
     } else {
       airplane.position.lerpVectors(tutStepStart, step.toPos, tutProgress);
+      tangentX = step.toPos.x - tutStepStart.x;
+      tangentZ = step.toPos.z - tutStepStart.z;
     }
 
-    airplane.rotation.y = tutStepStartRot   + (step.toRot - tutStepStartRot)   * tutProgress;
+    if (rotationMode === 'target') {
+      airplane.rotation.y = lerpAngle(tutStepStartRot, step.toRot, tutProgress);
+    } else if (Math.hypot(tangentX, tangentZ) > 0.0001) {
+      airplane.rotation.y = headingTo(tangentX, tangentZ);
+    } else {
+      airplane.rotation.y = lerpAngle(tutStepStartRot, step.toRot, tutProgress);
+    }
     airplane.rotation.z = tutStepStartPitch + (toPitch    - tutStepStartPitch) * tutProgress;
     airplane.rotation.x = tutStepStartRoll  + (toRoll     - tutStepStartRoll)  * tutProgress;
 
@@ -3168,11 +4304,15 @@ function updateTutorial(dt) {
       tutStepStartPitch = airplane.rotation.z;
       tutStepStartRoll  = airplane.rotation.x;
 
-      // End of taxi → snap camera behind the aligned plane and retire the path
-      if (tutStep === 4) {
+      // After "Line Up · Runway 25R" (step index 5) → snap chase cam, retire path
+      if (tutStep === 6) {
         snapChaseCam();
         pathGroup.visible = false;
       }
+
+      if (tutStep === 7) tutorialAudio?.cue('takeoff');
+      else if (tutStep === 8) tutorialAudio?.cue('rotate');
+      else if (tutStep < TUTORIAL.length) tutorialAudio?.cue('step');
 
       if (tutStep >= TUTORIAL.length) {
         completeTutorial();
@@ -3187,7 +4327,7 @@ function updateTutorial(dt) {
 function updateChaseCam() {
   if (!povActive || !tutActive) return;
   const offset = new THREE.Vector3(76, 28, 0);
-  offset.applyEuler(new THREE.Euler(0, airplane.rotation.y, 0, 'XYZ'));
+  offset.applyEuler(new THREE.Euler(0, tutorialCameraYaw(), 0, 'XYZ'));
   const desired = airplane.position.clone().add(offset);
   camera.position.lerp(desired, 0.18);
   controls.target.lerp(airplane.position, 0.24);
@@ -3217,10 +4357,10 @@ const clock = new THREE.Clock();
    CAMERA PRESETS + INITIAL POSITION
    ═══════════════════════════════════════════════ */
 const PRESETS = {
-  iso:      { pos: [1400, 1500, 2100], target: [0, 0, 0] },
-  top:      { pos: [0, 3600, 0.01],    target: [0, 0, 0] },
-  approach: { pos: [-2400, 300, -50],  target: [600, 20, 0] },
-  terminal: { pos: [-700, 420, 600],   target: [0, 0, 0] },
+  iso:      { pos: [2200, 2000, 2800], target: [0, 0, 100] },
+  top:      { pos: [0, 6000, 0.01],    target: [0, 0, 100] },
+  approach: { pos: [-3200, 400, -50],  target: [400, 20, 0] },
+  terminal: { pos: [-600, 420, 600],   target: [300, 0, 0] },
 };
 
 function animateTo(preset, ms = 1400) {
@@ -3278,6 +4418,7 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
+let _labelFrame = 0;
 function tick() {
   requestAnimationFrame(tick);
   const dt = Math.min(clock.getDelta(), 0.1);
@@ -3286,9 +4427,11 @@ function tick() {
   updateChaseCam();
   updatePathFX();
   updateMapFX(dt);
+  updateTutorialAudio(dt);
   controls.update();
   renderer.render(scene, camera);
-  labelRenderer.render(scene, camera);
+  // CSS2D labels are expensive (DOM updates); render every other frame
+  if ((_labelFrame++ & 1) === 0) labelRenderer.render(scene, camera);
 }
 tick();
 
