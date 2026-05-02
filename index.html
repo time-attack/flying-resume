@@ -1001,12 +1001,103 @@ body.board-view #tutorial {
   margin: 0 auto;
   padding: 56px 48px 80px;
 }
+.board-header {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(244, 238, 216, .12);
+  margin-bottom: 22px;
+}
+.board-header__pre {
+  font-size: 9px;
+  letter-spacing: .35em;
+  color: rgba(244, 238, 216, .5);
+  margin-bottom: 6px;
+}
+.board-header__name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  letter-spacing: -.02em;
+  line-height: 1;
+}
+.board-header__tag {
+  font-size: 11px;
+  letter-spacing: .18em;
+  opacity: .65;
+  margin-top: 5px;
+  text-transform: uppercase;
+}
+.board-header__right {
+  text-align: right;
+  font-size: 10px;
+  letter-spacing: .18em;
+  opacity: .6;
+  line-height: 1.7;
+}
+.board-header__plane {
+  position: absolute;
+  top: 4px;
+  right: 240px;
+  font-size: 14px;
+  color: #ed8e2b;
+  opacity: .55;
+  animation: ambientCruise 14s linear infinite;
+}
+@keyframes ambientCruise {
+  0%   { transform: translateX(-120px); opacity: 0; }
+  10%  { opacity: .55; }
+  90%  { opacity: .55; }
+  100% { transform: translateX(120px); opacity: 0; }
+}
+.board-back {
+  position: absolute;
+  top: -32px;
+  left: 0;
+  background: transparent;
+  border: 1px solid rgba(244, 238, 216, .25);
+  color: #f4eed8;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: .25em;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.board-back:hover {
+  border-color: #ed8e2b;
+  color: #ed8e2b;
+}
 </style>
 </head>
 <body>
 <div id="app">
   <canvas id="canvas"></canvas>
   <div id="labels"></div>
+
+  <!-- Portfolio departure board overlay (hidden until takeoff completes) -->
+  <div id="board">
+    <div class="board-inner">
+      <header class="board-header">
+        <button class="board-back" id="boardBack" aria-label="Return to LAX">← KLAX</button>
+        <div class="board-header__left">
+          <div class="board-header__pre">▸ DEPARTURES · KLAX</div>
+          <div class="board-header__name" id="boardName"></div>
+          <div class="board-header__tag" id="boardTagline"></div>
+        </div>
+        <div class="board-header__right">
+          <span id="boardLocation"></span><br>
+          <span id="boardEmail"></span><br>
+          <span id="boardSocial"></span>
+        </div>
+        <div class="board-header__plane" aria-hidden="true">✈</div>
+      </header>
+      <div id="boardSections"></div>
+    </div>
+  </div>
 
   <div id="loader"><div class="ring"></div></div>
 
@@ -4441,6 +4532,23 @@ tick();
 window.addEventListener('load', () => {
   setTimeout(() => document.getElementById('loader').classList.add('done'), 400);
 });
+
+/* ═══════════════════════════════════════════════
+   PORTFOLIO BOARD — RENDERER
+   ═══════════════════════════════════════════════ */
+function renderBoardHeader() {
+  const data = window.PORTFOLIO_DATA;
+  if (!data) return;
+  const i = data.identity;
+  document.getElementById('boardName').textContent = i.name;
+  document.getElementById('boardTagline').textContent = i.tagline;
+  document.getElementById('boardLocation').textContent = i.location;
+  const email = document.getElementById('boardEmail');
+  email.textContent = i.email.toUpperCase();
+  document.getElementById('boardSocial').textContent =
+    `GH: ${i.github.toUpperCase()} · LINKEDIN`;
+}
+renderBoardHeader();
 </script>
 </body>
 </html>
