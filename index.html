@@ -4973,7 +4973,18 @@ document.getElementById('board').addEventListener('click', e => {
   closeDetail();
 });
 
-document.getElementById('boardBack').addEventListener('click', () => setMode('airport'));
+document.getElementById('boardBack').addEventListener('click', () => {
+  const fade = document.getElementById('fadeOverlay');
+  fade.classList.add('active');
+  setTimeout(() => {
+    setMode('airport');
+    // exitMapView() (defined elsewhere in this file) restores scene background,
+    // fog, lights, backdrop visibility, and clears mapActive/ascentActive.
+    // Always call it on return so the user lands back at the LAX scene fully reset.
+    if (typeof exitMapView === 'function') exitMapView();
+    requestAnimationFrame(() => fade.classList.remove('active'));
+  }, 900);
+});
 </script>
 </body>
 </html>
