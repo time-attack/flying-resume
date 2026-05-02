@@ -1304,6 +1304,22 @@ body.detail-open #detail-panel {
   border-color: #ed8e2b;
   color: #ed8e2b;
 }
+.board-row__logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
+}
+.detail-panel__monogram-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: block;
+}
+.board-row__monogram.solid .board-row__logo,
+.board-row__monogram.solid .detail-panel__monogram-img {
+  filter: brightness(0) invert(0);
+}
 @media (max-width: 900px) {
   #board .board-inner {
     padding: 56px 18px 60px;
@@ -4895,7 +4911,16 @@ function renderBoardSections() {
       const mono = document.createElement('div');
       mono.className = 'board-row__monogram '
         + (section.muted ? 'dashed' : (isHeadline ? 'solid' : 'outlined'));
-      mono.textContent = item.monogram;
+      if (item.logo) {
+        const img = document.createElement('img');
+        img.src = item.logo;
+        img.alt = '';
+        img.className = 'board-row__logo';
+        img.onerror = () => { mono.removeChild(img); mono.textContent = item.monogram; };
+        mono.appendChild(img);
+      } else {
+        mono.textContent = item.monogram;
+      }
       row.appendChild(mono);
 
       const flight = document.createElement('span');
@@ -4967,7 +4992,12 @@ function renderDetail(itemId) {
   document.getElementById('detailInner').innerHTML = `
     <div class="detail-panel__pre">▸ FLIGHT ${item.flight} · NOW BOARDING</div>
     <div class="detail-panel__head">
-      <div class="detail-panel__monogram" style="background:${section.color}">${item.monogram}</div>
+      <div class="detail-panel__monogram" style="background:${section.color}">${
+        item.logo
+          ? `<img src="${item.logo}" alt="" class="detail-panel__monogram-img"
+                onerror="this.replaceWith(document.createTextNode('${item.monogram}'))">`
+          : item.monogram
+      }</div>
       <div>
         <div class="detail-panel__title">${d.title}</div>
         <div class="detail-panel__role">${d.role}</div>
