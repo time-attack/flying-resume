@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibecode · SSH Bypass · Sina Matian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&amp;family=Syne:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f1e3;
+    --paper:#fffaf0;
+    --ink:#1c1916;
+    --muted:#5b534d;
+    --line:#ddd2bf;
+    --accent:#c76421;
+    --accent-soft:#f1e1ca;
+    --safe:#306b45;
+    --safe-soft:#e6f1e9;
+  }
+
+  *, *::before, *::after { box-sizing:border-box; }
+
+  html { scroll-behavior:smooth; }
+
+  body {
+    margin:0;
+    background:linear-gradient(180deg, #f5efe1 0%, #f7f1e3 100%);
+    color:var(--ink);
+    font-family:'Newsreader', Georgia, serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a { color:inherit; }
+
+  .shell {
+    width:min(780px, calc(100vw - 32px));
+    margin:0 auto;
+    padding:28px 0 72px;
+  }
+
+  .topbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:48px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--line);
+  }
+
+  .brand {
+    font-family:'Syne', sans-serif;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.28em;
+    text-decoration:none;
+    text-transform:uppercase;
+  }
+
+  .topbar nav {
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+
+  .topbar nav a {
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    text-decoration:none;
+    text-transform:uppercase;
+    letter-spacing:.16em;
+  }
+
+  .eyebrow,
+  .meta-row,
+  .status,
+  .safe-note {
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .eyebrow {
+    font-size:11px;
+    color:var(--accent);
+    letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+
+  header h1 {
+    margin:12px 0 18px;
+    font-family:'Syne', sans-serif;
+    font-size:clamp(2.4rem, 7vw, 4rem);
+    line-height:.98;
+    letter-spacing:-.04em;
+  }
+
+  .lede {
+    margin:0;
+    color:var(--ink);
+    font-size:1.28rem;
+    line-height:1.72;
+  }
+
+  .meta-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:20px;
+    margin-bottom:36px;
+  }
+
+  .meta-row span {
+    padding:8px 10px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+
+  article {
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:30px 28px 36px;
+  }
+
+  section + section {
+    margin-top:30px;
+    padding-top:30px;
+    border-top:1px solid var(--line);
+  }
+
+  h2 {
+    margin:0 0 12px;
+    font-family:'Syne', sans-serif;
+    font-size:1.35rem;
+    letter-spacing:-.02em;
+  }
+
+  p {
+    margin:0 0 14px;
+    font-size:1.12rem;
+    line-height:1.82;
+  }
+
+  p:last-child { margin-bottom:0; }
+
+  .summary-box {
+    padding:18px 18px 18px 20px;
+    background:var(--accent-soft);
+    border-left:3px solid var(--accent);
+  }
+
+  ul {
+    margin:0;
+    padding-left:22px;
+  }
+
+  li {
+    margin:0 0 12px;
+    font-size:1.08rem;
+    line-height:1.75;
+  }
+
+  li:last-child { margin-bottom:0; }
+
+  .timeline {
+    display:grid;
+    gap:18px;
+  }
+
+  .timeline-item {
+    padding-bottom:18px;
+    border-bottom:1px solid var(--line);
+  }
+
+  .timeline-item:last-child {
+    padding-bottom:0;
+    border-bottom:none;
+  }
+
+  .timeline-date {
+    margin-bottom:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+
+  .timeline-item strong {
+    display:block;
+    margin-bottom:8px;
+    font-family:'Syne', sans-serif;
+    font-size:1.12rem;
+  }
+
+  .status,
+  .safe-note {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 11px;
+    font-size:10px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    border:1px solid var(--line);
+  }
+
+  .status {
+    background:#f7e6db;
+    color:#7a3813;
+    border-color:#dfbfaa;
+  }
+
+  .safe-note {
+    background:var(--safe-soft);
+    color:var(--safe);
+    border-color:#bed5c7;
+  }
+
+  .back-link {
+    display:inline-block;
+    margin-top:28px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--accent);
+    letter-spacing:.16em;
+    text-decoration:none;
+    text-transform:uppercase;
+  }
+
+  footer {
+    margin-top:24px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+  }
+
+  @media (max-width: 640px) {
+    .shell { width:min(100vw - 24px, 780px); }
+    .topbar {
+      flex-direction:column;
+      align-items:flex-start;
+      margin-bottom:36px;
+    }
+    article { padding:22px 20px 28px; }
+    .lede { font-size:1.14rem; }
+    p, li { font-size:1.03rem; }
+  }
+</style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <a class="brand" href="index.html">dripped</a>
+      <nav aria-label="Pages">
+        <a href="blog.html">Blog</a>
+        <a href="index.html">Airport</a>
+      </nav>
+    </div>
+
+    <header>
+      <div class="eyebrow">Story 01 / Bug Bounty Write-up</div>
+      <h1>Vibecode · SSH Bypass</h1>
+      <p class="lede">
+        Authentication bypass in the Vibecode app's SSH flow allowed unauthorized access. Reported through responsible disclosure; acknowledged by Vibecode.
+      </p>
+      <div class="meta-row" aria-label="Article metadata">
+        <span>Reported [DATE]</span>
+        <span>[STATUS]</span>
+        <span>Authentication</span>
+        <span>Redacted Public Version</span>
+      </div>
+    </header>
+
+    <article>
+      <section class="prose">
+        <h2>TL;DR</h2>
+        <!-- TODO Sina: replace with real writeup -->
+        <p>An authentication bypass in the Vibecode app's SSH flow allowed unauthorized access to the application. The vulnerability exposed a flaw in the SSH authentication verification mechanism, allowing attackers to bypass security controls. Reported through responsible disclosure; acknowledged by Vibecode.</p>
+      </section>
+
+      <section class="prose">
+        <h2>Background</h2>
+        <!-- TODO Sina: replace with real writeup -->
+        <p>This section will describe the background of the Vibecode SSH bypass discovery, including the context of how the vulnerability was identified and the scope of affected users and systems.</p>
+      </section>
+
+      <section class="prose">
+        <h2>Discovery</h2>
+        <!-- TODO Sina: replace with real writeup -->
+        <p>This section will detail the discovery process, methodology, and the specific steps taken to identify and confirm the SSH authentication bypass vulnerability in the Vibecode application.</p>
+      </section>
+
+      <section class="prose">
+        <h2>Reproduction</h2>
+        <!-- TODO Sina: replace with real writeup -->
+        <p>This section will outline the reproduction steps for the SSH bypass vulnerability, including the sequence of interactions and techniques required to circumvent the authentication mechanism.</p>
+      </section>
+
+      <section class="prose">
+        <h2>Impact</h2>
+        <!-- TODO Sina: replace with real writeup -->
+        <ul>
+          <li>Unauthorized access to the Vibecode application without valid SSH credentials.</li>
+          <li>Potential compromise of user accounts and application integrity.</li>
+          <li>Risk of data exposure and unauthorized modifications to application state.</li>
+        </ul>
+      </section>
+
+      <section class="prose">
+        <h2>Timeline</h2>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-date">[DATE] / [TIME]</div>
+            <strong>Report submitted</strong>
+            <!-- TODO Sina: replace with real timeline entry -->
+            <p>The report described the SSH bypass vulnerability with supporting evidence and reproduction steps.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-date">[DATE] / [TIME]</div>
+            <strong>Initial response from Vibecode</strong>
+            <!-- TODO Sina: replace with real timeline entry -->
+            <p>Vibecode acknowledged receipt of the report and began initial triage and investigation.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-date">[DATE] / [TIME]</div>
+            <strong>Resolution or status update</strong>
+            <!-- TODO Sina: replace with real timeline entry -->
+            <p>Vibecode provided status update on remediation efforts or final closure of the report.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="prose">
+        <h2>Program Response</h2>
+        <!-- TODO Sina: replace with real writeup -->
+        <div class="status">Status / [STATUS]</div>
+        <p style="margin-top:14px;">This section will describe Vibecode's response to the vulnerability disclosure, including their assessment and any remediation efforts undertaken to address the SSH bypass issue.</p>
+      </section>
+
+      <section class="prose">
+        <h2>Lessons Learned</h2>
+        <!-- TODO Sina: replace with real writeup -->
+        <p>This section will share takeaways and lessons learned from discovering and disclosing this SSH authentication bypass, including insights about secure credential handling and authentication flow design.</p>
+      </section>
+
+      <section class="prose">
+        <h2>What I Redacted</h2>
+        <div class="safe-note">Public-safe version</div>
+        <ul style="margin-top:14px;">
+          <li>All identifiable user information, account credentials, and personal data.</li>
+          <li>Exact SSH key formats, authentication protocol details, and specific bypass techniques.</li>
+          <li>Internal application paths, function names, and detailed exploitation methodology.</li>
+        </ul>
+      </section>
+
+      <a class="back-link" href="blog.html">Back to Blog</a>
+    </article>
+
+    <footer>dripped archive / selective disclosure / 2026</footer>
+  </main>
+</body>
+</html>
