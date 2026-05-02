@@ -4858,6 +4858,71 @@ function hexToRgba(hex, alpha) {
 }
 
 renderBoardSections();
+
+function findItemById(id) {
+  for (const section of window.PORTFOLIO_DATA.sections) {
+    const found = section.items.find(it => it.id === id);
+    if (found) return { item: found, section };
+  }
+  return null;
+}
+
+function renderDetail(itemId) {
+  const found = findItemById(itemId);
+  if (!found) return;
+  const { item, section } = found;
+  const d = item.detail;
+
+  const stats = (d.stats || []).map(s => `
+    <div class="detail-panel__stat" style="border-left-color:${section.color};background:${hexToRgba(section.color, 0.08)}">
+      <div class="detail-panel__stat-label">${s.label}</div>
+      <div class="detail-panel__stat-value" style="color:${section.color}">${s.value}</div>
+    </div>
+  `).join('');
+
+  const links = (d.links || []).map(l => `
+    <a href="${l.href}" class="${l.primary ? 'is-primary' : ''}"
+       ${l.href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${l.label}</a>
+  `).join('');
+
+  const heroStyle = d.hero
+    ? `background-image:url('${d.hero}')`
+    : '';
+  const heroClass = d.hero ? '' : 'is-placeholder';
+  const heroContent = d.hero ? '' : '[ ASSET PENDING ]';
+
+  document.getElementById('detailInner').innerHTML = `
+    <div class="detail-panel__pre">▸ FLIGHT ${item.flight} · NOW BOARDING</div>
+    <div class="detail-panel__head">
+      <div class="detail-panel__monogram" style="background:${section.color}">${item.monogram}</div>
+      <div>
+        <div class="detail-panel__title">${d.title}</div>
+        <div class="detail-panel__role">${d.role}</div>
+      </div>
+    </div>
+    <div class="detail-panel__hero ${heroClass}" style="${heroStyle}">${heroContent}</div>
+    ${stats ? `<div class="detail-panel__stats">${stats}</div>` : ''}
+    <div class="detail-panel__body">
+      ${(d.body || []).map(p => `<p>${p}</p>`).join('')}
+    </div>
+    ${links ? `<div class="detail-panel__links">${links}</div>` : ''}
+  `;
+  document.body.classList.add('detail-open');
+  document.getElementById('detail-panel').setAttribute('aria-hidden', 'false');
+}
+
+function closeDetail() {
+  document.body.classList.remove('detail-open');
+  document.getElementById('detail-panel').setAttribute('aria-hidden', 'true');
+}
+
+// Delegated click handler for all rows (covers both initial render and any future re-renders)
+document.getElementById('boardSections').addEventListener('click', e => {
+  const row = e.target.closest('.board-row');
+  if (row && row.dataset.id) renderDetail(row.dataset.id);
+});
+
+document.getElementById('detailClose').addEventListener('click', closeDetail);
 </script>
 </body>
 </html>
