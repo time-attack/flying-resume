@@ -4749,8 +4749,30 @@ function resize() {
 window.addEventListener('resize', resize);
 
 let _labelFrame = 0;
+
+/* ═══════════════════════════════════════════════
+   PORTFOLIO STATE MACHINE
+   ═══════════════════════════════════════════════ */
+let portfolioMode = 'airport';
+let renderLoopPaused = false;
+
+function setMode(mode) {
+  portfolioMode = mode;
+  if (mode === 'board') {
+    document.body.classList.add('board-view');
+    renderLoopPaused = true;
+  } else {
+    document.body.classList.remove('board-view');
+    document.body.classList.remove('detail-open');
+    renderLoopPaused = false;
+  }
+}
+
+window.PORTFOLIO_SET_MODE = setMode; // exposed for transition wiring + manual testing
+
 function tick() {
   requestAnimationFrame(tick);
+  if (renderLoopPaused) return;
   const dt = Math.min(clock.getDelta(), 0.1);
   updateTutorial(dt);
   updatePullUp();
@@ -4939,6 +4961,8 @@ document.getElementById('board').addEventListener('click', e => {
   if (e.target.closest('.board-row')) return; // row click is handled separately, not a "close" click
   closeDetail();
 });
+
+document.getElementById('boardBack').addEventListener('click', () => setMode('airport'));
 </script>
 </body>
 </html>
