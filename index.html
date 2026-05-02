@@ -1071,6 +1071,87 @@ body.board-view #tutorial {
   border-color: #ed8e2b;
   color: #ed8e2b;
 }
+.board-section {
+  margin-top: 22px;
+}
+.board-section__label {
+  font-size: 8px;
+  letter-spacing: .3em;
+  margin: 0 0 6px;
+}
+.board-section__cols {
+  display: grid;
+  grid-template-columns: 34px 76px 1fr 70px;
+  gap: 12px;
+  font-size: 8px;
+  letter-spacing: .25em;
+  color: rgba(244, 238, 216, .4);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(244, 238, 216, .08);
+  margin-bottom: 6px;
+}
+.board-row {
+  display: grid;
+  grid-template-columns: 34px 76px 1fr 70px;
+  gap: 12px;
+  align-items: center;
+  font-size: 11px;
+  padding: 7px 6px 7px 0;
+  border-bottom: 1px solid var(--row-color, rgba(244, 238, 216, .08));
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.board-row:hover {
+  background: rgba(244, 238, 216, .04);
+}
+.board-row.is-headline {
+  background: var(--row-bg, rgba(237, 142, 43, .06));
+  border-left: 2px solid var(--row-color, #ed8e2b);
+  padding-left: 6px;
+}
+.board-row__monogram {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+.board-row__monogram.solid {
+  color: #141311;
+  background: var(--row-color, #ed8e2b);
+}
+.board-row__monogram.outlined {
+  color: var(--row-color, #ed8e2b);
+  border: 1.5px solid var(--row-color, #ed8e2b);
+  background: transparent;
+}
+.board-row__monogram.dashed {
+  color: rgba(244, 238, 216, .5);
+  border: 1px dashed rgba(244, 238, 216, .4);
+  background: transparent;
+}
+.board-row__flight {
+  color: var(--row-color, #ed8e2b);
+  font-weight: 700;
+}
+.board-row__dest .sub {
+  opacity: .55;
+  margin-left: 6px;
+}
+.board-row__year {
+  opacity: .7;
+}
+.board-section.is-muted {
+  margin-top: 26px;
+}
+.board-section.is-muted .board-section__label {
+  color: rgba(244, 238, 216, .35);
+}
+.board-section.is-muted .board-row {
+  opacity: .6;
+}
 </style>
 </head>
 <body>
@@ -4549,6 +4630,76 @@ function renderBoardHeader() {
     `GH: ${i.github.toUpperCase()} · LINKEDIN`;
 }
 renderBoardHeader();
+
+function renderBoardSections() {
+  const data = window.PORTFOLIO_DATA;
+  if (!data) return;
+  const root = document.getElementById('boardSections');
+  root.innerHTML = '';
+
+  for (const section of data.sections) {
+    const sec = document.createElement('section');
+    sec.className = 'board-section' + (section.muted ? ' is-muted' : '');
+
+    const label = document.createElement('div');
+    label.className = 'board-section__label';
+    label.style.color = section.color;
+    label.textContent = '▸ ' + section.label;
+    sec.appendChild(label);
+
+    const cols = document.createElement('div');
+    cols.className = 'board-section__cols';
+    cols.innerHTML = `<span></span><span>FLIGHT</span><span>DESTINATION</span><span>YEAR</span>`;
+    sec.appendChild(cols);
+
+    section.items.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'board-row';
+      row.dataset.id = item.id;
+      row.style.setProperty('--row-color', section.color);
+      row.style.setProperty('--row-bg', hexToRgba(section.color, 0.06));
+      const isHeadline = i === 0 && !section.muted;
+      if (isHeadline) row.classList.add('is-headline');
+
+      const mono = document.createElement('div');
+      mono.className = 'board-row__monogram '
+        + (section.muted ? 'dashed' : (isHeadline ? 'solid' : 'outlined'));
+      mono.textContent = item.monogram;
+      row.appendChild(mono);
+
+      const flight = document.createElement('span');
+      flight.className = 'board-row__flight';
+      flight.textContent = item.flight;
+      row.appendChild(flight);
+
+      const dest = document.createElement('span');
+      dest.className = 'board-row__dest';
+      dest.innerHTML = item.subtitle
+        ? `${item.destination} <span class="sub">— ${item.subtitle}</span>`
+        : item.destination;
+      row.appendChild(dest);
+
+      const year = document.createElement('span');
+      year.className = 'board-row__year';
+      year.textContent = item.year;
+      row.appendChild(year);
+
+      sec.appendChild(row);
+    });
+
+    root.appendChild(sec);
+  }
+}
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+renderBoardSections();
 </script>
 </body>
 </html>
