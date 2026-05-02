@@ -1152,6 +1152,158 @@ body.board-view #tutorial {
 .board-section.is-muted .board-row {
   opacity: .6;
 }
+#detail-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 45%;
+  min-width: 420px;
+  max-width: 640px;
+  background: #141311;
+  border-left: 1px solid rgba(237, 142, 43, .25);
+  color: #f4eed8;
+  z-index: 40;
+  transform: translateX(100%);
+  transition: transform .35s cubic-bezier(.2, .8, .2, 1);
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  display: none;
+}
+body.detail-open #detail-panel {
+  display: block;
+  transform: translateX(0);
+}
+.detail-panel__inner {
+  padding: 32px 28px 56px;
+  font-size: 11px;
+}
+.detail-panel__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: 1px solid rgba(244, 238, 216, .25);
+  color: #f4eed8;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  z-index: 1;
+}
+.detail-panel__close:hover {
+  border-color: #ed8e2b;
+  color: #ed8e2b;
+}
+.detail-panel__pre {
+  font-size: 9px;
+  letter-spacing: .3em;
+  color: rgba(244, 238, 216, .4);
+  margin-bottom: 12px;
+}
+.detail-panel__head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(244, 238, 216, .1);
+  margin-bottom: 18px;
+}
+.detail-panel__monogram {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 24px;
+  flex-shrink: 0;
+  color: #141311;
+}
+.detail-panel__title {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.detail-panel__role {
+  opacity: .65;
+  font-size: 10px;
+  letter-spacing: .12em;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+.detail-panel__hero {
+  aspect-ratio: 16 / 9;
+  border-radius: 3px;
+  margin-bottom: 18px;
+  background-size: cover;
+  background-position: center;
+  background-color: #1a1410;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-panel__hero.is-placeholder {
+  background-image: linear-gradient(135deg, #1a1410 0%, #3a2818 50%, #5a3a20 100%);
+  font-size: 9px;
+  letter-spacing: .3em;
+  color: rgba(244, 238, 216, .4);
+}
+.detail-panel__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.detail-panel__stat {
+  padding: 10px;
+  background: rgba(237, 142, 43, .08);
+  border-left: 2px solid #ed8e2b;
+}
+.detail-panel__stat-label {
+  opacity: .5;
+  letter-spacing: .2em;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+.detail-panel__stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ed8e2b;
+  margin-top: 2px;
+}
+.detail-panel__body p {
+  line-height: 1.6;
+  opacity: .85;
+  margin-bottom: 10px;
+}
+.detail-panel__links {
+  margin-top: 18px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 9px;
+  letter-spacing: .15em;
+}
+.detail-panel__links a {
+  padding: 6px 10px;
+  border: 1px solid rgba(244, 238, 216, .2);
+  color: rgba(244, 238, 216, .75);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.detail-panel__links a.is-primary {
+  border-color: rgba(237, 142, 43, .4);
+  color: #ed8e2b;
+}
+.detail-panel__links a:hover {
+  border-color: #ed8e2b;
+  color: #ed8e2b;
+}
 </style>
 </head>
 <body>
@@ -1179,6 +1331,12 @@ body.board-view #tutorial {
       <div id="boardSections"></div>
     </div>
   </div>
+
+  <!-- Detail panel for a clicked board row -->
+  <aside id="detail-panel" aria-hidden="true">
+    <button class="detail-panel__close" id="detailClose" aria-label="Close">✕</button>
+    <div class="detail-panel__inner" id="detailInner"></div>
+  </aside>
 
   <div id="loader"><div class="ring"></div></div>
 
