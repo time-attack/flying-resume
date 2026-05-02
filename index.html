@@ -1304,6 +1304,46 @@ body.detail-open #detail-panel {
   border-color: #ed8e2b;
   color: #ed8e2b;
 }
+@media (max-width: 900px) {
+  #board .board-inner {
+    padding: 56px 18px 60px;
+  }
+  .board-header {
+    grid-template-columns: 1fr;
+  }
+  .board-header__right {
+    text-align: left;
+    margin-top: 8px;
+    line-height: 1.9;
+  }
+  .board-header__plane {
+    display: none;
+  }
+  .board-section__cols {
+    grid-template-columns: 30px 64px 1fr 56px;
+    gap: 8px;
+  }
+  .board-row {
+    grid-template-columns: 30px 64px 1fr 56px;
+    gap: 8px;
+    font-size: 10px;
+  }
+  .board-row__monogram {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  .board-row__dest .sub {
+    display: none;
+  }
+
+  #detail-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    border-left: none;
+  }
+}
 </style>
 </head>
 <body>
