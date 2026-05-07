@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sina Matian — Resume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #111;
+    --ink-soft: #444;
+    --ink-mute: #777;
+    --rule: #ddd;
+    --bg: #f4f1ea;
+    --paper: #fff;
+    --accent: #b1410f;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 11pt;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    padding: 36px 16px 80px;
+    display: flex;
+    justify-content: center;
+  }
+  .page {
+    width: 8.5in;
+    max-width: 100%;
+    background: var(--paper);
+    padding: 0.7in 0.7in 0.6in;
+    box-shadow: 0 22px 60px -30px rgba(0,0,0,0.25), 0 6px 16px -10px rgba(0,0,0,0.12);
+    border-radius: 4px;
+    position: relative;
+  }
+
+  /* Floating download bar (screen only) */
+  .toolbar {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+  .toolbar a, .toolbar button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border-radius: 999px;
+    border: 1px solid #1c1815;
+    background: #1c1815;
+    color: #fff8e7;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+  .toolbar a:hover, .toolbar button:hover { transform: translateY(-1px); }
+  .toolbar .ghost {
+    background: transparent;
+    color: #1c1815;
+  }
+
+  /* Header */
+  .head { padding-bottom: 14px; border-bottom: 1.5px solid var(--ink); margin-bottom: 18px; }
+  .name {
+    font-family: 'Instrument Serif', serif;
+    font-size: 38pt;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .tagline {
+    margin-top: 6px;
+    font-size: 11.5pt;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-family: 'Instrument Serif', serif;
+  }
+  .contact {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5pt;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  .contact a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--rule); }
+  .contact a:hover { color: var(--accent); }
+  .contact span.dot { color: var(--ink-mute); }
+
+  /* Sections */
+  section { margin-top: 18px; }
+  h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+  }
+
+  .summary { font-size: 11pt; line-height: 1.55; color: var(--ink); }
+  .summary strong { color: var(--ink); }
+
+  /* Entry block */
+  .entry { margin-bottom: 12px; }
+  .entry:last-child { margin-bottom: 0; }
+  .entry__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .entry__title {
+    font-weight: 700;
+    font-size: 11pt;
+    color: var(--ink);
+  }
+  .entry__title .at {
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+  .entry__date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+    color: var(--ink-mute);
+    white-space: nowrap;
+  }
+  .entry__role {
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 10.5pt;
+    font-family: 'Instrument Serif', serif;
+    margin-top: 1px;
+  }
+  .entry__bullets {
+    margin-top: 4px;
+    padding-left: 18px;
+    color: var(--ink);
+  }
+  .entry__bullets li {
+    margin-top: 3px;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  .entry__bullets li::marker { color: var(--ink-mute); }
+
+  /* Skills grid */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 14px;
+    font-size: 10.5pt;
+  }
+  .skills-grid dt {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .skills-grid dd {
+    color: var(--ink-soft);
+  }
+  .skills-grid dd .key {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Press */
+  .press {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 10.5pt;
+  }
+  .press a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .press a:hover { color: var(--accent); }
+
+  /* Print */
+  @media print {
+    @page { size: Letter; margin: 0.5in; }
+    html, body { background: #fff; padding: 0; }
+    .toolbar { display: none !important; }
+    .page {
+      box-shadow: none;
+      padding: 0;
+      width: 100%;
+      max-width: none;
+      border-radius: 0;
+    }
+    a { color: var(--ink) !important; }
+    .entry, section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button onclick="window.print()">↓ Save as PDF</button>
+  <a class="ghost" href="resume.html">← Back</a>
+</div>
+
+<article class="page" role="document">
+
+  <header class="head">
+    <h1 class="name">Sina Matian</h1>
+    <p class="tagline">Independent Security Researcher · Founder · CS @ NYU</p>
+    <div class="contact">
+      <a href="mailto:sina@sinamatian.com">sina@sinamatian.com</a>
+      <span class="dot">·</span>
+      <a href="https://sinamatian.com">sinamatian.com</a>
+      <span class="dot">·</span>
+      <a href="https://github.com/time-attack">github.com/time-attack</a>
+      <span class="dot">·</span>
+      <a href="https://www.linkedin.com/in/sina-matian-b4210238b/">linkedin.com/in/sina-matian</a>
+      <span class="dot">·</span>
+      <span>Los Angeles, CA</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Summary</h2>
+    <p class="summary">
+      Cybersecurity researcher and founder focused on reverse engineering of <strong>JavaScript</strong> and <strong>Swift / iOS</strong> applications. <strong>10+ approved bug bounty disclosures</strong> at Hinge, Wix, and Vibecode, and shipping consumer products that have reached <strong>30K+ daily active users</strong>. Building things that work for real people while finding what others ship by accident.
+    </p>
+  </section>
+
+  <section>
+    <h2>Skills</h2>
+    <dl class="skills-grid">
+      <dt>Specialty</dt>
+      <dd><span class="key">Reverse engineering</span> of JavaScript and Swift / iOS applications · API tampering · auth bypass research</dd>
+      <dt>Languages</dt>
+      <dd>JavaScript, TypeScript, Swift, Python, Go, SQL, Bash</dd>
+      <dt>Frameworks</dt>
+      <dd>React, Next.js, Node.js, SwiftUI, UIKit, FastAPI, PostgreSQL, Supabase</dd>
+      <dt>Security</dt>
+      <dd>Burp Suite, Frida, mitmproxy, Charles, IDA / Ghidra, HackerOne, OWASP</dd>
+      <dt>AI / ML</dt>
+      <dd>PyTorch, LangChain, OpenAI API, Anthropic API, vector databases</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Selected Disclosures</h2>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Hinge <span class="at">— Authorization bypass to premium features via API</span></div>
+        <div class="entry__date">2024 · Disclosed</div>
+      </div>
+      <ul class="entry__bullets">
+        <li>Found that the iOS client gated premium features in the UI but the backend would still process the underlying actions for non-paying accounts.</li>
+        <li>Reverse-engineered the Swift client and replayed authenticated requests to demonstrate paywall bypass against premium-target profiles.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Wix.com <span class="at">— IDOR exposing user-scoped data</span></div>
+        <div class="entry__date">2024 · Disclosed</div>
+      </div>
+      <ul class="entry__bullets">
+        <li>Identified an insecure direct object reference where authenticated requests with another user's identifier returned scoped data without authorization checks.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Vibecode <span class="at">— SSH authentication bypass (critical)</span></div>
+        <div class="entry__date">2024 · Disclosed</div>
+      </div>
+      <ul class="entry__bullets">
+        <li>Demonstrated an authentication bypass on the platform's SSH layer; coordinated disclosure with the team.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Experience</h2>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Tefillin Timer <span class="at">— Founder · iOS App</span></div>
+        <div class="entry__date">2024 — Present</div>
+      </div>
+      <div class="entry__role">Free iOS app helping observant Jews track tefillin practice with location-aware Zmanim and reminders.</div>
+      <ul class="entry__bullets">
+        <li>30K+ daily active users; rewrote the app from JavaScript to native Swift for performance and notification reliability.</li>
+        <li>Coverage in Jerusalem Post and 2 syndicated US broadcast outlets.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Senior Support AI <span class="at">— Founder · Nonprofit</span></div>
+        <div class="entry__date">2024 — Present</div>
+      </div>
+      <div class="entry__role">Nonprofit teaching seniors how to use modern technology, with 10+ partner centers.</div>
+      <ul class="entry__bullets">
+        <li>Designed curriculum and on-the-ground programming serving 300+ seniors.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Independent Security Researcher <span class="at">— Self-employed</span></div>
+        <div class="entry__date">2023 — Present</div>
+      </div>
+      <ul class="entry__bullets">
+        <li>10+ approved disclosures on HackerOne and direct programs across consumer and B2B platforms.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Webutation, Inc <span class="at">— Software Engineer Intern · Lead Dev on MVP</span></div>
+        <div class="entry__date">2022 — 2024</div>
+      </div>
+      <ul class="entry__bullets">
+        <li>Led MVP development end-to-end across full stack.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Education</h2>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">New York University <span class="at">— B.A. Computer Science · Tisch / CAS</span></div>
+        <div class="entry__date">2026 — 2029 · Admitted</div>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Santa Monica College <span class="at">— Computer Science · 4.0 GPA</span></div>
+        <div class="entry__date">2025 — Present</div>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Los Angeles Pierce College <span class="at">— Computer Science · 4.0 GPA</span></div>
+        <div class="entry__date">2025 — 2027</div>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="entry__top">
+        <div class="entry__title">Calabasas High School <span class="at">— AP Computer Science A &amp; Principles</span></div>
+        <div class="entry__date">2021 — 2025</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Press</h2>
+    <div class="press">
+      <a href="https://www.jpost.com/consumerism/article-879502" target="_blank" rel="noopener">Jerusalem Post — "Young developer builds Tefillin timer app"</a>
+      <a href="https://www.wric.com/business/press-releases/ein-presswire/871638251/sina-matian-announces-the-launch-of-tefillin-timer-a-free-app-helping-jews-worldwide-strengthen-daily-observance/" target="_blank" rel="noopener">WRIC ABC 8</a>
+      <a href="https://www.cbs42.com/business/press-releases/ein-presswire/871638251/sina-matian-announces-the-launch-of-tefillin-timer-a-free-app-helping-jews-worldwide-strengthen-daily-observance/" target="_blank" rel="noopener">CBS 42</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Languages · Activities</h2>
+    <p style="font-size:10.5pt;color:var(--ink-soft);">Fluent English · Conversational Hebrew · Level 10 competitive gymnast · Varsity wrestler.</p>
+  </section>
+
+</article>
+
+</body>
+</html>

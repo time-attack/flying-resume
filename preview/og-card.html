@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OG Card</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1200px;
+    height: 630px;
+    background: #f4eed8;
+    color: #1c1815;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "kern";
+  }
+  .card {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(255, 176, 74, 0.22), transparent 55%),
+      radial-gradient(ellipse at 0% 100%, rgba(74, 59, 140, 0.20), transparent 55%),
+      linear-gradient(180deg, #f7f1e3 0%, #ece4cd 100%);
+    padding: 36px 72px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .body { flex: 1 1 auto; }
+  .footer { flex: 0 0 auto; }
+  .card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at center, rgba(28, 24, 20, 0.06) 1px, transparent 1.5px);
+    background-size: 20px 20px;
+    pointer-events: none;
+  }
+  .card > * { position: relative; z-index: 1; }
+
+  /* Top strip */
+  .strip {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    letter-spacing: 0.28em;
+    color: #5b534d;
+    text-transform: uppercase;
+  }
+  .strip .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .strip .live::before {
+    content: "";
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #4caf50;
+  }
+
+  /* Body */
+  .body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 56px;
+    margin-top: 22px;
+  }
+  .avatar {
+    flex-shrink: 0;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 22px 60px -30px rgba(0,0,0,0.45);
+    border: 4px solid #fff;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .text { min-width: 0; flex: 1; }
+  .text .label {
+    font-size: 14px;
+    letter-spacing: 0.28em;
+    color: #b1410f;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .text h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 900;
+    font-size: 84px;
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    color: #1c1815;
+  }
+  .text p {
+    margin-top: 14px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 24px;
+    line-height: 1.3;
+    color: #3a322c;
+    max-width: 760px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px dashed #c5b990;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    letter-spacing: 0.18em;
+    color: #5b534d;
+    text-transform: uppercase;
+  }
+  .footer .stats {
+    display: flex; gap: 28px;
+  }
+  .footer .stat b {
+    color: #1c1815;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  .footer .url {
+    font-weight: 700;
+    color: #1c1815;
+    letter-spacing: 0.16em;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="strip">
+    <span class="live">Now Arriving · SMA 010 from KLAX</span>
+    <span>SINAMATIAN.COM</span>
+  </div>
+
+  <div class="body">
+    <div class="avatar"><img src="../assets/headshot.png" alt=""></div>
+    <div class="text">
+      <div class="label">Sina Matian · Portfolio</div>
+      <h1>Sina<br>Matian</h1>
+      <p>Independent security researcher and founder. Reverse engineering JS &amp; Swift apps.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="stats">
+      <span class="stat"><b>10+</b>Bug Bounties</span>
+      <span class="stat"><b>30K+</b>Tefillin DAU</span>
+      <span class="stat"><b>3</b>Press Outlets</span>
+    </div>
+    <span class="url">SINAMATIAN.COM</span>
+  </div>
+</div>
+</body>
+</html>

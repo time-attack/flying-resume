@@ -4,6 +4,14 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>SMI · Sina Matian International</title>
+<meta name="description" content="Sina Matian — independent security researcher and founder. Reverse engineering JS & Swift apps.">
+<meta property="og:title" content="Sina Matian — Portfolio">
+<meta property="og:description" content="Independent security researcher and founder. Reverse engineering JS & Swift apps.">
+<meta property="og:url" content="https://sinamatian.com/preview/resume.html">
+<meta property="og:image" content="https://sinamatian.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sinamatian.com/assets/og.png">
+<link rel="icon" type="image/png" href="../assets/headshot.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -730,6 +738,161 @@ hr.rule {
   color: var(--ink);
   letter-spacing: -0.01em;
 }
+/* Press bar */
+.press-bar {
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--rad-sm);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.press-bar__lbl {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.press-bar__list {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.press-bar a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--paper-line);
+  border-radius: var(--rad-xs);
+  background: var(--paper-deep);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.press-bar a:hover { transform: translateY(-1px); background: #fff; }
+.press-bar img { width: 18px; height: 18px; object-fit: contain; }
+
+/* Skills section */
+.skills {
+  margin-top: 22px;
+  padding: 18px 18px 16px;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--rad-sm);
+}
+.skills__head {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.skills__group { margin-bottom: 12px; }
+.skills__group:last-child { margin-bottom: 0; }
+.skills__cat {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.skills__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  border: 1px solid var(--paper-line);
+  border-radius: 999px;
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+.chip.is-key {
+  background: #1c1815;
+  color: #fff8e7;
+  border-color: #1c1815;
+}
+
+/* Contact CTA */
+.cta-row {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  text-decoration: none;
+  border: 1px solid var(--paper-line);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.cta--primary {
+  background: #1c1815;
+  color: #fff8e7;
+  border-color: #1c1815;
+}
+.cta--primary:hover { transform: translateY(-1px); background: #2c2620; }
+.cta--ghost {
+  background: transparent;
+  color: var(--ink);
+}
+.cta--ghost:hover { background: var(--paper-deep); }
+
+/* Scroll fade-in */
+.fade-in {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Print / PDF mode — clean traditional resume layout */
+@media print {
+  @page { size: Letter; margin: 0.6in; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .runway, .plane-wrap, .meta-bar, .cta-row, .press-bar, .footer-stamp,
+  .section__gate, .section__terminal, .section__count, .stat::after { display: none !important; }
+  .row[data-href]::before { display: none !important; }
+  .row[data-href] { transform: none !important; }
+  body { padding: 0 !important; max-width: none !important; }
+  .resume-grid { display: block !important; padding: 0 !important; }
+  .hero, .identity, .skills, .stat, .row, .section { break-inside: avoid; }
+  .hero { background: none !important; border: 1px solid #000 !important; padding: 16px !important; }
+  .hero__title, .hero__sub, .hero__code { color: #000 !important; }
+  .row, .section, .stat, .skills, .press-bar { background: #fff !important; }
+  .fade-in { opacity: 1 !important; transform: none !important; }
+  a { color: inherit; text-decoration: none; }
+  .row__title, .section__title, .id__name { color: #000 !important; }
+}
+
 .stat__unit {
   font-family: var(--f-mono);
   font-size: 10px;
@@ -830,8 +993,23 @@ hr.rule {
   padding: 14px 6px;
   border-bottom: 1px dashed var(--paper-line-2);
   position: relative;
-  transition: background 0.18s ease;
+  transition: background 0.18s ease, transform 0.18s ease;
 }
+.row[data-href] { cursor: pointer; }
+.row[data-href]:hover { transform: translateX(4px); }
+.row[data-href]::before {
+  content: "→";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%) translateX(0);
+  opacity: 0;
+  font-family: var(--f-mono);
+  color: var(--sec);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+.row[data-href]:hover::before { opacity: 0.6; transform: translateY(-50%) translateX(4px); }
 .row:hover { background: var(--sec-soft); }
 .row.is-headline {
   background: linear-gradient(90deg, var(--sec-soft), transparent 70%);
@@ -1116,6 +1294,11 @@ hr.rule {
     <span class="pill" style="background:transparent;border-color:var(--paper-line)">Last refresh · 09:34 PDT</span>
   </div>
 
+  <div class="cta-row">
+    <a class="cta cta--primary" href="mailto:sina@sinamatian.com">Contact me</a>
+    <a class="cta cta--ghost" href="resume.pdf.html" target="_blank" rel="noopener">↓ Download Resume</a>
+  </div>
+
   <!-- Identity -->
   <section class="identity" aria-label="Identity">
     <div class="avatar"><img src="../assets/headshot.png" alt="Sina Matian" onerror="this.replaceWith(document.createTextNode('SM'));"></div>
@@ -1145,7 +1328,7 @@ hr.rule {
   </section>
 
   <!-- Highlights -->
-  <section class="highlights" aria-label="Highlights">
+  <section class="highlights" aria-label="Highlights" style="grid-template-columns: repeat(3, 1fr);">
     <div class="stat">
       <div class="stat__lbl">Bug Bounties</div>
       <div class="stat__val">10<span class="stat__unit">+</span></div>
@@ -1158,9 +1341,76 @@ hr.rule {
       <div class="stat__lbl">Seniors Served</div>
       <div class="stat__val">300<span class="stat__unit">+</span></div>
     </div>
-    <div class="stat">
-      <div class="stat__lbl">Press Coverage</div>
-      <div class="stat__val">3<span class="stat__unit">OUTLETS</span></div>
+  </section>
+
+  <!-- Press coverage -->
+  <div class="press-bar" aria-label="As seen in">
+    <span class="press-bar__lbl">As Seen In</span>
+    <div class="press-bar__list">
+      <a href="https://www.jpost.com/consumerism/article-879502" target="_blank" rel="noopener"><img src="../assets/logos/press-jpost.png" alt="">Jerusalem Post</a>
+      <a href="https://www.wric.com/business/press-releases/ein-presswire/871638251/sina-matian-announces-the-launch-of-tefillin-timer-a-free-app-helping-jews-worldwide-strengthen-daily-observance/" target="_blank" rel="noopener"><img src="../assets/logos/press-wric.png" alt="">WRIC ABC 8</a>
+      <a href="https://www.cbs42.com/business/press-releases/ein-presswire/871638251/sina-matian-announces-the-launch-of-tefillin-timer-a-free-app-helping-jews-worldwide-strengthen-daily-observance/" target="_blank" rel="noopener"><img src="../assets/logos/press-cbs42.png" alt="">CBS 42</a>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <section class="skills" aria-label="Skills">
+    <div class="skills__head">Skills · Stack</div>
+    <div class="skills__group">
+      <div class="skills__cat">Reverse Engineering · Specialty</div>
+      <div class="skills__chips">
+        <span class="chip is-key">JS Application RE</span>
+        <span class="chip is-key">Swift / iOS RE</span>
+        <span class="chip is-key">API Tampering</span>
+        <span class="chip is-key">Auth Bypass Research</span>
+      </div>
+    </div>
+    <div class="skills__group">
+      <div class="skills__cat">Languages</div>
+      <div class="skills__chips">
+        <span class="chip">JavaScript</span>
+        <span class="chip">TypeScript</span>
+        <span class="chip">Swift</span>
+        <span class="chip">Python</span>
+        <span class="chip">Go</span>
+        <span class="chip">SQL</span>
+        <span class="chip">Bash</span>
+      </div>
+    </div>
+    <div class="skills__group">
+      <div class="skills__cat">Frameworks · Platforms</div>
+      <div class="skills__chips">
+        <span class="chip">React</span>
+        <span class="chip">Next.js</span>
+        <span class="chip">Node.js</span>
+        <span class="chip">SwiftUI</span>
+        <span class="chip">UIKit</span>
+        <span class="chip">FastAPI</span>
+        <span class="chip">PostgreSQL</span>
+        <span class="chip">Supabase</span>
+      </div>
+    </div>
+    <div class="skills__group">
+      <div class="skills__cat">Security · Tooling</div>
+      <div class="skills__chips">
+        <span class="chip">Burp Suite</span>
+        <span class="chip">Frida</span>
+        <span class="chip">mitmproxy</span>
+        <span class="chip">Charles</span>
+        <span class="chip">IDA / Ghidra</span>
+        <span class="chip">HackerOne</span>
+        <span class="chip">OWASP</span>
+      </div>
+    </div>
+    <div class="skills__group">
+      <div class="skills__cat">AI / ML</div>
+      <div class="skills__chips">
+        <span class="chip">PyTorch</span>
+        <span class="chip">LangChain</span>
+        <span class="chip">OpenAI API</span>
+        <span class="chip">Anthropic API</span>
+        <span class="chip">Vector DBs</span>
+      </div>
     </div>
   </section>
 
@@ -1177,7 +1427,7 @@ hr.rule {
       <div class="section__count">04 Flights</div>
     </header>
     <div class="rows">
-      <div class="row is-headline">
+      <div class="row is-headline" data-href="https://www.nyu.edu" target="_blank" rel="noopener">
         <div class="row__mono has-logo"><img src="../assets/logos/nyu.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('N'));"></div>
         <div class="row__main">
           <div class="row__title">New York University</div>
@@ -1195,7 +1445,7 @@ hr.rule {
           <span class="row__status" data-st="ADMITTED">Admitted</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="https://www.smc.edu" target="_blank" rel="noopener">
         <div class="row__mono has-logo"><img src="../assets/logos/smc.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Santa Monica College</div>
@@ -1211,7 +1461,7 @@ hr.rule {
           <span class="row__status" data-st="NOW">Now</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="https://www.piercecollege.edu" target="_blank" rel="noopener">
         <div class="row__mono has-logo"><img src="../assets/logos/piercecollege.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('L'));"></div>
         <div class="row__main">
           <div class="row__title">Los Angeles Pierce College</div>
@@ -1227,7 +1477,7 @@ hr.rule {
           <span class="row__status" data-st="NOW">Now</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="https://en.wikipedia.org/wiki/Calabasas_High_School" target="_blank" rel="noopener">
         <div class="row__mono has-logo"><img src="../assets/logos/calabasas-hs.jpg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('C'));"></div>
         <div class="row__main">
           <div class="row__title">Calabasas High School</div>
@@ -1257,7 +1507,7 @@ hr.rule {
       <div class="section__count">04 Flights</div>
     </header>
     <div class="rows">
-      <div class="row is-headline">
+      <div class="row is-headline" data-href="https://apps.apple.com/us/app/tefillin-timer/id6755014728" target="_blank" rel="noopener">
         <div class="row__mono has-logo has-logo--cover"><img src="../assets/logos/tefillin-timer.jpg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('T'));"></div>
         <div class="row__main">
           <div class="row__title">Tefillin Timer</div>
@@ -1275,7 +1525,7 @@ hr.rule {
           <span class="row__status" data-st="LIVE">Live</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="https://seniorsupportai.org" target="_blank" rel="noopener">
         <div class="row__mono">S</div>
         <div class="row__main">
           <div class="row__title">Senior Support AI · org</div>
@@ -1293,7 +1543,7 @@ hr.rule {
           <span class="row__status" data-st="LIVE">Live</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="https://hackerone.com" target="_blank" rel="noopener">
         <div class="row__mono">I</div>
         <div class="row__main">
           <div class="row__title">Independent Security Researcher</div>
@@ -1309,7 +1559,7 @@ hr.rule {
           <span class="row__status" data-st="NOW">Now</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="https://webutation.io" target="_blank" rel="noopener">
         <div class="row__mono has-logo"><img src="../assets/logos/webutation.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
         <div class="row__main">
           <div class="row__title">Webutation, Inc</div>
@@ -1341,7 +1591,7 @@ hr.rule {
       <div class="section__count">03 Flights</div>
     </header>
     <div class="rows">
-      <div class="row is-headline">
+      <div class="row is-headline" data-href="blog-hinge-paywall-bypass.html">
         <div class="row__mono has-logo"><img src="../assets/logos/hinge.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('H'));"></div>
         <div class="row__main">
           <div class="row__title">Hinge</div>
@@ -1357,7 +1607,7 @@ hr.rule {
           <span class="row__status" data-st="DISCLOSED">Disclosed</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="blog-wix-idor.html">
         <div class="row__mono has-logo"><img src="../assets/logos/wix.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
         <div class="row__main">
           <div class="row__title">Wix · com</div>
@@ -1373,7 +1623,7 @@ hr.rule {
           <span class="row__status" data-st="DISCLOSED">Disclosed</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="blog-vibecode-ssh.html">
         <div class="row__mono has-logo has-logo--cover"><img src="../assets/logos/vibecode.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('V'));"></div>
         <div class="row__main">
           <div class="row__title">Vibecode</div>
@@ -1405,7 +1655,7 @@ hr.rule {
       <div class="section__count">02 Flights</div>
     </header>
     <div class="rows">
-      <div class="row">
+      <div class="row" data-href="https://www.starbucks.com" target="_blank" rel="noopener">
         <div class="row__mono has-logo"><img src="../assets/logos/starbucks.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Starbucks</div>
@@ -1421,7 +1671,7 @@ hr.rule {
           <span class="row__status" data-st="DONE">8 mos</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-href="https://sloansicecream.com" target="_blank" rel="noopener">
         <div class="row__mono has-logo"><img src="../assets/logos/sloansicecream.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Sloan&rsquo;s Ice Cream LLC</div>
@@ -1544,6 +1794,36 @@ hr.rule {
   }
   fmt();
   setInterval(fmt, 1000 * 30);
+})();
+
+// Clickable rows — open data-href on click
+document.querySelectorAll('.row[data-href]').forEach(row => {
+  row.addEventListener('click', (e) => {
+    if (e.target.closest('a, button')) return;
+    const href = row.dataset.href;
+    const blank = row.getAttribute('target') === '_blank';
+    if (blank) window.open(href, '_blank', 'noopener');
+    else window.location.href = href;
+  });
+});
+
+// Scroll fade-in for rows, sections, and bars
+(() => {
+  const targets = document.querySelectorAll('.row, .section__head, .stat, .skills__group, .press-bar, .cta-row');
+  targets.forEach(el => el.classList.add('fade-in'));
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(el => el.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+  targets.forEach(el => io.observe(el));
 })();
 </script>
 </body>
