@@ -4,37 +4,41 @@
    ============================================================ */
 
 :root {
-  --bg:#f7f1e3;
-  --bg-2:#f1e9d5;
-  --paper:#fffaf0;
-  --paper-2:#fdf5e3;
-  --ink:#1c1916;
-  --muted:#5b534d;
+  /* Paper — cooler, slightly muted (less yellow) */
+  --bg:#f1ede2;
+  --bg-2:#ebe5d3;
+  --paper:#faf6ec;
+  --paper-2:#f5efde;
+  --ink:#16141a;
+  --muted:#574f4a;
   --muted-2:#7a716a;
-  --line:#ddd2bf;
-  --line-soft:#ebe1cb;
+  --line:#d6ccb5;
+  --line-soft:#e3d9c1;
 
-  --accent:#c76421;
-  --accent-soft:#f1e1ca;
-  --accent-deep:#8a3f0f;
+  /* Accent — ember/rust instead of candy-orange */
+  --accent:#a8421d;
+  --accent-soft:#f0d7c5;
+  --accent-deep:#73270e;
 
-  --safe:#2e6b45;
-  --safe-soft:#e3efe6;
-  --warn:#8e5a14;
-  --warn-soft:#f6e7c8;
-  --info:#3a597a;
-  --info-soft:#e3edf4;
-  --danger:#9c3a25;
-  --danger-soft:#f3dad0;
+  /* Semantic — slightly desaturated, more "operations dashboard" */
+  --safe:#2c5e3e;
+  --safe-soft:#dde8de;
+  --warn:#7e5b14;
+  --warn-soft:#f0e3c1;
+  --info:#2c4a6a;
+  --info-soft:#dbe5ee;
+  --danger:#8a2c1a;
+  --danger-soft:#eecdc2;
 
-  --code-bg:#15110d;
-  --code-surface:#1d1813;
-  --code-ink:#f0e2c6;
-  --code-muted:#8a7c64;
-  --code-rule:#2a2017;
-  --code-amber:#e8a05c;
-  --code-cream:#d8c79c;
-  --code-sage:#9ab089;
+  /* Code surface — cooler dark, terminal feel */
+  --code-bg:#12110f;
+  --code-surface:#1b1916;
+  --code-ink:#ecdcb8;
+  --code-muted:#7c6d52;
+  --code-rule:#251f17;
+  --code-amber:#e0995a;
+  --code-cream:#d4c193;
+  --code-sage:#92a87f;
 
   --shadow-1: 0 1px 0 rgba(56,41,25,.04);
   --shadow-2: 0 14px 30px -16px rgba(56,41,25,.18), 0 1px 0 rgba(56,41,25,.04);
@@ -49,7 +53,7 @@ body {
   background:
     linear-gradient(180deg, #f5efe1 0%, #f7f1e3 100%);
   color:var(--ink);
-  font-family:'Newsreader', Georgia, serif;
+  font-family:'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 
@@ -125,7 +129,7 @@ a { color:inherit; }
   display:inline-flex;
   align-items:center;
   gap:10px;
-  font-family:'Syne', sans-serif;
+  font-family:'Space Grotesk', sans-serif;
   font-size:13px;
   font-weight:800;
   letter-spacing:.28em;
@@ -207,10 +211,11 @@ a { color:inherit; }
 
 .index-hero h1 {
   margin:14px 0 12px;
-  font-family:'Syne', sans-serif;
-  font-size:clamp(2.6rem, 8vw, 4.4rem);
-  line-height:.96;
-  letter-spacing:-.04em;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:clamp(2.5rem, 7.6vw, 4.1rem);
+  line-height:1;
+  letter-spacing:-.028em;
+  font-weight:700;
   position:relative;
   z-index:1;
 }
@@ -344,7 +349,7 @@ a { color:inherit; }
 
 .story-card h2 {
   margin:0 0 10px;
-  font-family:'Syne', sans-serif;
+  font-family:'Space Grotesk', sans-serif;
   font-size:1.55rem;
   line-height:1.1;
   letter-spacing:-.02em;
@@ -400,19 +405,21 @@ a { color:inherit; }
 
 .article-header h1 {
   margin:18px 0 18px;
-  font-family:'Syne', sans-serif;
-  font-size:clamp(2.1rem, 5.6vw, 3.4rem);
-  line-height:1.02;
-  letter-spacing:-.035em;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:clamp(2rem, 5.2vw, 3.1rem);
+  line-height:1.06;
+  letter-spacing:-.022em;
+  font-weight:700;
   max-width:22ch;
 }
 
 .lede {
   margin:0;
   color:var(--ink);
-  font-size:1.18rem;
-  line-height:1.74;
+  font-size:1.16rem;
+  line-height:1.65;
   max-width:60ch;
+  font-weight:400;
 }
 
 .meta-row {
@@ -475,10 +482,11 @@ article > section + section::before {
 
 article h2 {
   margin:0 0 16px;
-  font-family:'Syne', sans-serif;
-  font-size:1.55rem;
-  line-height:1.18;
-  letter-spacing:-.02em;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:1.5rem;
+  line-height:1.22;
+  letter-spacing:-.012em;
+  font-weight:600;
   display:flex;
   align-items:baseline;
   gap:14px;
@@ -496,7 +504,7 @@ article h2::before {
 
 article h3 {
   margin:28px 0 10px;
-  font-family:'Syne', sans-serif;
+  font-family:'Space Grotesk', sans-serif;
   font-size:1.16rem;
   letter-spacing:-.01em;
   color:var(--ink);
@@ -504,16 +512,17 @@ article h3 {
 
 article p {
   margin:0 0 16px;
-  font-size:1.1rem;
-  line-height:1.82;
+  font-size:1.0625rem;
+  line-height:1.74;
   max-width:66ch;
+  color:#23222a;
 }
 
 article p:last-child { margin-bottom:0; }
 
 /* drop cap on first paragraph after lede */
 .dropcap::first-letter {
-  font-family:'Syne', sans-serif;
+  font-family:'Space Grotesk', sans-serif;
   font-size:3.4rem;
   font-weight:700;
   float:left;
@@ -716,11 +725,12 @@ article section > pre {
   margin:24px 0;
   padding:14px 0 14px 22px;
   border-left:3px solid var(--accent);
-  font-family:'Newsreader', Georgia, serif;
-  font-size:1.32rem;
-  line-height:1.5;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:1.28rem;
+  line-height:1.45;
+  letter-spacing:-.012em;
   color:var(--ink);
-  font-style:italic;
+  font-weight:500;
   max-width:60ch;
 }
 
@@ -756,7 +766,7 @@ article section > pre {
   padding-top:2px;
 }
 
-.step strong { display:block; margin-bottom:4px; font-family:'Syne', sans-serif; font-size:1.04rem; }
+.step strong { display:block; margin-bottom:4px; font-family:'Space Grotesk', sans-serif; font-size:1.04rem; }
 .step p { margin:0; font-size:1rem; line-height:1.7; }
 
 /* ------------------------------------------------------------
@@ -782,7 +792,7 @@ article th, article td {
 
 article th {
   background:var(--bg-2);
-  font-family:'Syne', sans-serif;
+  font-family:'Space Grotesk', sans-serif;
   font-size:.92rem;
   letter-spacing:.02em;
   border-bottom:1px solid var(--line);
@@ -844,7 +854,7 @@ article td code { font-size:.82em; }
 .timeline-item strong {
   display:block;
   margin-bottom:6px;
-  font-family:'Syne', sans-serif;
+  font-family:'Space Grotesk', sans-serif;
   font-size:1.08rem;
 }
 
