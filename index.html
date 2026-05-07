@@ -6,7 +6,7 @@
 <title>LAX · 3D Airport Diagram</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Boldonse&family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
   html,body {
@@ -130,6 +130,15 @@
     border-color:#ed8e2b;
     color:#141311;
     transform:translateY(-1px);
+  }
+  .site-nav a#jumpToResume {
+    background:rgba(237,142,43,.12);
+    border-color:rgba(237,142,43,.55);
+    color:#ed8e2b;
+  }
+  .site-nav a#jumpToResume:hover {
+    background:#ed8e2b;
+    color:#141311;
   }
 
   /* ——— LEGEND ——— */
@@ -570,6 +579,29 @@
     letter-spacing:.22em;
     color:rgba(244,238,216,.35);
   }
+  .tutorial__skip {
+    display:block;
+    margin:14px auto 0;
+    padding:8px 14px;
+    background:rgba(244,238,216,.06);
+    border:1px solid rgba(244,238,216,.18);
+    border-radius:6px;
+    color:rgba(244,238,216,.78);
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    cursor:pointer;
+    pointer-events:auto;        /* override parent's pointer-events:none */
+    position:relative;
+    z-index:1;
+    transition:background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .tutorial__skip:hover {
+    background:rgba(237,142,43,.14);
+    border-color:rgba(237,142,43,.55);
+    color:#ed8e2b;
+  }
 
   /* ——— 3D LABELS ——— */
   .runway-label {
@@ -742,6 +774,7 @@
     transform:translateY(-12px);
     transition:opacity 1.2s 1.2s, transform 1.2s 1.2s cubic-bezier(.2,.8,.2,1);
   }
+  body.birds-eye .map-title { opacity:0 !important; transition:opacity .6s; }
   body.map-view .map-title {
     opacity:1;
     transform:translateY(0);
@@ -903,48 +936,803 @@
     100% { transform:translate(18%, 26%) scale(3.2); }
   }
 
+  /* ═══════════════════════════════════════════════
+     LANDING SEQUENCE OVERLAY · SINA MATIAN INTL (SMI)
+     Cinematic descent through clouds → runway threshold reveal.
+     ═══════════════════════════════════════════════ */
+  .landing-overlay {
+    position:fixed;
+    inset:0;
+    z-index:90;
+    pointer-events:none;
+    opacity:0;
+    visibility:hidden;
+    transition:opacity .6s ease, visibility 0s linear .6s;
+    font-family:'JetBrains Mono', monospace;
+    color:#f5ecd6;
+    overflow:hidden;
+  }
+  .landing-overlay.active {
+    opacity:1;
+    visibility:visible;
+    transition:opacity .6s ease, visibility 0s linear 0s;
+  }
+
+  /* Sky-gradient backdrop that warms toward sunset as we descend */
+  .landing-sky {
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(ellipse at 50% 110%, rgba(255,196,128,0.55) 0%, transparent 55%),
+      linear-gradient(180deg,
+        #1c2738 0%,
+        #2c405d 28%,
+        #6e6486 55%,
+        #d9876b 78%,
+        #f6c282 100%);
+    transform:translateY(-12%);
+    transition:transform 4s cubic-bezier(.45,.05,.5,.95);
+  }
+  .landing-overlay.active .landing-sky { transform:translateY(0); }
+
+  /* Cloud streaks that whip past UPWARD as we descend */
+  .landing-cloud {
+    position:absolute;
+    left:-20%;
+    right:-20%;
+    height:40%;
+    background:
+      radial-gradient(ellipse 28% 80% at 18% 50%, rgba(255,255,255,0.35) 0%, transparent 70%),
+      radial-gradient(ellipse 22% 70% at 52% 50%, rgba(255,234,205,0.30) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 80% at 84% 50%, rgba(255,255,255,0.28) 0%, transparent 72%);
+    filter:blur(6px);
+    pointer-events:none;
+    will-change:transform, opacity;
+  }
+  .landing-cloud.l-c1 { top:60%;  opacity:0; }
+  .landing-cloud.l-c2 { top:38%;  opacity:0; }
+  .landing-cloud.l-c3 { top:18%;  opacity:0; }
+  .landing-overlay.active .landing-cloud {
+    animation:landingCloudPass 3.8s cubic-bezier(.35,.0,.65,1) forwards;
+  }
+  .landing-overlay.active .landing-cloud.l-c1 { animation-delay:.1s; }
+  .landing-overlay.active .landing-cloud.l-c2 { animation-delay:.5s; }
+  .landing-overlay.active .landing-cloud.l-c3 { animation-delay:.9s; }
+  @keyframes landingCloudPass {
+    0%   { transform:translateY(120%) scale(1.0); opacity:0; }
+    20%  { opacity:.95; }
+    100% { transform:translateY(-150%) scale(1.5); opacity:0; }
+  }
+
+  /* Airport silhouette emerging in the lower band */
+  .landing-airport-silhouette {
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:38%;
+    pointer-events:none;
+    opacity:0;
+    transform:translateY(40px) scale(.96);
+    transition:opacity 1.2s ease 1.4s, transform 1.6s cubic-bezier(.18,.89,.32,1.07) 1.4s;
+  }
+  .landing-overlay.active .landing-airport-silhouette {
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+  .landing-airport-silhouette svg { width:100%; height:100%; display:block; }
+
+  /* Approach plate · top-left HUD */
+  .landing-hud {
+    position:absolute;
+    top:24px;
+    left:24px;
+    background:rgba(8,12,20,.55);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(245,236,214,.18);
+    border-radius:10px;
+    padding:14px 18px;
+    min-width:240px;
+    box-shadow:0 8px 32px rgba(0,0,0,.35);
+    opacity:0;
+    transform:translateY(-12px);
+    transition:opacity .6s ease .25s, transform .7s cubic-bezier(.18,.89,.32,1.07) .25s;
+  }
+  .landing-overlay.active .landing-hud { opacity:1; transform:translateY(0); }
+  .landing-hud__label {
+    font-size:9px;
+    letter-spacing:.32em;
+    text-transform:uppercase;
+    color:#ffb04a;
+    margin-bottom:4px;
+  }
+  .landing-hud__plate {
+    font-size:11px;
+    letter-spacing:.18em;
+    color:rgba(245,236,214,.78);
+    line-height:1.5;
+  }
+  .landing-hud__plate b {
+    display:block;
+    font-size:18px;
+    letter-spacing:.08em;
+    color:#f5ecd6;
+    font-weight:700;
+    margin-bottom:2px;
+  }
+
+  /* Altimeter / ETA · top-right HUD */
+  .landing-altimeter {
+    position:absolute;
+    top:24px;
+    right:24px;
+    background:rgba(8,12,20,.55);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(245,236,214,.18);
+    border-radius:10px;
+    padding:14px 18px;
+    min-width:200px;
+    text-align:right;
+    box-shadow:0 8px 32px rgba(0,0,0,.35);
+    opacity:0;
+    transform:translateY(-12px);
+    transition:opacity .6s ease .25s, transform .7s cubic-bezier(.18,.89,.32,1.07) .25s;
+  }
+  .landing-overlay.active .landing-altimeter { opacity:1; transform:translateY(0); }
+  .landing-altimeter__row {
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:rgba(245,236,214,.7);
+    line-height:1.7;
+  }
+  .landing-altimeter__row b {
+    color:#f5ecd6;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .landing-altimeter__alt {
+    font-size:30px;
+    letter-spacing:.06em;
+    color:#5cf2c0;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    margin-top:6px;
+    text-shadow:0 0 14px rgba(92,242,192,.45);
+  }
+  .landing-altimeter__alt.touchdown { color:#ffb04a; text-shadow:0 0 14px rgba(255,176,74,.55); }
+
+  /* Center "NOW ARRIVING" placard */
+  .landing-placard {
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%) scale(.9);
+    text-align:center;
+    opacity:0;
+    transition:opacity .8s ease 2.4s, transform .9s cubic-bezier(.18,.89,.32,1.07) 2.4s;
+    pointer-events:none;
+  }
+  .landing-overlay.active .landing-placard {
+    opacity:1;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  .landing-placard__sub {
+    font-size:11px;
+    letter-spacing:.4em;
+    color:#ffb04a;
+    margin-bottom:14px;
+    text-transform:uppercase;
+  }
+  .landing-placard__main {
+    font-family:'Inter', sans-serif;
+    font-weight:800;
+    font-size:64px;
+    letter-spacing:-.02em;
+    line-height:.96;
+    color:#fff8e7;
+    text-shadow:0 6px 32px rgba(0,0,0,.4);
+  }
+  .landing-placard__code {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-top:18px;
+    padding:6px 14px;
+    border:1px solid rgba(245,236,214,.42);
+    border-radius:999px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.3em;
+    color:#f5ecd6;
+    text-transform:uppercase;
+  }
+  .landing-placard__code .dot {
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#5cf2c0;
+    box-shadow:0 0 8px #5cf2c0;
+    animation:pillPulse 1.6s ease-in-out infinite;
+  }
+
+  /* Ground rush flash at touchdown */
+  .landing-flash {
+    position:absolute;
+    inset:0;
+    background:radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.9) 0%, transparent 60%);
+    opacity:0;
+    pointer-events:none;
+  }
+  .landing-overlay.active .landing-flash {
+    animation:landingFlash 1.4s ease-out 3.6s 1;
+  }
+  @keyframes landingFlash {
+    0%   { opacity:0; }
+    35%  { opacity:.85; }
+    100% { opacity:0; }
+  }
+
+  @media (max-width: 760px) {
+    .landing-hud, .landing-altimeter { min-width:0; padding:10px 12px; font-size:10px; }
+    .landing-hud { left:12px; top:12px; right:auto; }
+    .landing-altimeter { right:12px; top:12px; }
+    .landing-altimeter__alt { font-size:22px; }
+    .landing-placard__main { font-size:38px; }
+    .landing-placard__sub { font-size:9px; letter-spacing:.32em; }
+  }
+
+  /* ═══════════════════════════════════════════════
+     ARRIVAL HERO · sits above the resume card
+     ═══════════════════════════════════════════════ */
+  .arrival-hero {
+    position:relative;
+    margin-bottom:18px;
+    border-radius:14px;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse at 70% 110%, rgba(255,176,74,.45) 0%, transparent 55%),
+      linear-gradient(180deg, #1c2738 0%, #2c405d 50%, #4a4665 100%);
+    color:#f5ecd6;
+    border:1px solid #1a1814;
+    box-shadow:0 10px 40px rgba(28,39,56,.18);
+  }
+  .arrival-hero__band {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:9px 18px;
+    background:rgba(0,0,0,.28);
+    border-bottom:1px solid rgba(245,236,214,.12);
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:rgba(245,236,214,.78);
+  }
+  .arrival-hero__band .live-dot {
+    display:inline-block;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#5cf2c0;
+    margin-right:8px;
+    box-shadow:0 0 8px #5cf2c0;
+    animation:pillPulse 1.6s ease-in-out infinite;
+  }
+  .arrival-hero__inner {
+    position:relative;
+    padding:32px 36px 30px;
+    z-index:1;
+  }
+  .arrival-hero__skyline {
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:80px;
+    pointer-events:none;
+    opacity:.55;
+    z-index:0;
+  }
+  .arrival-hero__skyline svg { display:block; width:100%; height:100%; }
+  .arrival-hero__top {
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:24px;
+    align-items:flex-start;
+    position:relative;
+    z-index:2;
+  }
+  .arrival-hero__welcome {
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.4em;
+    text-transform:uppercase;
+    color:#ffb04a;
+    margin-bottom:8px;
+  }
+  .arrival-hero__name {
+    font-family:'Inter', sans-serif;
+    font-weight:800;
+    font-size:42px;
+    letter-spacing:-.02em;
+    line-height:.98;
+    color:#fff8e7;
+    margin-bottom:8px;
+  }
+  .arrival-hero__sub {
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    letter-spacing:.04em;
+    color:rgba(245,236,214,.85);
+    line-height:1.45;
+    max-width:560px;
+  }
+  .arrival-hero__codebox {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding:10px 14px;
+    border:1px solid rgba(245,236,214,.28);
+    border-radius:10px;
+    background:rgba(0,0,0,.22);
+    font-family:'JetBrains Mono', monospace;
+    text-align:center;
+    min-width:120px;
+  }
+  .arrival-hero__codebox .lbl {
+    font-size:9px;
+    letter-spacing:.32em;
+    color:rgba(245,236,214,.62);
+    text-transform:uppercase;
+  }
+  .arrival-hero__codebox .code {
+    font-size:32px;
+    letter-spacing:.12em;
+    font-weight:800;
+    color:#fff8e7;
+    line-height:1;
+  }
+  .arrival-hero__codebox .codesub {
+    font-size:9px;
+    letter-spacing:.24em;
+    color:#ffb04a;
+    text-transform:uppercase;
+  }
+  .arrival-hero__pass {
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:0;
+    margin-top:24px;
+    border-top:1px dashed rgba(245,236,214,.28);
+    padding-top:14px;
+    position:relative;
+    z-index:2;
+  }
+  .arrival-hero__pass > div {
+    padding:4px 14px 4px 0;
+    border-right:1px dashed rgba(245,236,214,.18);
+    font-family:'JetBrains Mono', monospace;
+  }
+  .arrival-hero__pass > div:last-child { border-right:0; padding-right:0; }
+  .arrival-hero__pass .lbl {
+    font-size:9px;
+    letter-spacing:.28em;
+    color:rgba(245,236,214,.55);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .arrival-hero__pass .val {
+    font-size:14px;
+    color:#fff8e7;
+    font-weight:600;
+    letter-spacing:.06em;
+  }
+  .arrival-hero__pass .val.ok { color:#5cf2c0; }
+  @media (max-width: 760px) {
+    .arrival-hero__inner { padding:22px 20px; }
+    .arrival-hero__name { font-size:28px; }
+    .arrival-hero__top { grid-template-columns:1fr; }
+    .arrival-hero__codebox { align-self:flex-start; }
+    .arrival-hero__pass { grid-template-columns:repeat(2, 1fr); gap:14px 18px; }
+    .arrival-hero__pass > div { border-right:0; padding-right:0; }
+  }
+
+  /* World-space labels for the 3D destination airport — hidden by default
+     so they don't leak onto the LAX scene; shown only after landing begins. */
+  .world-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    letter-spacing: .14em;
+    color: #f5ecd6;
+    text-shadow: 0 2px 8px rgba(0,0,0,.6);
+    pointer-events: none;
+    white-space: nowrap;
+    display: none;
+  }
+  body.landing-3d .world-label { display: block; }
+  .world-label.smi-sign {
+    font-size: 22px;
+    background: rgba(20,28,44,.7);
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,176,74,.5);
+    box-shadow: 0 0 18px rgba(255,176,74,.3);
+  }
+  .world-label.rwy-num {
+    font-size: 64px;
+    color: #fff3d0;
+    -webkit-text-stroke: 2px #1a1a1f;
+  }
+
+  /* Canvas / labels reposition into the resume's left runway strip after the
+     3D landing. The 3D scene continues rendering in this skinny column,
+     showing the airframe parked from above. */
+  /* In resume-mode the body itself adopts the resume's cream background, so
+     while the HTML resume is fading in there's no dark gap behind it. */
+  body.resume-mode {
+    background: #f7f5ef !important;
+  }
+  /* Sunset sky behind the transparent WebGL canvas during the landing.
+     The CSS3D resume sits above this layer and below the canvas. */
+  body.landing-3d:not(.birds-eye):not(.resume-mode) {
+    background: linear-gradient(180deg, #2c2238 0%, #6f4040 40%, #d68a58 80%, #f5c79c 100%) !important;
+  }
+  body.birds-eye {
+    background: #f7f5ef !important;
+  }
+
+  /* In resume-mode, the canvas shrinks to occupy just the resume's runway
+     strip column (left:32 width:80). The 3D scene (plane on runway) renders
+     into that narrow column and the HTML resume covers the rest. */
+  body.resume-mode.board-view #canvas,
+  body.resume-mode.board-view #labels,
+  body.resume-mode #canvas,
+  body.resume-mode #labels {
+    display: block !important;
+    position: fixed !important;
+    left: 32px !important;
+    top: 0 !important;
+    width: 80px !important;
+    height: 100vh !important;
+    z-index: 50 !important;
+    pointer-events: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: width 1s cubic-bezier(.55,.05,.5,.95),
+                left 1s cubic-bezier(.55,.05,.5,.95);
+  }
+  body.resume-mode #canvas canvas {
+    width: 80px !important;
+    height: 100vh !important;
+    display: block !important;
+  }
+  body.resume-mode {
+    /* Hide map-related HUD elements but keep the canvas visible */
+  }
+  body.resume-mode .header,
+  body.resume-mode .legend,
+  body.resume-mode .compass,
+  body.resume-mode .presets,
+  body.resume-mode .site-nav,
+  body.resume-mode #mapTitle,
+  body.resume-mode .pov-plate,
+  body.resume-mode #exitPovBtn,
+  body.resume-mode #tutorial,
+  body.resume-mode .runway-strip {
+    /* Keep the strip's coord system + gate chips, but hide its asphalt + plane —
+       the 3D rendered runway behind takes over visually. */
+    pointer-events: none;
+  }
+  body.resume-mode .runway-strip::before,
+  body.resume-mode .runway-strip::after,
+  body.resume-mode .runway-strip__threshold,
+  body.resume-mode .runway-strip__end,
+  body.resume-mode .runway-strip__chevrons,
+  body.resume-mode .runway-plane {
+    display: none !important;
+  }
+  /* The gate chips still float over the 3D canvas, connecting each row to it */
+  body.resume-mode .runway-gate { z-index: 51; }
+  /* Hide oversized world labels (RWY 27/09 numbers, SMI sign) once we're
+     compressed into the strip — they fight for legibility against the runway
+     diagram itself. */
+  body.resume-mode .world-label { display: none !important; }
+  /* Hide ALL LAX scene labels (POI/terminal/taxiway) the moment the landing
+     starts. Otherwise they leak into the destination view. */
+  body.landing-3d .poi-label,
+  body.landing-3d .poi-sub,
+  body.landing-3d .label-stack,
+  body.landing-3d .terminal-label,
+  body.birds-eye .poi-label,
+  body.birds-eye .poi-sub,
+  body.birds-eye .label-stack,
+  body.birds-eye .terminal-label,
+  body.resume-mode .poi-label,
+  body.resume-mode .poi-sub,
+  body.resume-mode .label-stack,
+  body.resume-mode .terminal-label {
+    display: none !important;
+  }
+
+  /* ═══════════════════════════════════════════════
+     RESUME-AS-AIRPORT · runway strip + persistent plane
+     The page IS the airport diagram. A vertical runway
+     runs down the left side of the resume; each section
+     has a numbered gate; a 2D plane lives on the runway
+     and taxis to the gate of whichever section is in view.
+     ═══════════════════════════════════════════════ */
+  :root {
+    --runway-width: 80px;
+    --runway-color: #1f2937;
+  }
+  /* Push the resume content right so the runway has its own column */
+  body.board-view #board .board-inner {
+    padding-left: 132px;
+    position: relative;
+  }
+  .runway-strip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 32px;
+    width: var(--runway-width);
+    pointer-events: none;
+    z-index: 4;
+  }
+  .runway-strip::before {
+    /* Dark asphalt strip down the centre */
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 44px;
+    transform: translateX(-50%);
+    background:
+      linear-gradient(180deg,
+        rgba(31, 41, 55, .98) 0%,
+        rgba(31, 41, 55, .98) 100%);
+    border-left: 1px solid rgba(245, 236, 214, .25);
+    border-right: 1px solid rgba(245, 236, 214, .25);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
+  }
+  .runway-strip::after {
+    /* Centerline dashes */
+    content: '';
+    position: absolute;
+    top: 80px;
+    bottom: 70px;
+    left: 50%;
+    width: 4px;
+    transform: translateX(-2px);
+    background: repeating-linear-gradient(
+      180deg,
+      #f5ecd6 0,
+      #f5ecd6 26px,
+      transparent 26px,
+      transparent 60px
+    );
+    opacity: .9;
+  }
+  .runway-strip__threshold,
+  .runway-strip__end {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    color: #f5ecd6;
+    letter-spacing: .18em;
+    text-align: center;
+    z-index: 2;
+  }
+  .runway-strip__threshold {
+    top: 14px;
+    font-size: 26px;
+    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+  .runway-strip__threshold small {
+    display: block;
+    font-size: 8px;
+    letter-spacing: .3em;
+    color: #ffb04a;
+    margin-top: 4px;
+    font-weight: 700;
+  }
+  .runway-strip__end {
+    bottom: 14px;
+    font-size: 22px;
+  }
+  .runway-strip__end small {
+    display: block;
+    font-size: 8px;
+    letter-spacing: .3em;
+    color: #ffb04a;
+    margin-top: 4px;
+    font-weight: 700;
+  }
+  .runway-strip__chevrons {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: .85;
+  }
+  .runway-strip__chevrons span {
+    font-family: 'JetBrains Mono', monospace;
+    color: #f5ecd6;
+    font-size: 14px;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+
+  /* Per-section gate marker (positioned absolute via JS by section's Y) */
+  .runway-gate {
+    position: absolute;
+    left: calc(var(--runway-width) - 4px);
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 3;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .runway-gate__connector {
+    width: 26px;
+    height: 1px;
+    background: var(--gate-color, #c2542a);
+    opacity: .55;
+  }
+  .runway-gate__chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: .14em;
+    color: #fff;
+    background: var(--gate-color, #c2542a);
+    padding: 3px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .runway-gate__name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: .14em;
+    color: #5a554a;
+    text-transform: uppercase;
+  }
+
+  /* The persistent plane sits ON the runway and scrolls with the page (absolute
+     inside .runway-strip). `top` is animated as the user scrolls between
+     sections so the airframe taxis to whichever gate is currently in view. */
+  .runway-plane {
+    position: absolute;
+    left: 50%;
+    top: 80px;
+    width: 56px;
+    height: 56px;
+    z-index: 6;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -50%) rotate(180deg);
+    transition: top 1.1s cubic-bezier(.18,.89,.32,1.07),
+                opacity .5s ease;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+  }
+  body.board-view .runway-plane.live { opacity: 1; visibility: visible; }
+  .runway-plane svg { display:block; width:100%; height:100%; }
+  .runway-plane.taxiing { animation: planeWobble 1.4s ease-in-out infinite; }
+  @keyframes planeWobble {
+    0%, 100% { filter: drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+    50%      { filter: drop-shadow(0 6px 20px rgba(255,176,74,.45)); }
+  }
+
+  /* Hide runway / shift back on small screens — keeps the resume readable */
+  @media (max-width: 880px) {
+    body.board-view #board .board-inner {
+      padding-left: 56px;
+    }
+    .runway-strip { left: 8px; width: 44px; }
+    .runway-strip::before { width: 28px; }
+    .runway-strip__threshold { font-size: 16px; }
+    .runway-strip__end { font-size: 14px; }
+    .runway-gate__name { display: none; }
+    .runway-plane { width: 36px; height: 36px; }
+  }
+
+  /* Section airport-area sub-label override (rendered after section title) */
+  .board-section__terminal {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-left:10px;
+    padding:3px 10px;
+    background:rgba(28,39,56,.06);
+    border:1px solid rgba(28,39,56,.1);
+    border-radius:999px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:#5a554a;
+  }
+  .board-section__terminal .gate {
+    color:var(--sec-color, #c2542a);
+    font-weight:700;
+  }
+
   .plane-marker {
     font-family:'JetBrains Mono', monospace;
-    font-weight:700;
-    font-size:8px;
+    font-weight:800;
+    font-size:9px;
     letter-spacing:.2em;
-    color:#ed8e2b;
-    background:rgba(20,19,17,.92);
-    border:1px solid rgba(237,142,43,.5);
-    padding:4px 8px;
+    color:#141311;
+    background:#ed8e2b;
+    border:1.5px solid #ffb454;
+    padding:5px 9px;
     text-transform:uppercase;
     white-space:nowrap;
     text-align:center;
-    box-shadow:0 0 14px rgba(237,142,43,.3), 0 2px 8px rgba(0,0,0,.4);
-    animation:planePulse 2.2s ease-in-out infinite;
+    box-shadow:
+      0 0 0 2px rgba(237,142,43,.22),
+      0 0 18px rgba(237,142,43,.6),
+      0 2px 8px rgba(0,0,0,.5);
+    animation:planePulse 1.7s ease-in-out infinite;
     transition:opacity .4s;
   }
   .plane-marker .pm-main {
     display:block;
-    font-size:9px;
+    font-size:10px;
+    letter-spacing:.18em;
   }
   .plane-marker .pm-sub {
     display:block;
-    font-size:7px;
-    color:rgba(244,238,216,.72);
-    letter-spacing:.28em;
-    margin-top:2px;
+    font-size:7.5px;
+    color:rgba(20,19,17,.78);
+    letter-spacing:.24em;
+    margin-top:3px;
+    font-weight:700;
   }
   .plane-marker .pm-key {
     display:inline-block;
     font-family:'JetBrains Mono', monospace;
-    font-weight:700;
-    font-size:8.5px;
-    color:#141311;
-    background:#ed8e2b;
+    font-weight:800;
+    font-size:8px;
+    color:#ed8e2b;
+    background:#141311;
     padding:1px 5px;
     border-radius:2px;
     margin:0 2px;
     letter-spacing:.1em;
   }
   @keyframes planePulse {
-    0%, 100% { transform:translateY(0); filter:brightness(1); }
-    50%      { transform:translateY(-5px); filter:brightness(1.3); }
+    0%, 100% {
+      transform:translateY(0) scale(1);
+      box-shadow:
+        0 0 0 2px rgba(237,142,43,.22),
+        0 0 18px rgba(237,142,43,.6),
+        0 2px 8px rgba(0,0,0,.5);
+    }
+    50% {
+      transform:translateY(-5px) scale(1.04);
+      box-shadow:
+        0 0 0 5px rgba(237,142,43,.3),
+        0 0 30px rgba(237,142,43,.85),
+        0 5px 14px rgba(0,0,0,.55);
+    }
   }
 
   @keyframes fadeUp {
@@ -970,13 +1758,14 @@
   position: absolute;
   inset: 0;
   z-index: 30;
-  background: #0a0908;
-  color: #f4eed8;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  background: #f7f5ef;
+  color: #1a1814;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   overflow-y: auto;
-  display: none;
-  opacity: 0;
-  transition: opacity .4s ease;
+  display: block;
+  opacity: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 body.board-view #board {
   display: block;
@@ -997,361 +1786,771 @@ body.board-view #tutorial {
 }
 
 #board .board-inner {
-  max-width: 1180px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 56px 48px 80px;
+  padding: 32px 56px 96px;
 }
-.board-header {
+
+/* ——— RESUME COVER BANNER ——— */
+.board-cover {
+  height: 140px;
+  border-radius: 12px 12px 0 0;
+  background:
+    linear-gradient(135deg, #2c4660 0%, #4a6b8a 50%, #7a96b1 100%),
+    #4a6b8a;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 0;
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 24px;
-  align-items: flex-start;
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgba(244, 238, 216, .12);
-  margin-bottom: 22px;
+  overflow: hidden;
 }
-.board-header__pre {
-  font-size: 9px;
-  letter-spacing: .35em;
-  color: rgba(244, 238, 216, .5);
-  margin-bottom: 6px;
-}
-.board-header__name {
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
-  font-size: 32px;
-  letter-spacing: -.02em;
-  line-height: 1;
-}
-.board-header__tag {
-  font-size: 11px;
-  letter-spacing: .18em;
-  opacity: .65;
-  margin-top: 5px;
-  text-transform: uppercase;
-}
-.board-header__right {
-  text-align: right;
-  font-size: 10px;
-  letter-spacing: .18em;
-  opacity: .6;
-  line-height: 1.7;
-}
-.board-header__plane {
+.board-cover::after {
+  content: '';
   position: absolute;
-  top: 4px;
-  right: 240px;
-  font-size: 14px;
-  color: #ed8e2b;
-  opacity: .55;
-  animation: ambientCruise 14s linear infinite;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200' preserveAspectRatio='none'><path d='M0,100 Q300,40 600,100 T1200,100' stroke='rgba(255,255,255,0.08)' stroke-width='1' fill='none'/><path d='M0,140 Q300,80 600,140 T1200,140' stroke='rgba(255,255,255,0.06)' stroke-width='1' fill='none'/></svg>");
+  background-size: 100% 100%;
 }
-@keyframes ambientCruise {
-  0%   { transform: translateX(-120px); opacity: 0; }
-  10%  { opacity: .55; }
-  90%  { opacity: .55; }
-  100% { transform: translateX(120px); opacity: 0; }
+
+/* ——— TOP BAR (back button + departures pill) ——— */
+.board-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
 }
 .board-back {
-  position: absolute;
-  top: -32px;
-  left: 0;
-  background: transparent;
-  border: 1px solid rgba(244, 238, 216, .25);
-  color: #f4eed8;
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: .25em;
-  padding: 6px 12px;
+  background: #ffffff;
+  border: 1px solid #d8d3c5;
+  color: #2c2a26;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 8px 14px;
   cursor: pointer;
-  text-transform: uppercase;
+  border-radius: 999px;
+  transition: all .15s ease;
+  text-transform: none;
 }
 .board-back:hover {
-  border-color: #ed8e2b;
-  color: #ed8e2b;
+  border-color: #c2542a;
+  color: #c2542a;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
 }
-.board-section {
-  margin-top: 22px;
-}
-.board-section__label {
-  font-size: 8px;
-  letter-spacing: .3em;
-  margin: 0 0 6px;
-}
-.board-section__cols {
-  display: grid;
-  grid-template-columns: 34px 76px 1fr 70px;
-  gap: 12px;
-  font-size: 8px;
-  letter-spacing: .25em;
-  color: rgba(244, 238, 216, .4);
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(244, 238, 216, .08);
-  margin-bottom: 6px;
-}
-.board-row {
-  display: grid;
-  grid-template-columns: 34px 76px 1fr 70px;
-  gap: 12px;
+.board-departures-pill {
+  display: inline-flex;
   align-items: center;
-  font-size: 11px;
-  padding: 7px 6px 7px 0;
-  border-bottom: 1px solid var(--row-color, rgba(244, 238, 216, .08));
-  cursor: pointer;
-  transition: background .18s ease;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: #6b665b;
+  background: #ffffff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #e6e1d2;
 }
-.board-row:hover {
-  background: rgba(244, 238, 216, .04);
+.board-departures-pill .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2ab26b;
+  box-shadow: 0 0 0 3px rgba(42, 178, 107, .15);
+  animation: pillPulse 2.4s ease-in-out infinite;
 }
-.board-row.is-headline {
-  background: var(--row-bg, rgba(237, 142, 43, .06));
-  border-left: 2px solid var(--row-color, #ed8e2b);
-  padding-left: 6px;
+@keyframes pillPulse {
+  0%, 100% { opacity: .9; }
+  50%      { opacity: 1; }
 }
-.board-row__monogram {
-  width: 28px;
-  height: 28px;
+
+/* ——— RESUME CARD (white container under banner) ——— */
+.board-resume-card {
+  background: #ffffff;
+  border: 1px solid #e6e1d2;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 0 40px 36px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+
+/* ——— HEADER (photo + name + contact) ——— */
+.board-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 28px;
+  align-items: flex-end;
+  padding-top: 0;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #ece8d9;
+  margin-bottom: 28px;
+}
+.board-header__photo {
+  width: 152px;
+  height: 152px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #c2542a 0%, #8c3a18 60%, #5a2510 100%);
+  border: 4px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .14);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-}
-.board-row__monogram.solid {
-  color: #141311;
-  background: var(--row-color, #ed8e2b);
-}
-.board-row__monogram.outlined {
-  color: var(--row-color, #ed8e2b);
-  border: 1.5px solid var(--row-color, #ed8e2b);
-  background: transparent;
-}
-.board-row__monogram.dashed {
-  color: rgba(244, 238, 216, .5);
-  border: 1px dashed rgba(244, 238, 216, .4);
-  background: transparent;
-}
-.board-row__flight {
-  color: var(--row-color, #ed8e2b);
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
+  font-size: 52px;
+  color: #ffffff;
+  letter-spacing: -.02em;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  margin-top: -76px;
+  margin-bottom: 4px;
 }
-.board-row__dest .sub {
-  opacity: .55;
+.board-header__photo.has-image .initials { display: none; }
+
+.board-header__left { padding-bottom: 4px; }
+.board-header__name {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  color: #1a1814;
+  margin-bottom: 6px;
+}
+.board-header__verified {
+  display: inline-block;
+  vertical-align: middle;
   margin-left: 6px;
+  color: #2c5fbb;
 }
-.board-row__year {
+.board-header__headline {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2c2a26;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+  line-height: 1.4;
+  text-transform: none;
+}
+.board-header__tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #5a554a;
+  margin-top: 0;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.45;
+}
+.board-header__meta {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #6b665b;
+  margin-top: 8px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.board-header__meta .meta-icon {
+  margin-right: 4px;
   opacity: .7;
 }
-.board-section.is-muted {
-  margin-top: 26px;
+.board-header__meta a {
+  color: #2c5fbb;
+  text-decoration: none;
+  font-weight: 500;
 }
-.board-section.is-muted .board-section__label {
-  color: rgba(244, 238, 216, .35);
+.board-header__meta a:hover { text-decoration: underline; }
+.board-header__contact {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #2c2a26;
+  line-height: 1.5;
+  padding-bottom: 8px;
 }
-.board-section.is-muted .board-row {
-  opacity: .6;
+.board-header__contact .label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: #8b8576;
+  margin-right: 8px;
+  text-transform: uppercase;
 }
+.board-header__contact a {
+  color: #2c5fbb;
+  text-decoration: none;
+  font-weight: 500;
+  transition: text-decoration .12s ease;
+}
+.board-header__contact a:hover { text-decoration: underline; }
+
+/* ——— ABOUT (in resume card) ——— */
+.board-about {
+  display: none;
+  margin-bottom: 0;
+}
+.board-about.has-content { display: block; }
+.board-about__label {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1814;
+  margin-bottom: 12px;
+  letter-spacing: -.005em;
+}
+.board-about__body {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #2c2a26;
+}
+
+/* ——— HIGHLIGHTS / KPI BAR ——— */
+.board-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+  margin-top: 28px;
+}
+.board-highlight {
+  padding: 16px 18px;
+  background: #faf8f1;
+  border: 1px solid #ece8d9;
+  border-radius: 8px;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.board-highlight:hover {
+  border-color: #c2542a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .04);
+}
+.board-highlight__label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: #6b665b;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.board-highlight__value {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: #c2542a;
+  letter-spacing: -.015em;
+  line-height: 1.1;
+}
+
+/* ——— SECTION (each section is its own white card) ——— */
+.board-section {
+  background: #ffffff;
+  border: 1px solid #e6e1d2;
+  border-radius: 12px;
+  padding: 24px 28px 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+.board-section__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1ede0;
+}
+.board-section__icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--sec-bg, rgba(194, 84, 42, .1));
+  color: var(--sec-color, #c2542a);
+  flex-shrink: 0;
+}
+.board-section__icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.board-section__title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -.015em;
+  color: #1a1814;
+}
+.board-section__count {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #6b665b;
+  padding: 2px 8px;
+  background: #f1ede0;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+.board-section__sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: #8b8576;
+  margin-left: auto;
+}
+
+/* ——— FOOTER (languages, activities) ——— */
+.board-footer {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.board-footer__card {
+  background: #ffffff;
+  border: 1px solid #e6e1d2;
+  border-radius: 12px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+.board-footer__label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: #8b8576;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+}
+.board-footer__label svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.board-footer__value {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #2c2a26;
+  line-height: 1.55;
+  font-weight: 400;
+}
+@media (max-width: 700px) {
+  .board-footer { grid-template-columns: 1fr; }
+}
+
+/* ——— ROWS (white card with hover) ——— */
+.board-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s ease;
+  position: relative;
+  border-bottom: 1px solid #f1ede0;
+}
+.board-row:last-child { border-bottom: none; }
+.board-row:hover {
+  background: #faf8f1;
+}
+.board-row.is-headline {
+  background: transparent;
+}
+.board-row__monogram {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid #e6e1d2;
+  overflow: hidden;
+  padding: 6px;
+}
+.board-row__monogram.solid,
+.board-row__monogram.outlined,
+.board-row__monogram.dashed {
+  color: #1a1814;
+  background: #ffffff;
+  border: 1px solid #e6e1d2;
+}
+.board-row__monogram.no-logo {
+  background: var(--sec-color, #c2542a);
+  color: #ffffff;
+  border: none;
+}
+
+.board-row__main {
+  min-width: 0;
+}
+.board-row__title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1a1814;
+  letter-spacing: -.005em;
+  line-height: 1.3;
+  margin-bottom: 3px;
+}
+.board-row__role {
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  color: #5a554a;
+  line-height: 1.45;
+}
+.board-row__role .sub {
+  color: #8b8576;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid #e6e1d2;
+}
+
+.board-row__meta {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.board-row__year {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5a554a;
+}
+.board-row__flight {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: #8b8576;
+  opacity: .85;
+  text-transform: uppercase;
+}
+.board-row__status {
+  font-family: 'Inter', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--sec-color, #c2542a);
+  color: #ffffff;
+  text-transform: uppercase;
+}
+.board-row__status.is-done {
+  background: #f1ede0;
+  color: #6b665b;
+}
+
+.board-section.is-muted .board-row__title { color: #2c2a26; }
+.board-section.is-muted .board-row { opacity: .92; }
 #detail-panel {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 45%;
-  min-width: 420px;
-  max-width: 640px;
-  background: #141311;
-  border-left: 1px solid rgba(237, 142, 43, .25);
-  color: #f4eed8;
+  width: 48%;
+  min-width: 460px;
+  max-width: 680px;
+  background: #ffffff;
+  border-left: 1px solid #e6e1d2;
+  color: #1a1814;
   z-index: 40;
   transform: translateX(100%);
   transition: transform .35s cubic-bezier(.2, .8, .2, 1);
   overflow-y: auto;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   display: none;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, .08);
 }
 body.detail-open #detail-panel {
   display: block;
   transform: translateX(0);
 }
 .detail-panel__inner {
-  padding: 32px 28px 56px;
-  font-size: 11px;
+  padding: 44px 36px 64px;
+  font-size: 14px;
 }
 .detail-panel__close {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  background: transparent;
-  border: 1px solid rgba(244, 238, 216, .25);
-  color: #f4eed8;
-  width: 28px;
-  height: 28px;
+  top: 18px;
+  right: 18px;
+  background: #ffffff;
+  border: 1px solid #e6e1d2;
+  color: #2c2a26;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 16px;
+  border-radius: 999px;
   z-index: 1;
+  transition: all .15s ease;
 }
 .detail-panel__close:hover {
-  border-color: #ed8e2b;
-  color: #ed8e2b;
+  border-color: #c2542a;
+  color: #c2542a;
 }
 .detail-panel__pre {
-  font-size: 9px;
-  letter-spacing: .3em;
-  color: rgba(244, 238, 216, .4);
-  margin-bottom: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: #8b8576;
+  margin-bottom: 18px;
+  text-transform: uppercase;
 }
 .detail-panel__head {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(244, 238, 216, .1);
-  margin-bottom: 18px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1ede0;
+  margin-bottom: 24px;
 }
 .detail-panel__monogram {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 24px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  border-radius: 8px;
   flex-shrink: 0;
-  color: #141311;
+  background: #ffffff !important;
+  border: 1px solid #e6e1d2;
+  color: #1a1814;
+  padding: 6px;
+  overflow: hidden;
 }
 .detail-panel__title {
-  font-family: 'Syne', sans-serif;
-  font-size: 17px;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -.01em;
+  letter-spacing: -.015em;
+  line-height: 1.2;
+  color: #1a1814;
 }
 .detail-panel__role {
-  opacity: .65;
-  font-size: 10px;
-  letter-spacing: .12em;
+  font-family: 'Inter', sans-serif;
+  color: #5a554a;
+  font-size: 13.5px;
   margin-top: 4px;
-  text-transform: uppercase;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .detail-panel__hero {
   aspect-ratio: 16 / 9;
-  border-radius: 3px;
-  margin-bottom: 18px;
+  border-radius: 8px;
+  margin-bottom: 22px;
   background-size: cover;
   background-position: center;
-  background-color: #1a1410;
+  background-color: #faf8f1;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid #ece8d9;
 }
 .detail-panel__hero.is-placeholder {
-  background-image: linear-gradient(135deg, #1a1410 0%, #3a2818 50%, #5a3a20 100%);
-  font-size: 9px;
-  letter-spacing: .3em;
-  color: rgba(244, 238, 216, .4);
+  background-image:
+    linear-gradient(135deg, #f1ede0 0%, #e6e1d2 50%, #d8d3c5 100%);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: #8b8576;
+  text-transform: uppercase;
 }
 .detail-panel__stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 .detail-panel__stat {
-  padding: 10px;
-  background: rgba(237, 142, 43, .08);
-  border-left: 2px solid #ed8e2b;
+  padding: 14px 16px;
+  background: #faf8f1 !important;
+  border-left: 3px solid #c2542a !important;
+  border-radius: 0 6px 6px 0;
 }
 .detail-panel__stat-label {
-  opacity: .5;
-  letter-spacing: .2em;
-  font-size: 8px;
+  font-family: 'Inter', sans-serif;
+  color: #6b665b;
+  letter-spacing: .04em;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
+  margin-bottom: 3px;
 }
 .detail-panel__stat-value {
-  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
   font-weight: 700;
-  color: #ed8e2b;
-  margin-top: 2px;
+  color: #c2542a !important;
+  letter-spacing: -.015em;
 }
 .detail-panel__body p {
+  font-family: 'Inter', sans-serif;
+  font-size: 14.5px;
   line-height: 1.6;
-  opacity: .85;
-  margin-bottom: 10px;
+  color: #2c2a26;
+  margin-bottom: 12px;
 }
 .detail-panel__links {
-  margin-top: 18px;
+  margin-top: 24px;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  font-size: 9px;
-  letter-spacing: .15em;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 .detail-panel__links a {
-  padding: 6px 10px;
-  border: 1px solid rgba(244, 238, 216, .2);
-  color: rgba(244, 238, 216, .75);
+  padding: 8px 14px;
+  border: 1px solid #d8d3c5;
+  color: #2c2a26;
   text-decoration: none;
-  text-transform: uppercase;
+  text-transform: none;
+  border-radius: 999px;
+  font-weight: 500;
+  transition: all .15s ease;
 }
 .detail-panel__links a.is-primary {
-  border-color: rgba(237, 142, 43, .4);
-  color: #ed8e2b;
+  border-color: #c2542a;
+  background: #c2542a;
+  color: #ffffff;
 }
 .detail-panel__links a:hover {
-  border-color: #ed8e2b;
-  color: #ed8e2b;
+  border-color: #c2542a;
+  color: #c2542a;
+  background: #faf8f1;
+}
+.detail-panel__links a.is-primary:hover {
+  background: #a64722;
+  border-color: #a64722;
+  color: #ffffff;
 }
 .board-row__logo {
-  width: 22px;
-  height: 22px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   display: block;
 }
 .detail-panel__monogram-img {
-  width: 36px;
-  height: 36px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   display: block;
-}
-.board-row__monogram.solid .board-row__logo,
-.board-row__monogram.solid .detail-panel__monogram-img {
-  filter: brightness(0) invert(0);
+  border-radius: 6px;
 }
 @media (max-width: 900px) {
   #board .board-inner {
-    padding: 56px 18px 60px;
+    padding: 60px 20px 64px;
   }
   .board-header {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "photo name"
+      "contact contact";
+    gap: 18px 20px;
   }
-  .board-header__right {
+  .board-header__photo {
+    grid-area: photo;
+    width: 88px;
+    height: 88px;
+    font-size: 30px;
+    border-width: 2px;
+  }
+  .board-header__left { grid-area: name; }
+  .board-header__contact { grid-area: contact; }
+  .board-header__name {
+    font-size: 32px;
+  }
+  .board-header__headline {
+    font-size: 9.5px;
+    margin-bottom: 6px;
+  }
+  .board-header__tag {
+    font-size: 13px;
+  }
+  .board-header__contact {
     text-align: left;
-    margin-top: 8px;
-    line-height: 1.9;
+    align-items: flex-start;
+    font-size: 12px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px 18px;
   }
-  .board-header__plane {
+  .board-section__title {
+    font-size: 18px;
+  }
+  .board-section__sub {
     display: none;
-  }
-  .board-section__cols {
-    grid-template-columns: 30px 64px 1fr 56px;
-    gap: 8px;
   }
   .board-row {
-    grid-template-columns: 30px 64px 1fr 56px;
-    gap: 8px;
-    font-size: 10px;
+    grid-template-columns: 44px 1fr;
+    grid-template-areas:
+      "mono main"
+      "meta meta";
+    row-gap: 10px;
+    padding: 14px;
   }
   .board-row__monogram {
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
+    grid-area: mono;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
   }
-  .board-row__dest .sub {
-    display: none;
+  .board-row__main { grid-area: main; }
+  .board-row__meta {
+    grid-area: meta;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 12px;
+    width: 100%;
   }
+  .board-row__title { font-size: 16px; }
+  .board-row__role  { font-size: 12.5px; }
 
   #detail-panel {
     width: 100%;
@@ -1359,6 +2558,850 @@ body.detail-open #detail-panel {
     max-width: none;
     border-left: none;
   }
+  .detail-panel__inner { padding: 36px 22px 56px; }
+  .detail-panel__title { font-size: 20px; }
+}
+
+/* =========================================================================
+   v3 RESUME · "Departure board × architectural blueprint"
+   Scoped under .v3-resume so it overrides any leftover legacy rules.
+   ========================================================================= */
+.v3-resume {
+  /* Wipe any residual layout from the old resume CSS so we control everything */
+  --v3-paper:        #f3eedd;
+  --v3-paper-deep:   #e8dfc4;
+  --v3-paper-line:   rgba(28, 24, 20, 0.16);
+  --v3-paper-line-2: rgba(28, 24, 20, 0.08);
+  --v3-ink:          #181612;
+  --v3-ink-soft:     #3c352c;
+  --v3-ink-mute:     #6e6457;
+  --v3-ink-faint:    #98907f;
+  --v3-hero-bg:      #1d2638;
+  --v3-hero-rim:     #2c405d;
+  --v3-sunset-1:     #ffb04a;
+  --v3-c-edu:        #5446a6;
+  --v3-c-exp:        #d4762b;
+  --v3-c-bug:        #b5341f;
+  --v3-c-other:      #7d7567;
+  --v3-st-live:      #1f8d5c;
+  --v3-st-now:       #c66316;
+  --v3-st-disc:      #5446a6;
+  --v3-st-grad:      #1c4f7a;
+  --v3-st-done:      #6c6358;
+  --v3-asphalt-1:    #1a1c20;
+  --v3-asphalt-2:    #2a2d33;
+  --v3-runway-w:     88px;
+  --v3-runway-x:     32px;
+  --v3-gutter:       48px;
+  --v3-rad-sm:       6px;
+  --v3-rad-md:      10px;
+  --v3-f-display:    "Boldonse", "Arial Black", system-ui, sans-serif;
+  --v3-f-editorial:  "Instrument Serif", "Times New Roman", serif;
+  --v3-f-body:       "Hanken Grotesk", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --v3-f-mono:       "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Cover the entire viewport once revealed (post-handoff). Hidden until
+     the landing flow finishes and adds body.board-view. !important needed
+     because the legacy #board { display: block } rule has higher
+     specificity (id beats class). */
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 176, 74, 0.05), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(84, 70, 166, 0.04), transparent 40%),
+    repeating-linear-gradient(0deg,
+      rgba(28, 24, 20, 0.018) 0px,
+      rgba(28, 24, 20, 0.018) 1px,
+      transparent 1px,
+      transparent 3px),
+    radial-gradient(circle at center, rgba(28, 24, 20, 0.018) 1px, transparent 1.5px),
+    var(--v3-paper);
+  background-size: auto, auto, auto, 22px 22px, auto;
+  color: var(--v3-ink);
+  font-family: var(--v3-f-body);
+  font-size: 14.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.v3-resume * { box-sizing: border-box; }
+body.board-view .v3-resume { display: block !important; }
+
+/* Iframe-driven resume — matches a direct load of preview/resume.html 1:1 */
+#boardFrame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+.board-exit {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 31;
+  background: #f56935;
+  color: #fff;
+  border: 0;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(245, 105, 53, .35);
+  transition: background .18s, transform .18s;
+}
+.board-exit:hover { background: #d8542a; transform: translateX(-50%) translateY(-1px); }
+
+.v3-resume .v3-page {
+  position: relative;
+  max-width: 1320px;
+  margin: 0 auto;
+  /* padding-left = runway-x (32) + runway-w (88) + gutter (48) = 168.
+     Hardcoded literal value because html2canvas does not reliably
+     resolve calc() with chained CSS custom properties. */
+  padding: 32px 28px 80px 168px;
+}
+@media (max-width: 760px) {
+  .v3-resume {
+    --v3-runway-w: 56px;
+    --v3-runway-x: 20px;
+    --v3-gutter: 18px;
+  }
+  /* mobile: padding-left = 20 + 56 + 18 = 94 */
+  .v3-resume .v3-page { padding-right: 16px; padding-left: 94px; }
+}
+
+/* Back to LAX button */
+.v3-resume .v3-back {
+  background: #fff;
+  border: 1px solid var(--v3-paper-line);
+  color: var(--v3-ink-soft);
+  font-family: var(--v3-f-body);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, box-shadow .15s;
+  margin-bottom: 18px;
+}
+.v3-resume .v3-back:hover {
+  border-color: var(--v3-c-bug);
+  color: var(--v3-c-bug);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+/* ===== RUNWAY ===== */
+.v3-resume .v3-runway {
+  position: absolute;
+  left: var(--v3-runway-x);
+  top: 0;
+  bottom: 0;
+  width: var(--v3-runway-w);
+  pointer-events: none;
+  z-index: 4;
+}
+.v3-resume .v3-runway::before {
+  content: "";
+  position: absolute;
+  left: 8px; right: 8px; top: 0; bottom: 0;
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1.2px,
+      transparent 1.2px,
+      transparent 7px),
+    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.05), transparent 40%),
+    linear-gradient(180deg, var(--v3-asphalt-1), var(--v3-asphalt-2) 50%, var(--v3-asphalt-1));
+  border-left:  1px solid rgba(245, 236, 214, 0.22);
+  border-right: 1px solid rgba(245, 236, 214, 0.22);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.4),
+    0 1px 0 rgba(255,255,255,0.05);
+}
+.v3-resume .v3-runway::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 130px;
+  bottom: 130px;
+  width: 4px;
+  margin-left: -2px;
+  background-image: linear-gradient(180deg, #f1ead2 0 50%, transparent 50%);
+  background-size: 100% 38px;
+  opacity: 0.78;
+}
+.v3-resume .v3-thresh {
+  position: absolute;
+  left: 8px; right: 8px;
+  text-align: center;
+  font-family: var(--v3-f-display);
+  color: #f5edd0;
+  letter-spacing: 0.04em;
+  z-index: 2;
+}
+.v3-resume .v3-thresh--top    { top: 14px; }
+.v3-resume .v3-thresh--bottom { bottom: 14px; }
+.v3-resume .v3-thresh__num {
+  font-size: 38px; line-height: 1; letter-spacing: 0.06em;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6), 0 2px 8px rgba(255, 176, 74, 0.18);
+}
+.v3-resume .v3-thresh__lbl {
+  font-family: var(--v3-f-mono);
+  font-size: 8.5px; letter-spacing: 0.22em;
+  margin-top: 6px;
+  color: rgba(245, 236, 214, 0.55);
+  display: block;
+}
+.v3-resume .v3-thresh__chev {
+  margin-top: 8px;
+  display: flex; flex-direction: column; gap: 4px;
+  align-items: center;
+  font-size: 10px; color: rgba(245, 236, 214, 0.45);
+}
+.v3-resume .v3-thresh--bottom .v3-thresh__chev { margin-top: 0; margin-bottom: 8px; flex-direction: column-reverse; }
+.v3-resume .v3-piano {
+  position: absolute; left: 14px; right: 14px;
+  display: flex; gap: 4px;
+}
+.v3-resume .v3-piano span {
+  flex: 1; height: 18px; background: #f5edd0; border-radius: 1px; opacity: 0.85;
+}
+.v3-resume .v3-piano--top    { top: 86px; }
+.v3-resume .v3-piano--bottom { bottom: 86px; }
+.v3-resume .v3-edge-light {
+  position: absolute;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #ffe7b0;
+  box-shadow: 0 0 6px rgba(255,176,74,0.9), 0 0 12px rgba(255,176,74,0.4);
+}
+
+/* Plane */
+.v3-resume .v3-plane {
+  position: fixed;
+  left: calc(var(--v3-runway-x) + var(--v3-runway-w) / 2);
+  top: 50vh;
+  transform: translate(-50%, -50%);
+  width: calc(var(--v3-runway-w) - 16px);
+  z-index: 5;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45));
+  pointer-events: none;
+  animation: v3-idle-hum 3.6s ease-in-out infinite;
+}
+.v3-resume .v3-plane svg { width: 100%; height: auto; display: block; }
+@keyframes v3-idle-hum {
+  0%,100% { transform: translate(-50%, -50%) rotate(0.4deg); }
+  50%     { transform: translate(-50%, -50%) rotate(-0.4deg); }
+}
+
+/* ===== HERO ===== */
+.v3-resume .v3-hero {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(255, 176, 74, 0.45), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(84, 70, 166, 0.35), transparent 55%),
+    linear-gradient(135deg, var(--v3-hero-bg), var(--v3-hero-rim));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--v3-rad-md);
+  padding: 26px 32px 22px;
+  color: #f5edd0;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 24px 56px -28px rgba(28, 24, 20, 0.55);
+}
+.v3-resume .v3-hero::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 38px;
+  background:
+    linear-gradient(to top, rgba(0,0,0,0.25), transparent),
+    repeating-linear-gradient(90deg,
+      transparent 0 16px,
+      rgba(245,236,214,0.10) 16px 17px,
+      transparent 17px 28px,
+      rgba(245,236,214,0.06) 28px 29px);
+  pointer-events: none;
+}
+.v3-resume .v3-hero__band {
+  font-family: var(--v3-f-mono);
+  font-size: 10.5px; letter-spacing: 0.16em;
+  display: flex; justify-content: space-between; align-items: center;
+  color: rgba(245, 236, 214, 0.65);
+  padding-bottom: 14px;
+  border-bottom: 1px dashed rgba(245, 236, 214, 0.22);
+}
+.v3-resume .v3-live::before {
+  content: ""; display: inline-block;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #5cf2c0;
+  box-shadow: 0 0 0 2px rgba(92,242,192,0.25);
+  margin-right: 8px; vertical-align: 1px;
+  animation: v3-live-pulse 1.6s ease-in-out infinite;
+}
+@keyframes v3-live-pulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(92,242,192,0.25); }
+  50%     { box-shadow: 0 0 0 6px rgba(92,242,192,0.0); }
+}
+.v3-resume .v3-hero__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: end;
+  margin-top: 22px;
+}
+.v3-resume .v3-hero__welcome {
+  font-family: var(--v3-f-mono);
+  font-size: 11px; letter-spacing: 0.28em;
+  color: var(--v3-sunset-1);
+  margin-bottom: 12px;
+}
+.v3-resume .v3-hero__name {
+  font-family: var(--v3-f-display);
+  font-size: clamp(32px, 4.6vw, 56px);
+  letter-spacing: 0.005em;
+  color: #fff8e7;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  display: block;
+}
+.v3-resume .v3-hero__name span {
+  display: block;
+  line-height: 1;
+  padding-bottom: 0.18em;
+}
+.v3-resume .v3-hero__name span + span { margin-top: 0.32em; }
+.v3-resume .v3-hero__sub {
+  font-family: var(--v3-f-editorial);
+  font-style: italic;
+  font-size: 17px;
+  color: rgba(245, 236, 214, 0.78);
+  margin-top: 18px;
+  max-width: 540px;
+  line-height: 1.45;
+}
+.v3-resume .v3-hero__codebox {
+  border: 1.5px solid rgba(245, 236, 214, 0.4);
+  background: rgba(0,0,0,0.28);
+  padding: 14px 18px 16px;
+  border-radius: var(--v3-rad-sm);
+  text-align: center;
+  min-width: 138px;
+  flex-shrink: 0;
+  align-self: end;
+  position: relative;
+}
+.v3-resume .v3-hero__codebox::before,
+.v3-resume .v3-hero__codebox::after {
+  content: ""; position: absolute;
+  width: 8px; height: 8px;
+  border: 1.5px solid rgba(245, 236, 214, 0.4);
+}
+.v3-resume .v3-hero__codebox::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.v3-resume .v3-hero__codebox::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+.v3-resume .v3-cb__lbl {
+  font-family: var(--v3-f-mono);
+  font-size: 9px; letter-spacing: 0.32em;
+  color: rgba(245, 236, 214, 0.55);
+  display: block; margin-bottom: 6px;
+}
+.v3-resume .v3-cb__code {
+  font-family: var(--v3-f-display);
+  font-size: 44px; line-height: 1;
+  color: #fff8e7; letter-spacing: 0.02em;
+}
+.v3-resume .v3-cb__sub {
+  display: block;
+  font-family: var(--v3-f-mono);
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--v3-sunset-1);
+  margin-top: 6px;
+}
+.v3-resume .v3-hero__pass {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px dashed rgba(245, 236, 214, 0.22);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  position: relative;
+}
+.v3-resume .v3-hero__pass::before,
+.v3-resume .v3-hero__pass::after {
+  content: ""; position: absolute;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--v3-paper);
+  top: -8px;
+}
+.v3-resume .v3-hero__pass::before { left: -40px; }
+.v3-resume .v3-hero__pass::after  { right: -40px; }
+.v3-resume .v3-pass__field {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.v3-resume .v3-pass__lbl {
+  font-family: var(--v3-f-mono);
+  font-size: 9px; letter-spacing: 0.24em;
+  color: rgba(245, 236, 214, 0.55);
+}
+.v3-resume .v3-pass__val {
+  font-family: var(--v3-f-mono);
+  font-size: 14px; letter-spacing: 0.04em;
+  color: #fff8e7; font-weight: 600;
+}
+.v3-resume .v3-pass__field--ok .v3-pass__val { color: #5cf2c0; }
+@media (max-width: 720px) {
+  .v3-resume .v3-hero__top { grid-template-columns: 1fr; }
+  .v3-resume .v3-hero__pass { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== META BAR ===== */
+.v3-resume .v3-meta {
+  display: flex; gap: 14px; align-items: center;
+  margin: 18px 0 0;
+  flex-wrap: wrap;
+}
+.v3-resume .v3-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--v3-f-mono);
+  font-size: 10.5px; letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 6px 14px 5px;
+  border-radius: 999px;
+  border: 1px solid var(--v3-paper-line);
+  background: var(--v3-paper);
+  color: var(--v3-ink-soft);
+}
+.v3-resume .v3-pill__dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--v3-st-live);
+  box-shadow: 0 0 0 2px rgba(31,141,92,0.18);
+}
+.v3-resume .v3-pill--ghost { background: transparent; border-color: var(--v3-paper-line); }
+
+/* ===== IDENTITY ===== */
+.v3-resume .v3-id {
+  margin-top: 22px;
+  background: var(--v3-paper);
+  border: 1px solid var(--v3-paper-line);
+  border-radius: var(--v3-rad-md);
+  padding: 28px 32px;
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: 26px;
+  align-items: center;
+  position: relative;
+}
+.v3-resume .v3-id::before {
+  content: "MANIFEST · 01";
+  position: absolute; top: -1px; left: 28px;
+  font-family: var(--v3-f-mono);
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--v3-ink-mute);
+  background: var(--v3-paper);
+  padding: 0 10px;
+  transform: translateY(-50%);
+}
+.v3-resume .v3-id__avatar {
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--v3-c-exp), var(--v3-c-bug));
+  color: #fff8e7;
+  font-family: var(--v3-f-display);
+  font-size: 38px;
+  display: grid; place-items: center;
+  letter-spacing: 0.02em;
+  box-shadow: 0 12px 22px -10px rgba(180, 80, 30, 0.55);
+  position: relative;
+}
+.v3-resume .v3-id__avatar::after {
+  content: ""; position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 1px dashed var(--v3-paper-line);
+}
+.v3-resume .v3-id__main { min-width: 0; }
+.v3-resume .v3-id__name {
+  font-family: var(--v3-f-display);
+  font-size: 38px; line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--v3-ink);
+  display: flex; align-items: center; gap: 12px;
+  text-transform: uppercase;
+}
+.v3-resume .v3-id__check {
+  width: 22px; height: 22px; flex: 0 0 22px;
+  background: var(--v3-st-live);
+  color: #f3eedd;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: bold;
+}
+.v3-resume .v3-id__head {
+  margin-top: 12px;
+  font-family: var(--v3-f-mono);
+  font-size: 12px; letter-spacing: 0.14em;
+  color: var(--v3-ink); font-weight: 600;
+  text-transform: uppercase;
+}
+.v3-resume .v3-id__tag {
+  margin-top: 6px;
+  font-family: var(--v3-f-editorial);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--v3-ink-soft);
+  line-height: 1.35;
+}
+.v3-resume .v3-id__loc {
+  margin-top: 8px;
+  font-family: var(--v3-f-mono);
+  font-size: 11px; letter-spacing: 0.12em;
+  color: var(--v3-ink-mute);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.v3-resume .v3-id__loc::before {
+  content: "▲"; color: var(--v3-c-bug); font-size: 10px;
+}
+.v3-resume .v3-id__contact {
+  display: flex; flex-direction: column; gap: 10px;
+  font-family: var(--v3-f-mono);
+  font-size: 11.5px;
+  text-align: right;
+}
+.v3-resume .v3-id__contact a {
+  color: var(--v3-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--v3-ink-faint);
+  padding-bottom: 1px;
+  transition: border-color .2s, color .2s;
+}
+.v3-resume .v3-id__contact a:hover { color: var(--v3-c-exp); border-color: var(--v3-c-exp); }
+.v3-resume .v3-id__field {
+  display: flex; align-items: center; gap: 10px; justify-content: flex-end;
+}
+.v3-resume .v3-id__lbl {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: var(--v3-ink-mute);
+  text-transform: uppercase;
+}
+@media (max-width: 720px) {
+  .v3-resume .v3-id { grid-template-columns: 64px 1fr; gap: 16px; padding: 22px; }
+  .v3-resume .v3-id__avatar { width: 64px; height: 64px; font-size: 26px; }
+  .v3-resume .v3-id__name { font-size: 28px; }
+  .v3-resume .v3-id__contact { grid-column: 1 / -1; align-items: flex-start; text-align: left; }
+  .v3-resume .v3-id__field { justify-content: flex-start; }
+}
+
+/* ===== ABOUT ===== */
+.v3-resume .v3-about {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr 2.4fr;
+  gap: 22px;
+  align-items: start;
+}
+.v3-resume .v3-about__lbl {
+  font-family: var(--v3-f-mono);
+  font-size: 10.5px; letter-spacing: 0.28em;
+  color: var(--v3-ink-mute);
+  text-transform: uppercase;
+  position: relative; padding-top: 6px;
+}
+.v3-resume .v3-about__lbl::before {
+  content: ""; position: absolute;
+  left: 0; top: 0; width: 36px; height: 2px;
+  background: var(--v3-c-exp);
+}
+.v3-resume .v3-about__lbl span { color: var(--v3-ink-faint); }
+.v3-resume .v3-about__body {
+  font-family: var(--v3-f-editorial);
+  font-size: 19px; line-height: 1.5;
+  color: var(--v3-ink);
+}
+.v3-resume .v3-about__body strong {
+  font-family: var(--v3-f-body);
+  font-weight: 600; font-style: normal;
+  background: linear-gradient(180deg, transparent 60%, rgba(255,176,74,0.4) 60%);
+  padding: 0 2px;
+}
+@media (max-width: 720px) {
+  .v3-resume .v3-about { grid-template-columns: 1fr; gap: 8px; }
+  .v3-resume .v3-about__body { font-size: 17px; }
+}
+
+/* ===== HIGHLIGHTS ===== */
+.v3-resume .v3-highlights {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.v3-resume .v3-stat {
+  background: var(--v3-paper);
+  border: 1px solid var(--v3-paper-line);
+  border-radius: var(--v3-rad-sm);
+  padding: 16px 16px 14px;
+  position: relative;
+  overflow: hidden;
+}
+.v3-resume .v3-stat::after {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 50%;
+  border-top: 1px dashed var(--v3-paper-line-2);
+  pointer-events: none;
+}
+.v3-resume .v3-stat__lbl {
+  font-family: var(--v3-f-mono);
+  font-size: 9px; letter-spacing: 0.26em;
+  color: var(--v3-ink-mute);
+  text-transform: uppercase;
+}
+.v3-resume .v3-stat__val {
+  margin-top: 4px;
+  font-family: var(--v3-f-display);
+  font-size: 30px; line-height: 1;
+  color: var(--v3-ink);
+  letter-spacing: -0.01em;
+}
+.v3-resume .v3-stat__val span {
+  font-family: var(--v3-f-mono);
+  font-size: 10px;
+  color: var(--v3-c-exp);
+  margin-left: 4px;
+  vertical-align: 5px;
+  letter-spacing: 0.1em;
+}
+@media (max-width: 720px) {
+  .v3-resume .v3-highlights { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== SECTIONS ===== */
+.v3-resume .v3-section {
+  margin-top: 36px;
+  --v3-sec: var(--v3-c-edu);
+  --v3-sec-soft: rgba(84, 70, 166, 0.07);
+  position: relative;
+}
+.v3-resume .v3-section[data-color="exp"]   { --v3-sec: var(--v3-c-exp);   --v3-sec-soft: rgba(212, 118, 43, 0.08); }
+.v3-resume .v3-section[data-color="bug"]   { --v3-sec: var(--v3-c-bug);   --v3-sec-soft: rgba(181, 52, 31, 0.08); }
+.v3-resume .v3-section[data-color="other"] { --v3-sec: var(--v3-c-other); --v3-sec-soft: rgba(125, 117, 103, 0.10); }
+
+.v3-resume .v3-sec__head {
+  display: flex; flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  border-bottom: 2px solid var(--v3-ink);
+  padding-bottom: 10px;
+  position: relative;
+}
+.v3-resume .v3-sec__head::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: -7px;
+  width: 80px; height: 4px;
+  background: var(--v3-sec);
+}
+.v3-resume .v3-sec__num {
+  font-family: var(--v3-f-display);
+  font-size: 22px;
+  color: var(--v3-sec);
+  line-height: 1;
+  flex: 0 0 auto;
+}
+.v3-resume .v3-sec__num small { font-size: 11px; color: var(--v3-ink-mute); margin-left: 2px; vertical-align: 3px; }
+.v3-resume .v3-sec__title {
+  font-family: var(--v3-f-display);
+  font-size: clamp(20px, 2.4vw, 28px);
+  text-transform: uppercase;
+  color: var(--v3-ink);
+  line-height: 1;
+  letter-spacing: -0.005em;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.v3-resume .v3-sec__terminal {
+  font-family: var(--v3-f-mono);
+  font-size: 10.5px; letter-spacing: 0.18em;
+  color: var(--v3-ink-mute);
+  text-transform: uppercase;
+  flex: 0 0 auto;
+}
+.v3-resume .v3-sec__terminal b { color: var(--v3-sec); font-weight: 700; letter-spacing: 0.22em; }
+.v3-resume .v3-sec__count {
+  font-family: var(--v3-f-mono);
+  font-size: 11px; letter-spacing: 0.12em;
+  color: var(--v3-ink);
+  background: var(--v3-paper-deep);
+  border: 1px solid var(--v3-paper-line);
+  border-radius: 999px;
+  padding: 4px 10px 3px;
+  flex: 0 0 auto;
+}
+
+/* Rows */
+.v3-resume .v3-rows { margin-top: 4px; }
+.v3-resume .v3-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 6px;
+  border-bottom: 1px dashed var(--v3-paper-line-2);
+  position: relative;
+  transition: background 0.18s ease;
+}
+.v3-resume .v3-row:hover { background: var(--v3-sec-soft); }
+.v3-resume .v3-row--headline {
+  background: linear-gradient(90deg, var(--v3-sec-soft), transparent 70%);
+  margin: 0 -10px;
+  padding-left: 16px; padding-right: 16px;
+  border-radius: 3px;
+}
+.v3-resume .v3-row__mono {
+  width: 56px; height: 56px;
+  border-radius: var(--v3-rad-sm);
+  display: grid; place-items: center;
+  background: var(--v3-paper-deep);
+  border: 1px solid var(--v3-paper-line);
+  font-family: var(--v3-f-display);
+  font-size: 22px;
+  color: var(--v3-sec);
+  position: relative;
+}
+.v3-resume .v3-row__mono::after {
+  content: "";
+  position: absolute; inset: 5px;
+  border: 1px dashed var(--v3-sec);
+  border-radius: 4px; opacity: 0.25;
+}
+.v3-resume .v3-row__main { min-width: 0; }
+.v3-resume .v3-row__title {
+  font-family: var(--v3-f-display);
+  font-size: 18px;
+  text-transform: uppercase;
+  color: var(--v3-ink);
+  line-height: 1.05;
+}
+.v3-resume .v3-row__role {
+  margin-top: 4px;
+  font-family: var(--v3-f-body);
+  font-size: 13.5px;
+  color: var(--v3-ink-soft);
+  display: flex; flex-wrap: wrap;
+  gap: 4px 10px; align-items: center;
+}
+.v3-resume .v3-sep {
+  color: var(--v3-ink-faint);
+  font-family: var(--v3-f-mono);
+  font-weight: 500;
+}
+.v3-resume .v3-row__meta {
+  display: grid; grid-template-columns: auto auto auto;
+  gap: 14px; align-items: center;
+  font-family: var(--v3-f-mono);
+}
+.v3-resume .v3-row__year {
+  font-size: 11px; letter-spacing: 0.08em;
+  color: var(--v3-ink-soft);
+}
+.v3-resume .v3-row__flight {
+  font-size: 9.5px; letter-spacing: 0.22em;
+  color: var(--v3-ink-mute);
+  background: var(--v3-paper-deep);
+  padding: 4px 8px 3px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+.v3-resume .v3-row__status {
+  font-family: var(--v3-f-mono);
+  font-weight: 700;
+  font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 5px 10px 4px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.v3-resume .v3-row__status[data-st="LIVE"]      { background: rgba(31,141,92,0.14); color: var(--v3-st-live); }
+.v3-resume .v3-row__status[data-st="LIVE"]::before {
+  content: ""; display: inline-block;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--v3-st-live); margin-right: 6px; vertical-align: 1px;
+  box-shadow: 0 0 0 2px rgba(31,141,92,0.18);
+  animation: v3-live-pulse 1.6s ease-in-out infinite;
+}
+.v3-resume .v3-row__status[data-st="NOW"]       { background: rgba(198,99,22,0.14); color: var(--v3-st-now); }
+.v3-resume .v3-row__status[data-st="ADMITTED"]  { background: rgba(84,70,166,0.14); color: var(--v3-st-disc); }
+.v3-resume .v3-row__status[data-st="DISCLOSED"] { background: rgba(84,70,166,0.14); color: var(--v3-st-disc); }
+.v3-resume .v3-row__status[data-st="GRADUATED"] { background: rgba(28,79,122,0.14); color: var(--v3-st-grad); }
+.v3-resume .v3-row__status[data-st="DONE"]      { background: rgba(108,99,88,0.14); color: var(--v3-st-done); }
+
+@media (max-width: 760px) {
+  .v3-resume .v3-row { grid-template-columns: 44px 1fr; gap: 12px; padding: 12px 0; }
+  .v3-resume .v3-row__mono { width: 44px; height: 44px; font-size: 18px; }
+  .v3-resume .v3-row__title { font-size: 16px; }
+  .v3-resume .v3-row__meta { grid-column: 1 / -1; padding-left: 56px; }
+}
+
+/* ===== FOOTER ===== */
+.v3-resume .v3-foot {
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.v3-resume .v3-foot__card {
+  border: 1px solid var(--v3-paper-line);
+  background: var(--v3-paper);
+  border-radius: var(--v3-rad-sm);
+  padding: 18px 20px;
+}
+.v3-resume .v3-foot__lbl {
+  font-family: var(--v3-f-mono);
+  font-size: 9.5px; letter-spacing: 0.26em;
+  color: var(--v3-ink-mute);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex; gap: 8px; align-items: center;
+}
+.v3-resume .v3-foot__lbl::before {
+  content: ""; width: 18px; height: 1px; background: var(--v3-ink-mute);
+}
+.v3-resume .v3-foot__val {
+  font-family: var(--v3-f-editorial);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--v3-ink);
+  line-height: 1.35;
+}
+.v3-resume .v3-signoff {
+  margin-top: 38px;
+  padding-top: 22px;
+  border-top: 1px solid var(--v3-paper-line);
+  display: flex; justify-content: space-between;
+  font-family: var(--v3-f-mono);
+  font-size: 10px; letter-spacing: 0.22em;
+  color: var(--v3-ink-mute);
+  text-transform: uppercase;
+}
+.v3-resume .v3-stamp {
+  border: 1.5px dashed var(--v3-c-bug);
+  color: var(--v3-c-bug);
+  padding: 6px 14px 5px;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+  font-weight: 700;
+}
+@media (max-width: 720px) {
+  .v3-resume .v3-foot { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -1367,25 +3410,11 @@ body.detail-open #detail-panel {
   <canvas id="canvas"></canvas>
   <div id="labels"></div>
 
-  <!-- Portfolio departure board overlay (hidden until takeoff completes) -->
-  <div id="board">
-    <div class="board-inner">
-      <header class="board-header">
-        <button class="board-back" id="boardBack" aria-label="Return to LAX">← KLAX</button>
-        <div class="board-header__left">
-          <div class="board-header__pre">▸ DEPARTURES · KLAX</div>
-          <div class="board-header__name" id="boardName"></div>
-          <div class="board-header__tag" id="boardTagline"></div>
-        </div>
-        <div class="board-header__right">
-          <span id="boardLocation"></span><br>
-          <span id="boardEmail"></span><br>
-          <span id="boardSocial"></span>
-        </div>
-        <div class="board-header__plane" aria-hidden="true">✈</div>
-      </header>
-      <div id="boardSections"></div>
-    </div>
+  <!-- Portfolio resume overlay (hidden until landing completes) · v3 design -->
+  <!-- Resume overlay — embeds preview/resume.html so post-landing matches a direct resume load 1:1 -->
+  <div id="board" class="v3-resume">
+    <iframe id="boardFrame" src="preview/resume.html" title="Sina Matian International"></iframe>
+    <button class="board-exit" id="boardBack" aria-label="Return to LAX">← Exit Flight View</button>
   </div>
 
   <!-- Detail panel for a clicked board row -->
@@ -1397,6 +3426,7 @@ body.detail-open #detail-panel {
   <div id="loader"><div class="ring"></div></div>
 
   <nav class="site-nav" aria-label="Site">
+    <a href="#resume" id="jumpToResume">Resume</a>
     <a href="blog.html">Blog</a>
   </nav>
 
@@ -1457,6 +3487,114 @@ body.detail-open #detail-panel {
 
   <div class="fade-overlay" id="fadeOverlay"></div>
 
+  <!-- Landing sequence overlay · cinematic descent into Sina Matian Intl (SMI) -->
+  <div class="landing-overlay" id="landingOverlay" aria-hidden="true">
+    <div class="landing-sky"></div>
+    <div class="landing-cloud l-c1"></div>
+    <div class="landing-cloud l-c2"></div>
+    <div class="landing-cloud l-c3"></div>
+    <div class="landing-airport-silhouette" aria-hidden="true">
+      <svg viewBox="0 0 1600 420" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+        <!-- Distant ground / horizon haze -->
+        <rect x="0" y="320" width="1600" height="100" fill="rgba(20,28,44,0.85)"/>
+        <rect x="0" y="360" width="1600" height="60"  fill="rgba(8,12,20,0.95)"/>
+        <!-- Runway approach lights converging -->
+        <g stroke="rgba(255,200,120,0.85)" stroke-width="2" stroke-linecap="round">
+          <line x1="780" y1="420" x2="700" y2="350"/>
+          <line x1="820" y1="420" x2="900" y2="350"/>
+          <line x1="760" y1="420" x2="660" y2="350"/>
+          <line x1="840" y1="420" x2="940" y2="350"/>
+        </g>
+        <!-- Runway centerline strobes -->
+        <g fill="#ffd58a">
+          <circle cx="800" cy="345" r="3"/>
+          <circle cx="800" cy="360" r="3"/>
+          <circle cx="800" cy="378" r="3"/>
+          <circle cx="800" cy="398" r="3"/>
+        </g>
+        <!-- Control tower (left) -->
+        <g fill="rgba(20,28,44,0.95)">
+          <rect x="180" y="190" width="14" height="160"/>
+          <rect x="170" y="170" width="34" height="32" rx="4"/>
+          <rect x="178" y="158" width="18" height="14"/>
+          <circle cx="187" cy="152" r="3" fill="#ffb04a"/>
+        </g>
+        <!-- Main terminal silhouette -->
+        <path d="M 260 320 L 260 280 Q 260 250 290 250 L 360 250 Q 380 250 380 232 L 380 220 L 540 220 L 540 232 Q 540 250 560 250 L 700 250 Q 720 250 720 232 L 720 200 Q 720 180 740 180 L 880 180 Q 900 180 900 200 L 900 232 Q 900 250 920 250 L 1060 250 Q 1080 250 1080 232 L 1080 222 L 1240 222 L 1240 232 Q 1240 250 1260 250 L 1340 250 Q 1370 250 1370 280 L 1370 320 Z"
+              fill="rgba(20,28,44,0.95)"/>
+        <!-- Terminal window grid -->
+        <g fill="rgba(255,196,128,0.55)">
+          <rect x="290" y="270" width="6" height="12"/>
+          <rect x="304" y="270" width="6" height="12"/>
+          <rect x="318" y="270" width="6" height="12"/>
+          <rect x="332" y="270" width="6" height="12"/>
+          <rect x="404" y="240" width="6" height="14"/>
+          <rect x="418" y="240" width="6" height="14"/>
+          <rect x="432" y="240" width="6" height="14"/>
+          <rect x="446" y="240" width="6" height="14"/>
+          <rect x="460" y="240" width="6" height="14"/>
+          <rect x="474" y="240" width="6" height="14"/>
+          <rect x="488" y="240" width="6" height="14"/>
+          <rect x="502" y="240" width="6" height="14"/>
+          <rect x="516" y="240" width="6" height="14"/>
+          <rect x="752" y="200" width="6" height="14"/>
+          <rect x="766" y="200" width="6" height="14"/>
+          <rect x="780" y="200" width="6" height="14"/>
+          <rect x="794" y="200" width="6" height="14"/>
+          <rect x="808" y="200" width="6" height="14"/>
+          <rect x="822" y="200" width="6" height="14"/>
+          <rect x="836" y="200" width="6" height="14"/>
+          <rect x="850" y="200" width="6" height="14"/>
+          <rect x="864" y="200" width="6" height="14"/>
+          <rect x="878" y="200" width="6" height="14"/>
+          <rect x="932" y="240" width="6" height="14"/>
+          <rect x="946" y="240" width="6" height="14"/>
+          <rect x="960" y="240" width="6" height="14"/>
+          <rect x="974" y="240" width="6" height="14"/>
+          <rect x="988" y="240" width="6" height="14"/>
+          <rect x="1002" y="240" width="6" height="14"/>
+          <rect x="1016" y="240" width="6" height="14"/>
+          <rect x="1030" y="240" width="6" height="14"/>
+          <rect x="1044" y="240" width="6" height="14"/>
+          <rect x="1268" y="270" width="6" height="12"/>
+          <rect x="1282" y="270" width="6" height="12"/>
+          <rect x="1296" y="270" width="6" height="12"/>
+          <rect x="1310" y="270" width="6" height="12"/>
+        </g>
+        <!-- "SMI" sign on terminal roof -->
+        <g font-family="JetBrains Mono, monospace" font-weight="800" letter-spacing="6" fill="#ffb04a">
+          <text x="780" y="172" font-size="20" text-anchor="middle">SINA MATIAN INTL</text>
+        </g>
+        <!-- Distant tail-fins on apron -->
+        <g fill="rgba(255,196,128,0.4)">
+          <path d="M 1100 290 L 1108 250 L 1116 290 Z"/>
+          <path d="M 1140 295 L 1146 260 L 1152 295 Z"/>
+          <path d="M 1180 300 L 1184 270 L 1188 300 Z"/>
+        </g>
+      </svg>
+    </div>
+    <div class="landing-hud">
+      <div class="landing-hud__label">Approach Plate</div>
+      <div class="landing-hud__plate">
+        <b>SMI · KSMI</b>
+        ILS RWY 27 · 33.94°N 118.41°W<br>
+        WND 240/06 · VIS 10SM · CLR
+      </div>
+    </div>
+    <div class="landing-altimeter">
+      <div class="landing-altimeter__row"><span>Flight</span><b>SMA-010</b></div>
+      <div class="landing-altimeter__row"><span>From</span><b>KLAX</b></div>
+      <div class="landing-altimeter__row"><span>Gate</span><b>A1</b></div>
+      <div class="landing-altimeter__alt" id="landingAltVal">FL 350</div>
+    </div>
+    <div class="landing-placard">
+      <div class="landing-placard__sub">Now Arriving</div>
+      <div class="landing-placard__main">SINA MATIAN<br>INTERNATIONAL</div>
+      <div class="landing-placard__code"><span class="dot"></span>SMI · ON TIME · WELCOME ABOARD</div>
+    </div>
+    <div class="landing-flash"></div>
+  </div>
+
   <div class="tutorial" id="tutorial">
     <div class="tutorial__header">
       <div class="tutorial__step" id="tutStep">Step 1 of 11</div>
@@ -1475,6 +3613,9 @@ body.detail-open #detail-panel {
       <span class="t-total" id="tutDuration">5.0</span>
       <span class="t-unit">sec held</span>
     </div>
+    <button type="button" class="tutorial__skip" id="tutSkipBtn" aria-label="Skip tutorial and take off immediately">
+      Skip tutorial · take off →
+    </button>
   </div>
 
   <footer class="controls">
@@ -1495,11 +3636,13 @@ body.detail-open #detail-panel {
 }
 </script>
 <script src="osm_lax_data.js"></script>
-<script src="portfolio-data.js"></script>
+<script src="portfolio-data.js?v=4"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 /* ═══════════════════════════════════════════════
@@ -1550,7 +3693,11 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const canvasEl = document.querySelector('#canvas');
-const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, powerPreference: 'high-performance' });
+// alpha:true so the WebGL canvas can be transparent over the CSS3D-rendered
+// HTML resume below it. The scene's plane + clouds + sky show on top of the
+// real #board DOM element.
+const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setClearColor(0x000000, 0);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -1566,6 +3713,27 @@ labelRenderer.domElement.style.top = '0';
 labelRenderer.domElement.style.left = '0';
 labelRenderer.domElement.style.pointerEvents = 'none';
 document.querySelector('#labels').appendChild(labelRenderer.domElement);
+
+// CSS3DRenderer renders the actual #board DOM element as a 3D object in
+// the same scene. Plane lands on the LITERAL HTML resume — not a copy,
+// not a texture, not a procedural fallback. The runway-strip column
+// inside #board IS the runway.
+const css3dRenderer = new CSS3DRenderer();
+css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+css3dRenderer.domElement.style.position = 'fixed';
+css3dRenderer.domElement.style.top = '0';
+css3dRenderer.domElement.style.left = '0';
+css3dRenderer.domElement.style.width = '100vw';
+css3dRenderer.domElement.style.height = '100vh';
+css3dRenderer.domElement.style.pointerEvents = 'auto';
+// Hidden until the landing sequence starts — otherwise the resume floats
+// in over the LAX scene from page load.
+css3dRenderer.domElement.style.display = 'none';
+// PREPEND to body so the CSS3D resume is earlier in DOM order than #app
+// (which contains the WebGL canvas + all UI). With z-index auto everywhere,
+// later DOM = higher stacking → canvas + UI naturally sit above the
+// resume, and we don't have to touch any existing UI z-indexes.
+document.body.insertBefore(css3dRenderer.domElement, document.body.firstChild);
 
 /* ═══════════════════════════════════════════════
    ORBIT CONTROLS
@@ -3408,24 +5576,47 @@ const planeMarkerWrap = document.createElement('div');
 planeMarkerWrap.style.pointerEvents = 'none';
 planeMarkerWrap.innerHTML = `
   <div class="plane-marker">
-    <span class="pm-main">▴ Click here to fly plane</span>
+    <span class="pm-main">▸ CLICK THE PLANE TO FLY ◂</span>
     <span class="pm-sub">or press <span class="pm-key">↵ ENTER</span> to board</span>
   </div>
 `;
 const planeMarker = new CSS2DObject(planeMarkerWrap);
-// Offset away from the plane so it doesn't block content
-planeMarker.position.set(0, -70, 45);
-airplane.add(planeMarker);
+// Live in scene-space, not parented to the airplane. Each frame we re-derive
+// the badge's world position so it lands a fixed number of PIXELS below the
+// airplane on screen — never overlapping it regardless of camera angle.
+scene.add(planeMarker);
 
-// Leader line connecting the plane to the marker
-const markerLine = new THREE.Line(
-  new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, -70, 45),
-  ]),
-  new THREE.LineBasicMaterial({ color: 0xed8e2b, transparent: true, opacity: 0.6 }),
-);
-airplane.add(markerLine);
+// Place the badge a fixed pixel offset BELOW the lowest visible part of the
+// airplane in screen space. We project all 8 corners of its bounding box,
+// take the minimum NDC y, and anchor the badge there. This guarantees the
+// badge never overlaps the airplane silhouette no matter the camera angle.
+const _markerNDC = new THREE.Vector3();
+const _markerRef = new THREE.Vector3();
+const _markerCorner = new THREE.Vector3();
+const _airplaneCorners = [];
+for (let i = 0; i < 8; i++) {
+  _airplaneCorners.push(new THREE.Vector3(
+    (i & 1) ? airplaneBounds.max.x : airplaneBounds.min.x,
+    (i & 2) ? airplaneBounds.max.y : airplaneBounds.min.y,
+    (i & 4) ? airplaneBounds.max.z : airplaneBounds.min.z,
+  ));
+}
+const MARKER_SCREEN_OFFSET_PX = 38;
+function updatePlaneMarkerPosition() {
+  if (povActive) return;
+  airplane.updateMatrixWorld();
+  let minNDCy = Infinity;
+  for (const corner of _airplaneCorners) {
+    _markerCorner.copy(corner).applyMatrix4(airplane.matrixWorld).project(camera);
+    if (_markerCorner.y < minNDCy) minNDCy = _markerCorner.y;
+  }
+  // Use the airplane centre as the depth reference so the badge sizes consistently.
+  _markerRef.copy(airplane.position);
+  _markerNDC.copy(_markerRef).project(camera);
+  _markerNDC.y = minNDCy - (MARKER_SCREEN_OFFSET_PX * 2) / window.innerHeight;
+  _markerNDC.unproject(camera);
+  planeMarker.position.copy(_markerNDC);
+}
 
 /* ——— Pointer + raycaster ——— */
 const raycaster = new THREE.Raycaster();
@@ -3483,7 +5674,6 @@ function enterPov() {
   ensureTutorialAudio();
   povActive = true;
   planeMarker.element.style.opacity = '0';
-  markerLine.visible = false;
   document.body.classList.add('in-pov');
 
   povSaved.pos.copy(camera.position);
@@ -3515,7 +5705,6 @@ function exitPov() {
     document.body.classList.remove('in-pov');
     document.body.classList.remove('tutorial-complete');
     planeMarker.element.style.opacity = '';
-    markerLine.visible = true;
 
     stopTutorial();
     exitMapView();
@@ -3907,6 +6096,643 @@ const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
 }));
 mapGroup.add(stars);
 
+/* ═══════════════════════════════════════════════════════════
+   DESTINATION FLOOR · the resume itself, lying flat on the ground.
+
+   The runway sits on the LEFT EDGE of the resume floor (matching the actual
+   HTML resume's left runway strip). Plane heading +X = nose forward along
+   runway long-axis. After landing, the bird's-eye camera frames the entire
+   floor with runway on screen-left and resume content on screen-right.
+
+   Coordinate convention:
+   - plane heading = +X (rotation.y = π = MAP_HEADING)
+   - runway long-axis = +X
+   - runway is at world Z = +RUNWAY_Z_OFFSET (positive Z → screen left when
+     looking down with camera.up=+X, since screen-right = -Z under that basis)
+   - resume content extends from Z=+positive (left of runway strip) all the
+     way through Z=large negative (screen right when in bird's-eye)
+   ═══════════════════════════════════════════════════════════ */
+const destAirportGroup = new THREE.Group();
+destAirportGroup.visible = false;
+
+const RUNWAY_LEN  = 1600;        // length of runway (along +X)
+const RUNWAY_W    = 110;         // width of runway (along Z)
+const RUNWAY_X0   = 1400;        // runway threshold X (touchdown end, ahead of plane)
+const RUNWAY_X1   = RUNWAY_X0 + RUNWAY_LEN;
+const RUNWAY_Y    = 0.6;
+// runway centerline Z. Negative offset (with up=+X looking down -Y, screen-right
+// = +Z so screen-left = -Z) places the runway on the LEFT of the bird's-eye
+// view — matching the HTML resume's runway-strip column on the left side of
+// the page. Resume content (texture) extends to the right of the runway.
+const RUNWAY_Z_OFFSET = -1040;
+const TOUCHDOWN_X = RUNWAY_X0 + 280;
+const PARK_X      = RUNWAY_X0 + 380;     // where rollout ends (first gate)
+const FAR_END_X   = RUNWAY_X0 + 1380;    // far end of runway (last gate when scrolling down)
+
+// The destination floor IS the actual HTML resume rendered to a canvas via
+// html2canvas. We capture the resume DOM at startup and use the resulting
+// canvas as a texture on the floor — so the resume the pilot sees while
+// landing is byte-identical to the scrollable HTML resume that takes over
+// after touchdown. (Replaces the prior canvas-drawn stylization.)
+function buildResumeFloorCanvas() {
+  const C = document.createElement('canvas');
+  // Aspect 1:2 — resume-ish vertical layout. Map to a wide-X / narrower-Z
+  // floor so canvas-vertical aligns with world +X (runway long-axis).
+  C.width  = 1024;
+  C.height = 2048;
+  const x = C.getContext('2d');
+
+  // ── 1. Cream paper background ────────────────────────────────────────────
+  x.fillStyle = '#f7f5ef';
+  x.fillRect(0, 0, C.width, C.height);
+
+  // Subtle grid of dots for paper texture
+  x.fillStyle = 'rgba(28, 24, 20, 0.04)';
+  for (let i = 0; i < C.width; i += 28) {
+    for (let j = 0; j < C.height; j += 28) x.fillRect(i, j, 1, 1);
+  }
+
+  // ── 2. Header card · Sina Matian INTERNATIONAL banner ───────────────────
+  // Lives at the "top" of the canvas (which we'll map to the far X end).
+  x.fillStyle = '#2c405d';
+  roundedRect(x, 80, 80, 864, 360, 14);
+  // Sunset glow corner
+  const grad = x.createRadialGradient(880, 440, 30, 880, 440, 480);
+  grad.addColorStop(0, 'rgba(255, 176, 74, 0.55)');
+  grad.addColorStop(1, 'rgba(255, 176, 74, 0)');
+  x.fillStyle = grad;
+  x.fillRect(80, 80, 864, 360);
+  // "WELCOME TO" eyebrow
+  x.fillStyle = '#ffb04a';
+  x.font = '600 22px JetBrains Mono, monospace';
+  x.fillText('WELCOME TO', 130, 150);
+  // Big name
+  x.fillStyle = '#fff8e7';
+  x.font = '800 76px Inter, sans-serif';
+  x.fillText('SINA MATIAN', 130, 240);
+  x.fillText('INTERNATIONAL', 130, 320);
+  // SMI airport code box
+  x.strokeStyle = 'rgba(245,236,214,0.42)';
+  x.lineWidth = 2;
+  roundedStroke(x, 740, 100, 180, 200, 8);
+  x.fillStyle = 'rgba(0,0,0,0.22)';
+  roundedRect(x, 740, 100, 180, 200, 8);
+  x.fillStyle = 'rgba(245,236,214,0.62)';
+  x.font = '600 16px JetBrains Mono, monospace';
+  x.fillText('AIRPORT', 770, 140);
+  x.fillStyle = '#fff8e7';
+  x.font = '800 70px JetBrains Mono';
+  x.fillText('SMI', 770, 220);
+  x.fillStyle = '#ffb04a';
+  x.font = '600 14px JetBrains Mono';
+  x.fillText('KSMI · INTL', 770, 260);
+  // Boarding-pass strip at bottom of header
+  x.strokeStyle = 'rgba(245,236,214,0.28)';
+  x.setLineDash([6, 4]);
+  x.beginPath(); x.moveTo(110, 380); x.lineTo(914, 380); x.stroke();
+  x.setLineDash([]);
+  const passLabels = ['PASSENGER', 'FROM → TO', 'GATE · SEAT', 'STATUS'];
+  const passVals   = ['SINA MATIAN', 'KLAX → SMI', 'A1 · 1A', 'ON TIME · ARRIVED'];
+  for (let i = 0; i < 4; i++) {
+    const cx = 130 + i * 200;
+    x.fillStyle = 'rgba(245,236,214,0.55)';
+    x.font = '600 12px JetBrains Mono';
+    x.fillText(passLabels[i], cx, 410);
+    x.fillStyle = i === 3 ? '#5cf2c0' : '#fff8e7';
+    x.font = '600 18px JetBrains Mono';
+    x.fillText(passVals[i], cx, 430);
+  }
+
+  // ── 3. Identity card (white card with avatar + name + headline) ─────────
+  x.fillStyle = '#ffffff';
+  roundedRect(x, 80, 480, 864, 240, 14);
+  x.strokeStyle = '#e6e1d2';
+  x.lineWidth = 2;
+  roundedStroke(x, 80, 480, 864, 240, 14);
+  // Avatar
+  x.fillStyle = '#c2542a';
+  x.beginPath();
+  x.arc(180, 600, 78, 0, Math.PI * 2);
+  x.fill();
+  x.fillStyle = '#fff';
+  x.font = '800 56px Inter';
+  x.fillText('SM', 138, 620);
+  // Name + headline
+  x.fillStyle = '#1a1814';
+  x.font = '700 44px Inter';
+  x.fillText('Sina Matian', 290, 580);
+  x.fillStyle = '#2c2a26';
+  x.font = '500 22px Inter';
+  x.fillText('CYBERSECURITY & AI RESEARCHER', 290, 615);
+  x.fillText('10+ APPROVED BUG BOUNTIES', 290, 645);
+  x.fillStyle = '#5a554a';
+  x.font = '400 18px Inter';
+  x.fillText('Founder · Independent Security Researcher · CS @ NYU', 290, 678);
+
+  // ── 4. Resume sections (Education, Experience, Disclosures, Other) ──────
+  const sections = [
+    { title: 'EDUCATION',   color: '#7d6fd1', items: ['New York University', 'Santa Monica College', 'LA Pierce College', 'Calabasas High'] },
+    { title: 'EXPERIENCE',  color: '#ed8e2b', items: ['Tefillin Timer (Founder)', 'SeniorSupportAI.org (Founder)', 'Independent Security Researcher', 'Webutation, Inc'] },
+    { title: 'DISCLOSURES', color: '#c9432f', items: ['Hinge · Paywall Bypass', 'Wix.com · IDOR', 'Vibecode · SSH Auth Bypass'] },
+    { title: 'OTHER',       color: '#9a9385', items: ['Starbucks · Barista', "Sloan's Ice Cream"] },
+  ];
+  let yPos = 760;
+  for (const sec of sections) {
+    const cardH = 60 + sec.items.length * 36 + 28;
+    x.fillStyle = '#ffffff';
+    roundedRect(x, 80, yPos, 864, cardH, 12);
+    x.strokeStyle = '#e6e1d2';
+    x.lineWidth = 2;
+    roundedStroke(x, 80, yPos, 864, cardH, 12);
+    // Color stripe on the left edge of each card
+    x.fillStyle = sec.color;
+    x.fillRect(80, yPos, 8, cardH);
+    // Title
+    x.fillStyle = '#1a1814';
+    x.font = '700 30px Inter';
+    x.fillText(sec.title, 120, yPos + 50);
+    // Item lines
+    x.font = '500 22px Inter';
+    for (let i = 0; i < sec.items.length; i++) {
+      x.fillStyle = '#2c2a26';
+      x.fillText(`• ${sec.items[i]}`, 120, yPos + 90 + i * 36);
+    }
+    yPos += cardH + 16;
+  }
+
+  // ── 5. Contact / footer card ────────────────────────────────────────────
+  x.fillStyle = '#1c2738';
+  roundedRect(x, 80, yPos, 864, 110, 12);
+  x.fillStyle = '#ffb04a';
+  x.font = '700 18px JetBrains Mono';
+  x.fillText('CONTACT · OPEN TO OPPORTUNITIES', 110, yPos + 38);
+  x.fillStyle = '#fff8e7';
+  x.font = '500 18px Inter';
+  x.fillText('sina@sinamatian.com   ·   github.com/time-attack   ·   linkedin.com/in/sina-matian-b4210238b', 110, yPos + 78);
+
+  return C;
+
+  function roundedRect(c, x0, y0, w, h, r) {
+    c.beginPath();
+    c.moveTo(x0 + r, y0);
+    c.lineTo(x0 + w - r, y0);
+    c.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + r);
+    c.lineTo(x0 + w, y0 + h - r);
+    c.quadraticCurveTo(x0 + w, y0 + h, x0 + w - r, y0 + h);
+    c.lineTo(x0 + r, y0 + h);
+    c.quadraticCurveTo(x0, y0 + h, x0, y0 + h - r);
+    c.lineTo(x0, y0 + r);
+    c.quadraticCurveTo(x0, y0, x0 + r, y0);
+    c.closePath();
+    c.fill();
+  }
+  function roundedStroke(c, x0, y0, w, h, r) {
+    c.beginPath();
+    c.moveTo(x0 + r, y0);
+    c.lineTo(x0 + w - r, y0);
+    c.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + r);
+    c.lineTo(x0 + w, y0 + h - r);
+    c.quadraticCurveTo(x0 + w, y0 + h, x0 + w - r, y0 + h);
+    c.lineTo(x0 + r, y0 + h);
+    c.quadraticCurveTo(x0, y0 + h, x0, y0 + h - r);
+    c.lineTo(x0, y0 + r);
+    c.quadraticCurveTo(x0, y0, x0 + r, y0);
+    c.closePath();
+    c.stroke();
+  }
+}
+
+const _resumeCanvas = buildResumeFloorCanvas();
+const _resumeTex    = new THREE.CanvasTexture(_resumeCanvas);
+_resumeTex.colorSpace = THREE.SRGBColorSpace;
+_resumeTex.anisotropy = 8;
+_resumeTex.minFilter  = THREE.LinearFilter;
+_resumeTex.magFilter  = THREE.LinearFilter;
+
+// Asynchronously capture the actual HTML resume to a canvas via html2canvas
+// and swap it in as the floor texture. This makes the resume visible during
+// landing pixel-identical to the HTML resume that takes over after handoff —
+// no jarring "different view" in the transition.
+async function captureResumeToFloor() {
+  if (typeof html2canvas !== 'function') return;
+  const board = document.getElementById('board');
+  const strip = document.getElementById('runwayStrip');
+  if (!board) return;
+
+  const savedBoard = board.getAttribute('style') || '';
+  const savedStrip = strip ? strip.getAttribute('style') || '' : '';
+  // Render the resume off-screen at full width so html2canvas captures it.
+  // Hide the runway-strip during capture — the 3D runway mesh provides that.
+  board.style.cssText = `
+    display: block !important;
+    position: fixed !important;
+    left: -10000px !important;
+    top: 0 !important;
+    width: 1080px !important;
+    height: auto !important;
+    opacity: 1 !important;
+    z-index: -1 !important;
+    overflow: visible !important;
+  `;
+  if (strip) strip.style.cssText = 'display: none !important;';
+  // Wait for layout to settle.
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  // Hide cross-origin <img>s before capture (e.g. Google favicons that don't
+  // serve CORS headers). They'd taint the resulting canvas, which then can't
+  // be uploaded as a WebGL texture — the entire 3D scene goes black.
+  const hiddenImages = [];
+  board.querySelectorAll('img').forEach(img => {
+    const sameOrigin = !img.src ||
+      img.src.startsWith(location.origin) ||
+      img.src.startsWith('data:') ||
+      img.src.startsWith('blob:');
+    if (!sameOrigin) {
+      hiddenImages.push([img, img.style.visibility]);
+      img.style.visibility = 'hidden';
+    }
+  });
+  let captured = null;
+  try {
+    captured = await html2canvas(board, {
+      width: 1080,
+      height: board.scrollHeight,
+      backgroundColor: '#f7f5ef',
+      scale: 1,
+      logging: false,
+      useCORS: true,
+      allowTaint: false,            // skip cross-origin images instead of tainting the canvas
+      imageTimeout: 2000,
+    });
+  } catch (e) {
+    console.warn('html2canvas resume capture failed:', e);
+  }
+  // Restore visibility of skipped images.
+  hiddenImages.forEach(([img, prev]) => { img.style.visibility = prev; });
+  // Restore exact prior state.
+  board.setAttribute('style', savedBoard);
+  if (strip) strip.setAttribute('style', savedStrip);
+  if (captured) {
+    // CRITICAL: html2canvas can produce a tainted canvas if the resume
+    // contains any cross-origin images (logos, screenshots, etc.) without
+    // proper CORS headers. A tainted canvas cannot be uploaded as a WebGL
+    // texture — every renderer.render() throws SecurityError and the
+    // entire 3D scene goes black. Probe with getImageData; if it throws
+    // the canvas is tainted, so we keep the procedurally-drawn fallback.
+    try {
+      captured.getContext('2d').getImageData(0, 0, 1, 1);
+    } catch (e) {
+      console.warn('html2canvas capture is tainted (cross-origin image without CORS); using fallback resume floor texture.');
+      return;
+    }
+    _resumeTex.image = captured;
+    _resumeTex.needsUpdate = true;
+  }
+}
+window.PORTFOLIO_CAPTURE_RESUME = captureResumeToFloor;
+// Trigger capture asynchronously after page load — bounded by a timeout so
+// it can't hang the page. If it fails or takes too long, the canvas-drawn
+// fallback texture stays in place.
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    Promise.race([
+      captureResumeToFloor(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000)),
+    ]).catch(e => console.warn('html2canvas capture skipped:', e.message));
+  }, 800);
+});
+
+// === RESUME-AS-FLOOR · the LITERAL #board DOM element lying flat in 3D ===
+// No texture, no copy, no procedural fallback. CSS3DRenderer projects the
+// real #board into the same scene as the WebGL plane; the runway-strip
+// column inside #board IS the runway the plane lands on.
+//
+// Coordinate setup so the existing chase/landing math keeps working:
+//   - plane lands at world Z = RUNWAY_Z_OFFSET (= -1040)
+//   - that maps to CSS pixel ~72 inside the 1080-wide #board (the centre
+//     of the .runway-strip column at left:32px / width:80px)
+//   - so #board is positioned/scaled so its centreline column projects to
+//     world Z = RUNWAY_Z_OFFSET
+// === RESUME FLOOR · html2canvas snapshot of the v3 #board, used as a
+// PlaneGeometry texture during the 3D landing. After the handoff, the
+// 3D scene hides and the live DOM #board takes over (visually identical
+// because the snapshot WAS of the live #board). ===
+const RESUME_FLOOR_W = 2400;
+const _RESUME_SCALE  = RESUME_FLOOR_W / 1080;
+
+// Procedural fallback canvas (used while html2canvas snapshot is in flight).
+const _resumeFallback = document.createElement('canvas');
+_resumeFallback.width = 1080; _resumeFallback.height = 3200;
+{
+  const cx = _resumeFallback.getContext('2d');
+  cx.fillStyle = '#f3eedd';
+  cx.fillRect(0, 0, _resumeFallback.width, _resumeFallback.height);
+}
+const _resumeTex2 = new THREE.CanvasTexture(_resumeFallback);
+_resumeTex2.colorSpace = THREE.SRGBColorSpace;
+_resumeTex2.anisotropy = 8;
+_resumeTex2.minFilter  = THREE.LinearFilter;
+_resumeTex2.magFilter  = THREE.LinearFilter;
+
+const destGround = new THREE.Mesh(
+  new THREE.PlaneGeometry(RESUME_FLOOR_W, RESUME_FLOOR_W * 3),
+  new THREE.MeshBasicMaterial({
+    map: _resumeTex2,
+    side: THREE.DoubleSide,
+    fog: false,
+  }),
+);
+// Lay flat — same orientation as the original destGround so the existing
+// landing camera math keeps working. CSS-top → world +X, CSS-right →
+// world +Z, normal → world +Y.
+destGround.rotation.x = -Math.PI / 2;
+destGround.rotation.z = -Math.PI / 2;
+destGround.position.set(RUNWAY_X0 + RUNWAY_LEN / 2, 0, 0);
+destAirportGroup.add(destGround);
+
+// Cream backstop in case the texture fails — never let the user see black.
+const destGroundBackup = new THREE.Mesh(
+  new THREE.PlaneGeometry(RESUME_FLOOR_W * 1.4, RESUME_FLOOR_W * 4),
+  new THREE.MeshBasicMaterial({ color: 0xf3eedd, side: THREE.DoubleSide, fog: false }),
+);
+destGroundBackup.rotation.x = -Math.PI / 2;
+destGroundBackup.rotation.z = -Math.PI / 2;
+destGroundBackup.position.set(RUNWAY_X0 + RUNWAY_LEN / 2, -0.2, 0);
+destAirportGroup.add(destGroundBackup);
+
+// 3D runway slab — the plane physically lands on this.
+const RUNWAY_TOP = 6;
+const RUNWAY_THICK = 4;
+const runwayMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(RUNWAY_LEN, RUNWAY_THICK, RUNWAY_W),
+  new THREE.MeshStandardMaterial({
+    color: 0x2c2f38, roughness: 0.92,
+    emissive: 0x14161c, emissiveIntensity: 0.35,
+  }),
+);
+runwayMesh.position.set(
+  RUNWAY_X0 + RUNWAY_LEN / 2,
+  RUNWAY_TOP - RUNWAY_THICK / 2,
+  RUNWAY_Z_OFFSET,
+);
+destAirportGroup.add(runwayMesh);
+
+// Centerline dashes for "looks like a runway".
+for (let i = 0; i < 32; i++) {
+  const dash = new THREE.Mesh(
+    new THREE.BoxGeometry(28, 0.1, 3.5),
+    new THREE.MeshBasicMaterial({ color: 0xfff3d0 }),
+  );
+  dash.position.set(RUNWAY_X0 + 80 + i * 46, RUNWAY_TOP + 0.1, RUNWAY_Z_OFFSET);
+  destAirportGroup.add(dash);
+}
+
+// === Procedural floor texture · drawn once at startup ===
+// We deliberately do NOT html2canvas the live #board — it kept leaving
+// the element with broken inline styles after capture interruptions.
+// Instead the floor shows a stylised "resume page" sketch (header card,
+// section bands, runway-strip column) so the user clearly sees they are
+// landing on a resume. The real DOM #board takes over post-handoff.
+(function paintResumeFloorTexture() {
+  const c = _resumeFallback;
+  c.width = 1080; c.height = 3200;
+  const cx = c.getContext('2d');
+
+  // Cream paper bg
+  cx.fillStyle = '#f3eedd';
+  cx.fillRect(0, 0, c.width, c.height);
+
+  // Subtle dot grain
+  cx.fillStyle = 'rgba(28, 24, 20, 0.04)';
+  for (let i = 0; i < c.width; i += 28) {
+    for (let j = 0; j < c.height; j += 28) cx.fillRect(i, j, 2, 2);
+  }
+
+  // Hero card (navy)
+  const grad = cx.createLinearGradient(40, 40, c.width - 40, 480);
+  grad.addColorStop(0, '#1d2638');
+  grad.addColorStop(1, '#2c405d');
+  cx.fillStyle = grad;
+  roundRect(cx, 40, 60, c.width - 80, 480, 16); cx.fill();
+  cx.fillStyle = '#ffb04a';
+  cx.font = 'bold 22px "JetBrains Mono", monospace';
+  cx.fillText('▲ NOW ARRIVING · SMA 010 FROM KLAX', 80, 110);
+  cx.fillStyle = '#fff8e7';
+  cx.font = 'bold 96px "Boldonse", "Arial Black", sans-serif';
+  cx.fillText('SINA MATIAN', 80, 250);
+  cx.fillText('INTERNATIONAL', 80, 360);
+  cx.font = 'italic 28px "Instrument Serif", serif';
+  cx.fillStyle = 'rgba(245,236,214,0.78)';
+  cx.fillText('Founder · Independent Security Researcher · CS @ NYU', 80, 410);
+  // SMI codebox
+  cx.strokeStyle = 'rgba(245,236,214,0.4)';
+  cx.lineWidth = 2;
+  roundRect(cx, c.width - 280, 130, 220, 280, 6); cx.stroke();
+  cx.fillStyle = '#fff8e7';
+  cx.font = 'bold 96px "Boldonse", sans-serif';
+  cx.fillText('SMI', c.width - 240, 270);
+  cx.fillStyle = '#ffb04a';
+  cx.font = 'bold 14px "JetBrains Mono", monospace';
+  cx.fillText('KSMI · INTL', c.width - 240, 310);
+
+  // Section bands
+  const sections = [
+    { color: '#5446a6', title: 'EDUCATION',   sub: 'TERMINAL E · LEARNING CONCOURSE',  rows: 4, y: 700 },
+    { color: '#d4762b', title: 'EXPERIENCE',  sub: 'TERMINAL X · CAREER CONCOURSE',    rows: 4, y: 1320 },
+    { color: '#b5341f', title: 'DISCLOSURES', sub: 'CHECKPOINT C · SECURITY WING',     rows: 3, y: 1940 },
+    { color: '#7d7567', title: 'OTHER',       sub: 'DUTY-FREE · CASUAL ROLES',         rows: 2, y: 2440 },
+  ];
+  sections.forEach(sec => {
+    cx.fillStyle = sec.color;
+    cx.fillRect(80, sec.y, 80, 4);
+    cx.fillStyle = '#181612';
+    cx.font = 'bold 56px "Boldonse", sans-serif';
+    cx.fillText(sec.title, 80, sec.y + 64);
+    cx.fillStyle = 'rgba(28,24,20,0.55)';
+    cx.font = 'bold 16px "JetBrains Mono", monospace';
+    cx.fillText(sec.sub, 80, sec.y + 96);
+    // Row strips
+    for (let i = 0; i < sec.rows; i++) {
+      const ry = sec.y + 130 + i * 110;
+      cx.strokeStyle = 'rgba(28,24,20,0.16)';
+      cx.lineWidth = 1;
+      cx.setLineDash([4, 4]);
+      cx.beginPath(); cx.moveTo(80, ry + 96); cx.lineTo(c.width - 80, ry + 96); cx.stroke();
+      cx.setLineDash([]);
+      // Monogram tile
+      cx.fillStyle = '#e8dfc4';
+      roundRect(cx, 80, ry, 70, 70, 8); cx.fill();
+      cx.fillStyle = sec.color;
+      cx.font = 'bold 32px "Boldonse", sans-serif';
+      cx.fillText(sec.title[0], 100, ry + 50);
+      // Title bar (monospace placeholder for actual title)
+      cx.fillStyle = '#181612';
+      cx.font = 'bold 28px "Boldonse", sans-serif';
+      cx.fillText('Row Title', 180, ry + 36);
+      cx.fillStyle = 'rgba(28,24,20,0.55)';
+      cx.font = '16px "Hanken Grotesk", sans-serif';
+      cx.fillText('Description · subtitle', 180, ry + 64);
+      // Status pill
+      cx.fillStyle = sec.color + '22';
+      roundRect(cx, c.width - 220, ry + 18, 140, 32, 16); cx.fill();
+      cx.fillStyle = sec.color;
+      cx.font = 'bold 12px "JetBrains Mono", monospace';
+      cx.fillText('STATUS', c.width - 200, ry + 38);
+    }
+  });
+
+  // Footer
+  cx.fillStyle = '#1c2738';
+  roundRect(cx, 80, 2920, c.width - 160, 110, 12); cx.fill();
+  cx.fillStyle = '#ffb04a';
+  cx.font = 'bold 18px "JetBrains Mono", monospace';
+  cx.fillText('CONTACT · OPEN TO OPPORTUNITIES', 110, 2960);
+  cx.fillStyle = '#fff8e7';
+  cx.font = '500 18px "Hanken Grotesk", sans-serif';
+  cx.fillText('sina@sinamatian.com  ·  github.com/time-attack  ·  linkedin · sina-matian', 110, 2998);
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  _resumeTex2.needsUpdate = true;
+  // Match floor mesh aspect to canvas aspect
+  destGround.geometry.dispose();
+  destGround.geometry = new THREE.PlaneGeometry(
+    RESUME_FLOOR_W,
+    RESUME_FLOOR_W * (c.height / c.width),
+  );
+})();
+
+// === html2canvas the LIVE v3 resume from a CLONE ===
+// Critical: we never modify the live #board — we cloneNode it into an
+// off-screen container, capture the clone, remove it. Original #board's
+// inline styles stay clean, so handoff always reveals it correctly.
+// The v3 resume has zero cross-origin <img> tags, so the canvas stays
+// untainted and uploads as a WebGL texture cleanly.
+async function captureV3ResumeToFloor() {
+  // Disabled — #board is now an iframe, and html2canvas can't faithfully
+  // snapshot iframe content (produces blank/misaligned output). Letting the
+  // procedural cream fallback stay on the floor during landing; the actual
+  // resume reveals via the post-landing iframe handoff anyway.
+  return;
+  /* eslint-disable */
+  if (typeof html2canvas !== 'function') return;
+  const iframe = document.getElementById('boardFrame');
+  if (!iframe) return;
+  let captured = null;
+
+  if (!captured) return;
+  try { captured.getContext('2d').getImageData(0, 0, 1, 1); }
+  catch (e) {
+    console.warn('iframe resume capture tainted; keeping fallback texture.');
+    return;
+  }
+
+  // Post-process: paint the runway asphalt directly onto the captured
+  // canvas. html2canvas can't render the multi-layer gradient on the
+  // .v3-runway::before pseudo-element, so the runway-strip column comes
+  // out blank in the snapshot. Draw it ourselves with the same visual.
+  (function paintRunwayOntoSnapshot(c) {
+    const ctx = c.getContext('2d');
+    // CSS layout: .v3-runway at left:32, width:88 → asphalt at left+8 to right-8
+    const STRIP_X = 32 + 8;
+    const STRIP_W = 88 - 16;
+    const cx = STRIP_X + STRIP_W / 2;
+
+    // Asphalt gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, c.height);
+    grad.addColorStop(0,   '#1a1c20');
+    grad.addColorStop(0.5, '#2a2d33');
+    grad.addColorStop(1,   '#1a1c20');
+    ctx.fillStyle = grad;
+    ctx.fillRect(STRIP_X, 0, STRIP_W, c.height);
+    // Edge highlights
+    ctx.strokeStyle = 'rgba(245, 236, 214, 0.22)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(STRIP_X + 0.5, 0.5, STRIP_W - 1, c.height - 1);
+
+    // Threshold piano keys (top & bottom)
+    ctx.fillStyle = '#f5edd0';
+    const keyCount = 5, keyGap = 4;
+    const keyAreaW = STRIP_W - 12;
+    const keyW = (keyAreaW - keyGap * (keyCount - 1)) / keyCount;
+    for (let i = 0; i < keyCount; i++) {
+      const x = STRIP_X + 6 + i * (keyW + keyGap);
+      ctx.fillRect(x, 86, keyW, 18);
+      ctx.fillRect(x, c.height - 86 - 18, keyW, 18);
+    }
+
+    // Centerline dashes
+    ctx.strokeStyle = '#f1ead2';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([19, 19]);
+    ctx.beginPath();
+    ctx.moveTo(cx, 130);
+    ctx.lineTo(cx, c.height - 130);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Threshold text "27" / "09"
+    ctx.fillStyle = '#f5edd0';
+    ctx.font = 'bold 38px "Boldonse", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('27', cx, 52);
+    ctx.fillText('09', cx, c.height - 30);
+    // Threshold sub-labels
+    ctx.font = 'bold 8px "JetBrains Mono", monospace';
+    ctx.fillStyle = 'rgba(245, 236, 214, 0.55)';
+    ctx.fillText('RWY · TOUCHDOWN', cx, 68);
+    ctx.fillText('END · APRON',     cx, c.height - 14);
+  })(captured);
+
+  _resumeTex2.image = captured;
+  _resumeTex2.needsUpdate = true;
+
+  // Resize floor mesh aspect to match the captured texture so content
+  // doesn't stretch.
+  destGround.geometry.dispose();
+  destGround.geometry = new THREE.PlaneGeometry(
+    RESUME_FLOOR_W,
+    RESUME_FLOOR_W * (captured.height / captured.width),
+  );
+
+  // Calibrate the floor's world Z offset so the texture's runway-strip
+  // column (at CSS pixel ~76 of the captured viewport-width layout) sits
+  // exactly on top of the 3D runway mesh at z = RUNWAY_Z_OFFSET. This
+  // makes the live DOM render line up pixel-for-pixel with the 3D
+  // texture render at handoff.
+  const stripCenterPx = 76;        // CSS px from left edge of v3 layout to runway-strip centre
+  const stripUV = stripCenterPx / captured.width;
+  // texture pixel u maps to floor world Z = floor.z + (u - 0.5) * RESUME_FLOOR_W
+  // we want the strip world Z = RUNWAY_Z_OFFSET, so:
+  //   RUNWAY_Z_OFFSET = floor.z + (stripUV - 0.5) * RESUME_FLOOR_W
+  destGround.position.z = RUNWAY_Z_OFFSET - (stripUV - 0.5) * RESUME_FLOOR_W;
+  destGroundBackup.position.z = destGround.position.z;
+}
+
+let _v3CaptureTimer = 0;
+function _scheduleV3Capture(delay) {
+  clearTimeout(_v3CaptureTimer);
+  _v3CaptureTimer = setTimeout(() => {
+    Promise.race([
+      captureV3ResumeToFloor(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000)),
+    ]).catch(e => console.warn('v3 capture skipped:', e.message));
+  }, delay);
+}
+window.addEventListener('load', () => _scheduleV3Capture(800));
+// On resize, debounce re-capture so the texture and the floor alignment
+// always match the current viewport. Live calibration.
+window.addEventListener('resize', () => _scheduleV3Capture(300));
+
+mapGroup.add(destAirportGroup);
+
 /* ─── Sunset-key lighting (only on while map is shown) ─── */
 const mapHemi = new THREE.HemisphereLight(0xffd8a8, 0x32324e, 0.85);
 const mapSunLight = new THREE.DirectionalLight(0xffc58a, 1.1);
@@ -3950,17 +6776,44 @@ function exitMapView() {
   mapHemi.visible = false;
   mapSunLight.visible = false;
   document.body.classList.remove('map-view');
+  document.body.classList.remove('landing-3d');
+  document.body.classList.remove('birds-eye');
+  document.body.classList.remove('resume-mode');
   airportBackdrop.forEach(o => o.visible = true);
-  scene.background.copy(SKY_ORIG);
+  // Restore opaque LAX background and re-hide the resume floor.
+  scene.background = scene.background || new THREE.Color();
+  if (typeof SKY_ORIG !== 'undefined') {
+    if (scene.background.copy) scene.background.copy(SKY_ORIG);
+    else scene.background = SKY_ORIG.clone();
+  }
   scene.fog.color.copy(SKY_ORIG);
   scene.fog.near = FOG_ORIG.near;
   scene.fog.far  = FOG_ORIG.far;
   stars.material.opacity = 0;
+  if (typeof css3dRenderer !== 'undefined') {
+    css3dRenderer.domElement.style.display = 'none';
+  }
 }
 
 function updateMapFX(dt) {
   if (!mapActive) return;
   const now = performance.now();
+
+  // Landing sequence: visible descent + bank as the overlay reveals SMI.
+  if (landingActive) {
+    const t = Math.min(1, (now - landingStart) / LANDING_DURATION);
+    // easeInOutCubic for a smooth approach
+    const k = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+    airplane.position.y = _landingFromY + (LANDING_END_Y - _landingFromY) * k;
+    // Approach pitch: nose slightly down then flare at the end
+    const flare = t < 0.85 ? -0.06 - 0.05 * k : -0.06 + 0.18 * ((t - 0.85) / 0.15);
+    airplane.rotation.z = flare;
+    // Final bank-roll into runway alignment
+    airplane.rotation.x = Math.sin(t * Math.PI) * 0.08;
+    cloudGroup.rotation.y = now * 0.00006;
+    controls.target.lerp(airplane.position, 0.25);
+    return;
+  }
 
   if (ascentActive) {
     const elapsed = now - ascentStart;
@@ -4442,6 +7295,23 @@ const tutTitleEl    = document.getElementById('tutTitle');
 const tutHintEl     = document.getElementById('tutHint');
 const tutElapsedEl  = document.getElementById('tutElapsed');
 const tutDurationEl = document.getElementById('tutDuration');
+const tutSkipBtn    = document.getElementById('tutSkipBtn');
+if (tutSkipBtn) {
+  tutSkipBtn.addEventListener('click', () => {
+    if (!tutActive) return;
+    // Snap the airframe to the runway-aligned takeoff position so the skip
+    // looks like an instant cut to "ready for takeoff" rather than the plane
+    // climbing out from wherever the player paused.
+    const lineupStep = TUTORIAL[5]; // "Line Up · Runway 25R"
+    if (lineupStep && lineupStep.toPos) {
+      airplane.position.copy(lineupStep.toPos);
+      airplane.rotation.set(0, lineupStep.toRot, 0);
+    }
+    // Mark all steps complete so completeTutorial doesn't skip half the UI.
+    tutStep = TUTORIAL.length;
+    completeTutorial();
+  });
+}
 const keyEls   = {};
 const keyFills = {};
 ['w','a','s','d'].forEach(k => {
@@ -4549,6 +7419,12 @@ function performMapSwap() {
   mapGroup.visible = true;
   mapHemi.visible = true;
   mapSunLight.visible = true;
+  // Hide the cloud-carpet discs during cruise — the user reads them as a
+  // flat slab drifting in the middle of the puffs. Individual cloud meshes
+  // stay visible for the actual "above the clouds" feel.
+  cloudFloor.visible      = false;
+  cloudFloorRim.visible   = false;
+  cloudUnderside.visible  = false;
   document.body.classList.add('map-view');
   mapActive = true;
 
@@ -4780,10 +7656,107 @@ function animateTo(preset, ms = 1400) {
   requestAnimationFrame(step);
 }
 
-// Initial view
-camera.position.set(...PRESETS.iso.pos);
-controls.target.set(...PRESETS.iso.target);
+// Intro: camera = moon, ATC tower = sun. The camera orbits the airport at a
+// low altitude with its target locked on the ATC tower for most of the run,
+// then dives in close on the parked airplane. Radius/height/target each have
+// their own ease curve so the orbit feels steady early on and the dive-in
+// happens late — but it's still ONE continuous motion (no phase snap).
+const INTRO = {
+  active: true,
+  startMs: null,
+  durationMs: 9500,
+  startAngle: Math.PI * 0.85,   // start SW of the tower so the plane isn't in the foreground
+  startRadius: 2200,
+  endRadius:   200,
+  startHeight: 1100,
+  endHeight:   65,
+  // Orbit pivot — slightly above the ATC tower base so the camera looks
+  // straight at the tower, not down at the apron.
+  towerCenter: new THREE.Vector3(30, 80, -68),
+  // Final close-up — very close to the airplane so the user can see it clearly.
+  planeCenter: airplane.position.clone().setY(5),
+  revolutions: 1.0,
+  finalPos: new THREE.Vector3(),
+  finalTarget: new THREE.Vector3(),
+};
+
+// Pre-compute the end pose so skipIntro lands where the animation would.
+{
+  const endAngle = INTRO.startAngle + INTRO.revolutions * Math.PI * 2;
+  INTRO.finalPos.set(
+    Math.sin(endAngle) * INTRO.endRadius + INTRO.planeCenter.x,
+    INTRO.endHeight,
+    Math.cos(endAngle) * INTRO.endRadius + INTRO.planeCenter.z,
+  );
+  INTRO.finalTarget.copy(INTRO.planeCenter);
+}
+
+// Initial pose
+camera.position.set(
+  Math.sin(INTRO.startAngle) * INTRO.startRadius + INTRO.towerCenter.x,
+  INTRO.startHeight,
+  Math.cos(INTRO.startAngle) * INTRO.startRadius + INTRO.towerCenter.z,
+);
+controls.target.copy(INTRO.towerCenter);
+controls.enabled = false;
 controls.update();
+
+function skipIntro() {
+  if (!INTRO.active) return;
+  INTRO.active = false;
+  camera.position.copy(INTRO.finalPos);
+  controls.target.copy(INTRO.finalTarget);
+  controls.enabled = true;
+  controls.update();
+}
+
+function updateIntro() {
+  if (!INTRO.active) return false;
+  if (INTRO.startMs === null) INTRO.startMs = performance.now();
+  const elapsed = performance.now() - INTRO.startMs;
+  const t = Math.min(1, elapsed / INTRO.durationMs);
+  const easeInOutCubic = x => x < 0.5
+    ? 4 * x * x * x
+    : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const eased = easeInOutCubic(t);
+
+  // Angle: continuous orbit through the entire run
+  const angle = INTRO.startAngle + eased * Math.PI * 2 * INTRO.revolutions;
+
+  // Radius/height/center: biased so they barely change for the first ~60%
+  // of the run (camera "orbits the tower"), then drop fast in the last ~40%
+  // (camera "dives onto the plane"). This is what gives the orbit-then-zoom
+  // feel without a phase boundary.
+  const dive = Math.pow(eased, 2.4);
+
+  const radius = INTRO.startRadius + (INTRO.endRadius - INTRO.startRadius) * dive;
+  const height = INTRO.startHeight + (INTRO.endHeight - INTRO.startHeight) * dive;
+  const cx = INTRO.towerCenter.x + (INTRO.planeCenter.x - INTRO.towerCenter.x) * dive;
+  const cz = INTRO.towerCenter.z + (INTRO.planeCenter.z - INTRO.towerCenter.z) * dive;
+
+  camera.position.set(
+    Math.sin(angle) * radius + cx,
+    height,
+    Math.cos(angle) * radius + cz,
+  );
+  controls.target.lerpVectors(INTRO.towerCenter, INTRO.planeCenter, dive);
+  // Without this, camera.position changes but the camera keeps whatever
+  // orientation it had — so the orbit looks like a sideways slide instead
+  // of "moon-orbiting-sun". lookAt re-aims the camera at the tower (and
+  // later the plane) every frame.
+  camera.lookAt(controls.target);
+
+  if (t >= 1) {
+    INTRO.active = false;
+    controls.enabled = true;
+  }
+  return true;
+}
+
+// Skip intro on any user interaction
+['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(ev => {
+  window.addEventListener(ev, skipIntro, { once: true });
+});
 
 // Preset button wiring
 document.querySelectorAll('.presets button').forEach(btn => {
@@ -4798,10 +7771,16 @@ document.querySelectorAll('.presets button').forEach(btn => {
    ANIMATION LOOP
    ═══════════════════════════════════════════════ */
 function resize() {
+  if (_resumeMode3D) {
+    setupBirdsEyeOrtho();
+    css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+    return;
+  }
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   labelRenderer.setSize(window.innerWidth, window.innerHeight);
+  css3dRenderer.setSize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', resize);
 
@@ -4828,29 +7807,732 @@ function setMode(mode) {
 window.PORTFOLIO_SET_MODE = setMode; // exposed for transition wiring + manual testing
 
 function triggerBoardReveal() {
-  // Fade existing canvas via the existing fadeOverlay element, then swap modes.
-  const fade = document.getElementById('fadeOverlay');
-  fade.classList.add('active');
-  setTimeout(() => {
-    setMode('board');
-    requestAnimationFrame(() => fade.classList.remove('active'));
-  }, 900);
+  // Default flow runs the cinematic 3D landing into Sina Matian International,
+  // ending with a camera handoff to the resume page (canvas shrinks into the
+  // resume's left runway strip).
+  trigger3DLanding();
 }
+
+/* ───── Landing sequence · descent into SMI ─────
+   Drives both the 3D plane (visible bank + drop) and the HTML overlay
+   (altimeter ticker, cloud streaks, airport silhouette reveal). Once the
+   altimeter reaches zero we swap into the arrival board. */
+let landingActive = false;
+let landingStart  = 0;
+const LANDING_DURATION = 4400;
+const LANDING_START_Y  = 540;
+const LANDING_END_Y    = 140;
+let _landingFromY = LANDING_START_Y;
+
+function triggerLandingSequence() {
+  if (landingActive || portfolioMode === 'board') return;
+  const overlay = document.getElementById('landingOverlay');
+  const fade    = document.getElementById('fadeOverlay');
+  if (!overlay) { // graceful fallback
+    fade.classList.add('active');
+    setTimeout(() => {
+      setMode('board');
+      requestAnimationFrame(() => fade.classList.remove('active'));
+    }, 900);
+    return;
+  }
+  // Sync altimeter local-time to current wall clock for a touch of realism.
+  try {
+    const t = new Date();
+    const hh = String(t.getHours()).padStart(2, '0');
+    const mm = String(t.getMinutes()).padStart(2, '0');
+    const localEl = document.getElementById('arrivalLocalTime');
+    if (localEl) localEl.textContent = `LOCAL · ${hh}:${mm}`;
+  } catch (e) { /* ignore */ }
+
+  controls.enabled = false;
+  ascentActive = false;
+  _landingFromY = airplane.position.y;
+  landingActive = true;
+  landingStart  = performance.now();
+  overlay.classList.add('active');
+
+  // Altimeter ticker — counts down from current FL to "0 FT · TOUCHDOWN"
+  const altEl = document.getElementById('landingAltVal');
+  const startFL = 350;
+  let lastTick = -1;
+  function tickAlt() {
+    if (!landingActive) return;
+    const tt = Math.min(1, (performance.now() - landingStart) / (LANDING_DURATION - 600));
+    const fl = Math.max(0, Math.round(startFL * (1 - tt)));
+    if (fl !== lastTick && altEl) {
+      lastTick = fl;
+      if (fl > 100)      altEl.textContent = `FL ${String(fl).padStart(3, '0')}`;
+      else if (fl > 0)   altEl.textContent = `${fl * 100} FT`;
+      else { altEl.textContent = `TOUCHDOWN`; altEl.classList.add('touchdown'); }
+    }
+    if (tt < 1) requestAnimationFrame(tickAlt);
+  }
+  tickAlt();
+
+  // At the touchdown flash (~3.6s in via the CSS keyframes), pre-arm the 2D
+  // plane onto the runway. The board view itself reveals a moment later, but
+  // by then the airframe is already in position — the handoff feels like a
+  // single continuous landing rather than a cut.
+  const TOUCHDOWN_MS = 3700;
+  setTimeout(() => {
+    // Reveal the board UNDER the overlay so the plane has a runway to anchor
+    // to, but keep the overlay opaque on top so the visible scene is still the
+    // cinematic touchdown.
+    setMode('board');
+    try { armRunwayPlaneFromTouchdown(); } catch (e) { /* board not ready */ }
+  }, TOUCHDOWN_MS);
+
+  // After the cinematic descent → cross-fade overlay out, plane begins taxi.
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    landingActive = false;
+    if (altEl) altEl.classList.remove('touchdown');
+    try { startRunwayTaxi(); } catch (e) { /* fine */ }
+  }, LANDING_DURATION);
+}
+
+window.PORTFOLIO_TRIGGER_LANDING = triggerBoardReveal; // routes to 3D landing
+window.PORTFOLIO_TRIGGER_LANDING_CSS = triggerLandingSequence; // legacy CSS overlay
+// Test helpers — let callers force the plane straight into the map view so
+// the 3D landing can be triggered without playing the full tutorial.
+window.PORTFOLIO_FORCE_MAP_VIEW = () => {
+  if (typeof performMapSwap === 'function') performMapSwap();
+};
+window.PORTFOLIO_FORCE_LANDING_3D = () => {
+  if (typeof performMapSwap === 'function' && !mapActive) performMapSwap();
+  // Drop the plane to the start of the approach (well behind the runway).
+  airplane.position.set(RUNWAY_X0 - 900, 320, RUNWAY_Z_OFFSET);
+  airplane.rotation.set(0, MAP_HEADING, 0);
+  ascentActive = false;
+  trigger3DLanding();
+};
+// Render the landing scene at a specific elapsed time (kept for dev / testing).
+window.__renderLandingAt = (elapsedMs) => {
+  if (!landing3DActive) {
+    if (typeof performMapSwap === 'function' && !mapActive) performMapSwap();
+    airplane.position.set(RUNWAY_X0 - 900, 320, RUNWAY_Z_OFFSET);
+    airplane.rotation.set(0, MAP_HEADING, 0);
+    trigger3DLanding();
+  }
+  for (let e = 0; e <= elapsedMs; e += 40) {
+    update3DLanding(landing3DStart + e);
+  }
+  const cam = _resumeMode3D ? orthoCamera : camera;
+  renderer.render(scene, cam);
+  css3dRenderer.render(scene, cam);
+  return {plane: airplane.position.toArray(), pitch: airplane.rotation.z, heading: airplane.rotation.y};
+};
+window.__pos = () => ({
+  plane: airplane.position.toArray(),
+  cam: camera.position.toArray(),
+  target: controls.target.toArray(),
+});
+window.__forceTopdown = () => {
+  camera.position.set(2200, 4500, 0);
+  controls.target.set(2200, 0, 0);
+  camera.up.set(1, 0, 0);
+  camera.lookAt(controls.target);
+  camera.fov = 60;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+  css3dRenderer.render(scene, camera);
+  return document.getElementById('board').getBoundingClientRect();
+};
+window.__forceAngle = () => {
+  // Camera tilted ~45° not pure top-down, with up=+Y
+  camera.position.set(2200, 3000, 3000);
+  controls.target.set(2200, 0, 0);
+  camera.up.set(0, 1, 0);
+  camera.lookAt(controls.target);
+  camera.fov = 60;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+  css3dRenderer.render(scene, camera);
+  const rect = document.getElementById('board').getBoundingClientRect();
+  return {
+    rect: { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
+    fov: camera.fov, aspect: camera.aspect,
+    proj5: camera.projectionMatrix.elements[5],
+    cssOuter: css3dRenderer.domElement.style.cssText.substring(0, 200),
+    cssInner: css3dRenderer.domElement.firstElementChild?.style.cssText.substring(0, 300),
+    boardTransform: document.getElementById('board').style.transform,
+  };
+};
+window.__ortho = () => ({
+  pos: orthoCamera.position.toArray(),
+  l: orthoCamera.left, r: orthoCamera.right,
+  t: orthoCamera.top, b: orthoCamera.bottom,
+  zoom: orthoCamera.zoom,
+  inUseFlag: { _resumeMode3D, _birdsEyeFullScreen },
+});
+window.__forceBirdsEye = () => {
+  renderer.render(scene, orthoCamera);
+  const gl = renderer.domElement.getContext('webgl2') || renderer.domElement.getContext('webgl');
+  const samples = [];
+  for (const y of [100, 200, 300, 400, 500, 600, 700]) {
+    const px = new Uint8Array(4);
+    gl.readPixels(72, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    samples.push({y, rgba: Array.from(px)});
+  }
+  return {samples, planePos: airplane.position.toArray(), camPos: orthoCamera.position.toArray(), runwayPos: [RUNWAY_X0 + RUNWAY_LEN / 2, RUNWAY_TOP, RUNWAY_Z_OFFSET]};
+};
+window.__texInfo = () => ({
+  w: _resumeTex?.image?.width,
+  h: _resumeTex?.image?.height,
+  type: _resumeTex?.image?.tagName,
+});
+// Test helper — runs the entire 3D landing sequence in a tight synchronous loop.
+window.__runLandingSync = () => {
+  if (!landing3DActive) {
+    if (typeof performMapSwap === 'function' && !mapActive) performMapSwap();
+    airplane.position.set(RUNWAY_X0 - 900, 320, RUNWAY_Z_OFFSET);
+    airplane.rotation.set(0, MAP_HEADING, 0);
+    trigger3DLanding();
+  }
+  const start = landing3DStart;
+  for (let e = 0; e <= 19000; e += 40) {
+    update3DLanding(start + e);
+    const cam = _resumeMode3D ? orthoCamera : camera;
+    renderer.render(scene, cam);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   3D LANDING SEQUENCE · realistic approach → flare → touchdown → rollout
+   Plane heading is +X (MAP_HEADING = π → nose +X). Runway extends along +X.
+   Movement direction matches nose direction — no more sideways slide.
+   ═══════════════════════════════════════════════════════════ */
+let landing3DActive   = false;
+let landing3DStart    = 0;
+let landing3DStartPos = new THREE.Vector3();
+const _v3a = new THREE.Vector3();
+const _v3b = new THREE.Vector3();
+
+// Phase budget (ms). Post-rollout uses ONE continuous perspective-camera
+// motion — no ortho snap, no extra camera-type switches mid-air.
+const L3 = {
+  CRUISE_END:    2800,   // plane keeps cruising forward above clouds (3rd person)
+  APPROACH_END:  7800,   // long stable descent on glide path (5s)
+  FLARE_END:     8600,   // short flare just before touchdown
+  ROLLOUT_END:  11600,   // brake to stop on runway
+  ZOOMOUT_END:  15600,   // 4s · ONE motion · chase cam lifts smoothly to a wide top-down view of the entire resume
+  HOLD_END:     16600,   // 1s · settle on the wide view
+  HANDOFF_END:  18400,   // 1.8s · canvas shrinks into the runway strip while the HTML resume fades in over the top
+};
+
+function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2; }
+function easeIn(t)    { return t * t; }
+function easeOut(t)   { return 1 - Math.pow(1 - t, 2); }
+
+function trigger3DLanding() {
+  if (landing3DActive || landingActive || portfolioMode === 'board') return;
+  landing3DActive = true;
+  landing3DStart  = performance.now();
+  landingActive   = false;
+  ascentActive    = false;
+  _resumeHandoffStarted = false;
+  _birdsEyeFullScreen   = false;
+
+  controls.enabled = false;
+  document.body.classList.add('landing-3d');
+  document.body.classList.remove('birds-eye');
+  // Reset opacity in case a prior landing faded these out.
+  if (renderer.domElement) renderer.domElement.style.opacity = '1';
+  // Reveal the CSS3D resume floor — hidden until now so it doesn't float
+  // over the LAX scene during the tutorial / climb-out.
+  if (typeof css3dRenderer !== 'undefined') {
+    css3dRenderer.domElement.style.display = 'block';
+    css3dRenderer.domElement.style.opacity = '1';
+  }
+  _handoffMoved = false;
+
+  // Make the destination scene fully lit and visible regardless of what
+  // path got us here. Without these guarantees, the floor + runway can
+  // render against a dark scene and read as a black screen.
+  mapGroup.visible          = true;
+  destAirportGroup.visible  = true;
+  mapHemi.visible           = true;
+  mapSunLight.visible       = true;
+  if (skyDome)    skyDome.visible    = true;
+  if (sunsetDisc) sunsetDisc.visible = true;
+  if (sunsetGlow) sunsetGlow.visible = true;
+  if (sunsetHalo) sunsetHalo.visible = true;
+  cloudGroup.visible = true;
+  cloudGroup.children.forEach(child => {
+    if (child.material && 'opacity' in child.material) {
+      child.material.transparent = true;
+      const base = child.material.userData?.baseOpacity;
+      if (base != null) child.material.opacity = base;
+    }
+  });
+  airportBackdrop.forEach(o => o.visible = false);
+  pathGroup.visible = false;
+
+  // CSS3D resume needs to show THROUGH the WebGL canvas. Drop scene
+  // background so the canvas renders only its 3D geometry (plane + clouds);
+  // pixels with no geometry are transparent, revealing the real #board DOM
+  // below. The sunset is provided by the body's CSS gradient instead.
+  scene.background = null;
+  scene.fog.color.copy(SKY_HAZE);
+  scene.fog.near = 600;
+  scene.fog.far  = 4500;
+  if (stars && stars.material) stars.material.opacity = 0;
+  if (skyDome) skyDome.visible = false;
+
+  // Hide the cloud carpet (the solid disk under the puffs) so the resume
+  // floor below is visible. The individual puffs above stay around for the
+  // cruise phase, then fade out during approach.
+  cloudFloor.material.transparent     = true;
+  cloudUnderside.material.transparent = true;
+  cloudFloorRim.material.transparent  = true;
+  cloudFloor.visible      = false;
+  cloudUnderside.visible  = false;
+  cloudFloorRim.visible   = false;
+
+  landing3DStartPos.copy(airplane.position);
+  // Lock heading: nose +X (matches MAP_HEADING and the runway's long axis).
+  airplane.rotation.y = MAP_HEADING;
+}
+
+// Chase-camera offset: BEHIND the plane and slightly above, looking forward
+// over the plane's tail toward the runway/resume floor ahead. The pre-rotation
+// offset uses -X (which after the rotation by MAP_HEADING=π becomes +X in
+// world, putting the camera at plane.x + behind — behind the plane whose nose
+// points -X after the same rotation).
+function placeChaseCamera(behind, up, side, plane, lerp) {
+  // Use the same convention as the existing performMapSwap chase offset:
+  // (95, 26, 0) before MAP_HEADING (π) rotation puts the camera at +X-after,
+  // i.e. plane.x - behind in world (since π flips +X → -X). That worked as
+  // a behind-view in the original codebase, so we mirror it.
+  const off = _v3a.set(behind, up, side);
+  off.applyEuler(new THREE.Euler(0, airplane.rotation.y, 0, 'XYZ'));
+  const desired = _v3b.copy(plane).add(off);
+  camera.position.lerp(desired, lerp);
+  controls.target.lerp(plane, 0.25);
+}
+
+function update3DLanding(now) {
+  if (!landing3DActive) return false;
+  const elapsed = now - landing3DStart;
+
+  // ── PHASE 0 · cruise above the clouds (3rd-person follow) ────────────────
+  // Plane keeps moving forward at altitude. The destination floor (and the
+  // resume runway) come into view ahead as the camera trails the airframe.
+  if (elapsed < L3.CRUISE_END) {
+    const t = elapsed / L3.CRUISE_END;
+    const startX = landing3DStartPos.x;
+    const startY = landing3DStartPos.y;
+    // Slight forward drift over the cruise phase (~360u travelled).
+    airplane.position.x = startX + 360 * t;
+    airplane.position.y = startY + Math.sin(elapsed * 0.0015) * 1.4;
+    airplane.position.z = RUNWAY_Z_OFFSET;
+    airplane.rotation.z = -0.03 + Math.sin(elapsed * 0.0008) * 0.012;
+    airplane.rotation.x = Math.sin(elapsed * 0.0006) * 0.015;
+    placeChaseCamera(140, 36, 0, airplane.position, 0.14);
+    return true;
+  }
+
+  // ── PHASE 1 · stable approach descent ───────────────────────────────────
+  // Plane descends from cruise altitude down to the flare point on a steady
+  // slope, moving forward (+X) the whole time. Pitch is slightly nose-up.
+  if (elapsed < L3.APPROACH_END) {
+    const t = (elapsed - L3.CRUISE_END) / (L3.APPROACH_END - L3.CRUISE_END);
+    const k = easeInOut(t);
+    const startX = landing3DStartPos.x + 360;     // where cruise left off
+    const startY = landing3DStartPos.y;
+    const endX   = TOUCHDOWN_X - 60;
+    const endY   = 14;
+    airplane.position.x = startX + (endX - startX) * k;
+    airplane.position.y = startY + (endY - startY) * k;
+    airplane.position.z = RUNWAY_Z_OFFSET;
+    airplane.rotation.z = 0.04 + 0.02 * Math.sin(elapsed * 0.001);
+    airplane.rotation.x = Math.sin(elapsed * 0.0006) * 0.025;
+    // Hide clouds entirely as soon as the descent begins — they cause the
+    // "white" smear over the resume below otherwise.
+    cloudGroup.visible = false;
+    placeChaseCamera(120, 32, 0, airplane.position, 0.16);
+    return true;
+  }
+
+  // ── PHASE 2 · flare and touchdown ────────────────────────────────────────
+  // Quick nose-up rotation to bleed off rate of descent. Wheels kiss the
+  // runway top just before phase end.
+  if (elapsed < L3.FLARE_END) {
+    const t = (elapsed - L3.APPROACH_END) / (L3.FLARE_END - L3.APPROACH_END);
+    const k = easeOut(t);
+    const wheelY = RUNWAY_TOP + AIRPLANE_Y + 0.5; // runway top + plane wheel offset
+    airplane.position.x = (TOUCHDOWN_X - 60) + 60 * k;
+    airplane.position.y = 14 - (14 - wheelY) * k;
+    airplane.position.z = RUNWAY_Z_OFFSET;
+    airplane.rotation.z = 0.04 + 0.20 * k;             // nose up for flare
+    airplane.rotation.x = 0;
+    placeChaseCamera(95, 22, 0, airplane.position, 0.20);
+    return true;
+  }
+
+  // ── PHASE 3 · rollout · braking deceleration on the runway ───────────────
+  // Plane brakes to a stop on the runway. NO handoff yet — the bird's-eye
+  // reveal of the entire resume happens after the plane parks.
+  if (elapsed < L3.ROLLOUT_END) {
+    const t = (elapsed - L3.FLARE_END) / (L3.ROLLOUT_END - L3.FLARE_END);
+    const k = easeOut(t);
+    const wheelY = RUNWAY_TOP + AIRPLANE_Y + 0.5;
+    airplane.position.x = TOUCHDOWN_X + (PARK_X - TOUCHDOWN_X) * k;
+    airplane.position.y = wheelY;
+    airplane.position.z = RUNWAY_Z_OFFSET;
+    airplane.rotation.z = (0.24) * (1 - Math.min(1, t * 1.6));
+    airplane.rotation.x = 0;
+    placeChaseCamera(95 - 15 * k, 22 - 2 * k, 0, airplane.position, 0.20);
+    return true;
+  }
+
+  // ── PHASE 4 · ZOOMOUT · ONE continuous motion · chase cam lifts smoothly
+  // up and back, ending in a wide top-down framing of the entire resume.
+  // Single perspective camera throughout — no ortho switch, no snap.
+  if (elapsed < L3.ZOOMOUT_END) {
+    const t = (elapsed - L3.ROLLOUT_END) / (L3.ZOOMOUT_END - L3.ROLLOUT_END);
+    const k = easeInOut(Math.max(0, Math.min(1, t)));
+    zoomoutCamera(k);
+    fadeBackgroundToCream(k);
+    airplane.position.set(PARK_X, RUNWAY_TOP + AIRPLANE_Y + 0.5, RUNWAY_Z_OFFSET);
+    airplane.rotation.z = 0;
+    return true;
+  }
+
+  // ── PHASE 5 · settle on the wide bird's-eye view ────────────────────────
+  if (elapsed < L3.HOLD_END) {
+    zoomoutCamera(1);
+    fadeBackgroundToCream(1);
+    airplane.position.set(PARK_X, RUNWAY_TOP + AIRPLANE_Y + 0.5, RUNWAY_Z_OFFSET);
+    airplane.rotation.z = 0;
+    return true;
+  }
+
+  // ── PHASE 6 · HANDOFF · canvas shrinks into runway strip while HTML
+  // resume fades in over the top. Same perspective camera tracks from the
+  // wide bird's-eye to a tight strip framing — when fully shrunk we hand
+  // off to the ortho strip view (already covered by the opaque HTML).
+  if (elapsed < L3.HANDOFF_END) {
+    const t = (elapsed - L3.HOLD_END) / (L3.HANDOFF_END - L3.HOLD_END);
+    const k = easeInOut(Math.max(0, Math.min(1, t)));
+    if (!_resumeHandoffStarted) {
+      _resumeHandoffStarted = true;
+      // Begin HTML resume reveal NOW so its 1.2s opacity fade overlaps the
+      // canvas shrink — no black gap between the two visualisations.
+      setMode('board');
+      cloudGroup.visible = false;
+      stars.material.opacity = 0;
+      ensureBirdsEyeLight();
+    }
+    animateHandoffPerspective(k);
+    fadeBackgroundToCream(1);
+    airplane.position.set(PARK_X, RUNWAY_TOP + AIRPLANE_Y + 0.5, RUNWAY_Z_OFFSET);
+    return true;
+  }
+
+  // ── Final · landing complete; snap to strip framing ───────────────────
+  hand3DOffToResume();
+  landing3DActive = false;
+  _birdsEyeFullScreen = false;
+  document.body.classList.remove('landing-3d');
+  document.body.classList.remove('birds-eye');
+  return false;
+}
+let _resumeHandoffStarted = false;
+let _birdsEyeFullScreen   = false;
+const RESUME_PAPER_COLOR  = new THREE.Color(0xf7f5ef);
+const _bgColorTmp         = new THREE.Color();
+
+function ensureBirdsEyeLight() {
+  if (!_birdsEyeLight) {
+    _birdsEyeLight = new THREE.DirectionalLight(0xffffff, 0.95);
+    _birdsEyeLight.position.set(0, 1000, 0);
+    _birdsEyeLight.target.position.set(0, 0, 0);
+    mapGroup.add(_birdsEyeLight);
+    mapGroup.add(_birdsEyeLight.target);
+  }
+  _birdsEyeLight.visible = true;
+}
+
+// Compute the altitude needed to fit the entire #board (in CSS3D-projected
+// world units) inside the camera's vertical FOV at the bird's-eye end.
+// This way the bird's-eye actually shows the whole resume regardless of
+// how tall the live HTML content is.
+function _birdsEyeAltitude(fovDegrees) {
+  // Read the floor mesh's actual world height (along the long axis).
+  // PlaneGeometry's `height` param maps to world +X after our rotations,
+  // which is the axis the camera frames vertically.
+  let worldH = RESUME_FLOOR_W * 3;
+  if (typeof destGround !== 'undefined' &&
+      destGround.geometry &&
+      destGround.geometry.parameters &&
+      destGround.geometry.parameters.height) {
+    worldH = destGround.geometry.parameters.height;
+  }
+  const fovRad = (fovDegrees * Math.PI) / 180;
+  // 1.85 padding · the resume sits in the centre with generous margin so
+  // it clearly reads as "the whole document" rather than filling the frame.
+  return (worldH * 1.85) / (2 * Math.tan(fovRad / 2));
+}
+
+// One continuous zoom-out using the perspective camera. k=0: chase view
+// just behind the parked plane. k=1: high-altitude top-down view framing
+// the entire resume floor below. Camera position, target, up vector, and
+// FOV all interpolate continuously — no ortho swap, no snap.
+function zoomoutCamera(k) {
+  // Clean up the destination scene as we lift off. Done at k > 0.55 so the
+  // body background doesn't switch to cream while the camera is still in
+  // chase view — that would produce the white flash before the resume is
+  // visible.
+  if (k > 0.55 && !document.body.classList.contains('birds-eye')) {
+    document.body.classList.add('birds-eye');
+    cloudGroup.visible = false;
+    stars.material.opacity = 0;
+    if (skyDome)    skyDome.visible    = false;
+    if (sunsetDisc) sunsetDisc.visible = false;
+    if (sunsetGlow) sunsetGlow.visible = false;
+    if (sunsetHalo) sunsetHalo.visible = false;
+    if (mapHemi)    mapHemi.visible    = true;
+    if (mapSunLight) mapSunLight.visible = true;
+    // Keep canvas transparent so the CSS3D resume below shows through.
+    // Cream "background" is provided by body CSS, not the canvas clear.
+    renderer.setClearColor(0x000000, 0);
+    ensureBirdsEyeLight();
+  }
+
+  // End the zoom-out at the EXACT framing the DOM resume has at scroll=0:
+  // top of resume aligned to top of viewport, texture rendered at the
+  // viewport scale. Same content, same size as a regular page load.
+  const _vw = window.innerWidth;
+  const _vh = window.innerHeight;
+  const _focal = _vh / 2 / Math.tan(Math.PI / 6);
+  // Altitude where floor's full WIDTH (RESUME_FLOOR_W) projects to
+  // viewport width on screen → texture renders at native scale.
+  const targetAltitude = _focal * (RESUME_FLOOR_W / _vw);
+  const floorH = (destGround.geometry.parameters && destGround.geometry.parameters.height)
+                 ? destGround.geometry.parameters.height
+                 : RESUME_FLOOR_W * 3;
+  const halfV = targetAltitude * Math.tan(Math.PI / 6);
+  const floorCentreX = RUNWAY_X0 + RUNWAY_LEN / 2;
+  // Top-aligned: place the FLOOR'S TOP EDGE exactly at SCREEN-TOP
+  // (= scroll position 0 in the DOM rendering).
+  const finalTargetX = floorCentreX + floorH / 2 - halfV;
+  const finalCamZ    = destGround.position.z;
+
+  const startCamX = PARK_X - 95;
+  const startCamY = 32;
+  const startCamZ = RUNWAY_Z_OFFSET;
+  const endCamX   = finalTargetX;
+  const endCamY   = targetAltitude;
+  const endCamZ   = finalCamZ;
+  camera.position.set(
+    startCamX + (endCamX - startCamX) * k,
+    startCamY + (endCamY - startCamY) * k,
+    startCamZ + (endCamZ - startCamZ) * k,
+  );
+
+  const wheelY = RUNWAY_TOP + AIRPLANE_Y + 0.5;
+  const startTgtX = PARK_X;
+  const startTgtY = wheelY;
+  const startTgtZ = RUNWAY_Z_OFFSET;
+  const endTgtX   = finalTargetX;
+  const endTgtY   = 0;
+  const endTgtZ   = finalCamZ;
+  controls.target.set(
+    startTgtX + (endTgtX - startTgtX) * k,
+    startTgtY + (endTgtY - startTgtY) * k,
+    startTgtZ + (endTgtZ - startTgtZ) * k,
+  );
+
+  // Camera up vector rotates from world +Y (chase: gravity is down) to
+  // world +X (top-down: resume's "up" axis matches screen-up). Interpolate
+  // around the +Z axis with sin/cos so the up vector stays unit-length.
+  const upAngle = (Math.PI / 2) * k;
+  camera.up.set(Math.sin(upAngle), Math.cos(upAngle), 0);
+  camera.lookAt(controls.target);
+
+  // FOV widens slightly so the bird's-eye actually frames the whole floor.
+  camera.fov = 38 + (60 - 38) * k;
+  camera.aspect = window.innerWidth / Math.max(1, window.innerHeight);
+  camera.updateProjectionMatrix();
+}
+
+// HANDOFF · hold at the "matches DOM scroll=0" framing while the handoff
+// phase runs out. hand3DOffToResume then does ONE invisible hard cut into
+// the live HTML resume — same on-screen size, same scroll position.
+let _handoffMoved = false;
+function animateHandoffPerspective(k) {
+  // Hold at end-of-zoomout framing (top of resume at viewport scale).
+  const _vw = window.innerWidth;
+  const _vh = window.innerHeight;
+  const _focal = _vh / 2 / Math.tan(Math.PI / 6);
+  const camY = _focal * (RESUME_FLOOR_W / _vw);
+  const floorH = (destGround.geometry.parameters && destGround.geometry.parameters.height)
+                 ? destGround.geometry.parameters.height
+                 : RESUME_FLOOR_W * 3;
+  const halfV = camY * Math.tan(Math.PI / 6);
+  const camX = (RUNWAY_X0 + RUNWAY_LEN / 2) + floorH / 2 - halfV;
+  const camZ = destGround.position.z;
+  camera.position.set(camX, camY, camZ);
+  controls.target.set(camX, 0, camZ);
+  camera.up.set(1, 0, 0);
+  camera.lookAt(controls.target);
+  camera.fov = 60;
+  camera.aspect = window.innerWidth / Math.max(1, window.innerHeight);
+  camera.updateProjectionMatrix();
+}
+
+// Cross-fade scene background + fog from the orange sunset haze to the
+// resume's cream paper colour, so the area beyond the floor edges reads as
+// continuous paper rather than sky.
+function fadeBackgroundToCream(t) {
+  const k = Math.max(0, Math.min(1, t));
+  if (scene.background && scene.background.lerpColors) {
+    scene.background.lerpColors(SKY_HAZE, RESUME_PAPER_COLOR, k);
+  } else if (scene.background && scene.background.copy) {
+    _bgColorTmp.copy(SKY_HAZE).lerp(RESUME_PAPER_COLOR, k);
+    scene.background.copy(_bgColorTmp);
+  }
+  if (scene.fog) {
+    _bgColorTmp.copy(SKY_HAZE).lerp(RESUME_PAPER_COLOR, k);
+    scene.fog.color.copy(_bgColorTmp);
+    // Push fog out so it doesn't grey-out the floor at this distance.
+    scene.fog.near = 600 + 1200 * k;
+    scene.fog.far  = 4500 + 4000 * k;
+  }
+}
+
+function hand3DOffToResume() {
+  // ONE hard cut from 3D to live HTML resume.
+
+  // 1. Hide all 3D layers permanently
+  if (typeof css3dRenderer !== 'undefined') {
+    css3dRenderer.domElement.style.display = 'none';
+  }
+  const cnvEl = document.querySelector('#canvas');
+  if (cnvEl) cnvEl.style.display = 'none';
+  const labelsEl = document.getElementById('labels');
+  if (labelsEl) labelsEl.style.display = 'none';
+
+  // 2. Body class state matches a fresh-page-load resume render
+  document.body.classList.remove('landing-3d');
+  document.body.classList.remove('birds-eye');
+  document.body.classList.remove('map-view');
+  document.body.classList.remove('resume-mode');
+  document.body.classList.add('board-view');
+
+  // 3. Reveal #board. Strip any inline style anything else might have left
+  //    on it (defensive — guarantees the CSS rule wins). Make it the last
+  //    body child so it stacks on top.
+  const board = document.getElementById('board');
+  if (board) {
+    board.removeAttribute('style');
+    if (board.parentElement !== document.body) document.body.appendChild(board);
+    board.scrollTop = 0;
+  }
+
+  cloudGroup.visible = false;
+  stars.material.opacity = 0;
+
+  setMode('board');
+  renderLoopPaused = true;
+  _resumeMode3D = false;
+}
+
+// Configure ortho bird's-eye to render only into the 80px runway-strip column.
+// Canvas is sized to 80×viewport_h via CSS. Frustum half-width is set so the
+// runway (width 110, centered at z=RUNWAY_Z_OFFSET) fills the strip horizontally.
+function setupBirdsEyeOrtho() {
+  const STRIP_W = 80;
+  const h = window.innerHeight;
+  renderer.setSize(STRIP_W, h, true);
+  labelRenderer.setSize(STRIP_W, h);
+  // Force canvas to occupy the runway-strip column.
+  const cnv = renderer.domElement;
+  cnv.style.cssText =
+    'position:fixed !important; left:32px !important; top:0 !important; ' +
+    `width:${STRIP_W}px !important; height:100vh !important; ` +
+    'max-width:80px !important; right:auto !important; ' +
+    'z-index:50 !important; pointer-events:none !important;';
+  const lab = document.getElementById('labels');
+  if (lab) lab.style.cssText = cnv.style.cssText;
+  // Frustum tuned for the strip: ±halfW horizontal covers runway + edges.
+  const halfW = 60;
+  const halfH = halfW * (h / STRIP_W);
+  orthoCamera.left   = -halfW;
+  orthoCamera.right  =  halfW;
+  orthoCamera.top    =  halfH;
+  orthoCamera.bottom = -halfH;
+  orthoCamera.near   = 1;
+  orthoCamera.far    = 4000;
+  orthoCamera.position.set(PARK_X, 600, RUNWAY_Z_OFFSET);
+  orthoCamera.up.set(1, 0, 0);
+  orthoCamera.lookAt(PARK_X, 0, RUNWAY_Z_OFFSET);
+  orthoCamera.updateProjectionMatrix();
+}
+let _birdsEyeLight = null;
+
+let _resumeMode3D = false;
+
+// Orthographic camera reserved for the bird's-eye runway view in resume mode.
+// True top-down framing without the edge-of-FOV horizon artifacts that wide
+// perspective FOVs produce on a narrow strip. Runway runs along +X, so we
+// orient the camera so screen-up = world +X.
+const orthoCamera = new THREE.OrthographicCamera(-65, 65, 650, -650, 1, 4000);
+orthoCamera.position.set(2200, 600, 0);
+orthoCamera.up.set(1, 0, 0);
+orthoCamera.lookAt(2200, 0, 0);
 
 function tick() {
   requestAnimationFrame(tick);
-  if (renderLoopPaused) return;
+  if (renderLoopPaused && !_resumeMode3D) return;
   const dt = Math.min(clock.getDelta(), 0.1);
+  const introRunning = updateIntro();
   updateTutorial(dt);
   updatePullUp();
   updateChaseCam();
   updatePathFX();
-  updateMapFX(dt);
+  if (!update3DLanding(performance.now()) && !_resumeMode3D) {
+    updateMapFX(dt);
+  }
+  updateResumeModeTaxi();
   updateTutorialAudio(dt);
-  controls.update();
-  renderer.render(scene, camera);
-  // CSS2D labels are expensive (DOM updates); render every other frame
-  if ((_labelFrame++ & 1) === 0) labelRenderer.render(scene, camera);
+  if (!introRunning && !_resumeMode3D) controls.update();
+  updatePlaneMarkerPosition();
+  // Perspective camera throughout the entire landing flow (cruise →
+  // approach → flare → rollout → zoom-out → bird's-eye → handoff). Only
+  // after the handoff completes do we switch to ortho for the static
+  // 80px runway-strip framing.
+  const renderCam = _resumeMode3D ? orthoCamera : camera;
+  renderer.render(scene, renderCam);
+  if ((_labelFrame++ & 1) === 0) labelRenderer.render(scene, renderCam);
+  // Project the actual #board DOM into the same scene via the same camera.
+  css3dRenderer.render(scene, renderCam);
+}
+
+function updateResumeModeTaxi() {
+  if (!_resumeMode3D) return;
+  const board = document.getElementById('board');
+  if (!board || !_runwayGates.length) return;
+  const target = activeGateForViewport();
+  if (!target) return;
+  const minY = Math.min(..._runwayGates.map(g => g.y));
+  const maxY = Math.max(..._runwayGates.map(g => g.y));
+  const range = Math.max(1, maxY - minY);
+  const t = (target.y - minY) / range;
+  // Map active gate Y → 3D runway X. Plane taxis forward (+X) as user
+  // scrolls down: t=0 (top of resume) → PARK_X (parked at first gate);
+  // t=1 (bottom of resume) → FAR_END_X (last gate near runway end).
+  const targetX = PARK_X + (FAR_END_X - PARK_X) * t;
+  airplane.position.x += (targetX - airplane.position.x) * 0.08;
+  airplane.position.y = RUNWAY_TOP + AIRPLANE_Y + 0.5;
+  airplane.position.z = RUNWAY_Z_OFFSET;
+  // Pan the ortho camera along +X so the airframe stays in the reading band.
+  orthoCamera.position.x += (airplane.position.x - orthoCamera.position.x) * 0.1;
+  orthoCamera.lookAt(orthoCamera.position.x, 0, RUNWAY_Z_OFFSET);
 }
 tick();
 
@@ -4864,21 +8546,189 @@ window.addEventListener('load', () => {
 /* ═══════════════════════════════════════════════
    PORTFOLIO BOARD — RENDERER
    ═══════════════════════════════════════════════ */
+// Acronyms / brand words that should keep their canonical casing. Anything
+// not in this list gets title-cased normally — that way proper names like
+// "SINA" become "Sina" instead of being mistaken for acronyms.
+const PRESERVED_WORDS = new Map(
+  [
+    'iOS', 'macOS', 'tvOS', 'watchOS', 'iPhone', 'iPad',
+    'NYU', 'LAX', 'NYC', 'AP', 'CS', 'AI', 'ML', 'API', 'MVP', 'VC',
+    'GH', 'CEO', 'CTO', 'IDE', 'CLI', 'UX', 'UI', 'SDK', 'OS',
+    'SaaS', 'JavaScript', 'TypeScript',
+    'DAU', 'MAU', 'KPI', 'ROI', 'GPA', 'LLC', 'INC', 'LLP',
+    'ENG', 'INTL', 'ATC', 'IT',
+    'IDOR', 'SSH', 'XSS', 'CSRF', 'SQL', 'JWT', 'OAuth', 'TLS', 'SSL',
+    'HTTP', 'HTTPS', 'URL', 'JSON', 'XML', 'HTML', 'CSS', 'DNS', 'TCP', 'UDP',
+    'GPU', 'CPU', 'RAM', 'OSINT', 'CTF',
+  ].map(w => [w.toLowerCase(), w]),
+);
+// Small words kept lowercase in title case (unless they're the first word of a phrase).
+// Note: 'a' and 'an' are intentionally excluded — in resume contexts they're usually
+// identifiers (e.g. "AP CS A") rather than articles.
+const SMALL_WORDS = new Set([
+  'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of',
+  'on', 'or', 'the', 'to', 'vs', 'via', 'with',
+]);
+// Domain TLDs we want lowercased (so "ORG" after a dot renders as ".org").
+const TLD_LOWERCASE = new Set(['com', 'org', 'net', 'io', 'ai', 'co', 'app', 'dev', 'gov']);
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.replace(/[A-Za-z][A-Za-z0-9'’]*/g, (w, offset, full) => {
+    const preserved = PRESERVED_WORDS.get(w.toLowerCase());
+    if (preserved) return preserved;
+    // Treat a trailing 2-4 letter chunk after a dot as a TLD.
+    if (full[offset - 1] === '.' && TLD_LOWERCASE.has(w.toLowerCase())) {
+      return w.toLowerCase();
+    }
+    // Small words stay lowercase unless they're the first word of the string.
+    if (SMALL_WORDS.has(w.toLowerCase()) && offset > 0) {
+      return w.toLowerCase();
+    }
+    return w[0].toUpperCase() + w.slice(1).toLowerCase();
+  });
+}
+
+// Inline Lucide icon SVGs — keeps the page CDN-free for icons.
+const ICONS = {
+  'graduation-cap': '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+  'briefcase': '<rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  'shield-check': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  'coffee': '<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>',
+  'globe': '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  'medal': '<path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/>',
+  'mail': '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  'github': '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+  'linkedin': '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
+  'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  'badge-check': '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+};
+const lucide = (name, cls = '') =>
+  `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+
 function renderBoardHeader() {
+  // Resume content is now static HTML in the v3 design — these old IDs no
+  // longer exist. Bail if any of them are missing so the rest of the page
+  // load isn't blocked.
+  if (!document.getElementById('boardPhoto')) return;
   const data = window.PORTFOLIO_DATA;
   if (!data) return;
   const i = data.identity;
-  document.getElementById('boardName').textContent = i.name;
-  document.getElementById('boardTagline').textContent = i.tagline;
-  document.getElementById('boardLocation').textContent = i.location;
-  const email = document.getElementById('boardEmail');
-  email.textContent = i.email.toUpperCase();
-  document.getElementById('boardSocial').textContent =
-    `GH: ${i.github.toUpperCase()} · LINKEDIN`;
+
+  // Profile photo — drop assets/photos/sina.jpg to override the gradient avatar.
+  const photo = document.getElementById('boardPhoto');
+  const initials = toTitleCase(i.name).split(/\s+/).map(s => s[0]).join('').slice(0, 2);
+  photo.innerHTML = `<span class="initials">${initials}</span>`;
+  if (i.photo) {
+    const img = new Image();
+    img.onload = () => {
+      photo.style.backgroundImage = `url('${i.photo}')`;
+      photo.classList.add('has-image');
+    };
+    img.src = i.photo;
+  }
+
+  // Name + verification check
+  const nameEl = document.getElementById('boardName');
+  nameEl.innerHTML = `${toTitleCase(i.name)}<span class="board-header__verified" title="Verified">${lucide('badge-check')}</span>`;
+
+  document.getElementById('boardHeadline').textContent = (i.headline || '');
+  document.getElementById('boardTagline').textContent = toTitleCase(i.tagline || '');
+
+  // Meta row (location)
+  const meta = document.getElementById('boardMeta');
+  meta.innerHTML = `
+    <span><span class="meta-icon">${lucide('map-pin')}</span>${i.location || ''}</span>
+  `;
+
+  // Style the meta-icon SVG (override generic svg sizing)
+  meta.querySelectorAll('svg').forEach(s => {
+    s.style.width = '14px';
+    s.style.height = '14px';
+    s.style.verticalAlign = '-2px';
+    s.style.stroke = 'currentColor';
+    s.style.strokeWidth = '2';
+    s.style.fill = 'none';
+    s.style.strokeLinecap = 'round';
+    s.style.strokeLinejoin = 'round';
+    s.style.marginRight = '4px';
+  });
+  // Verified badge styling
+  document.querySelectorAll('.board-header__verified svg').forEach(s => {
+    s.style.width = '20px';
+    s.style.height = '20px';
+    s.style.stroke = 'currentColor';
+    s.style.strokeWidth = '2';
+    s.style.fill = 'none';
+    s.style.strokeLinecap = 'round';
+    s.style.strokeLinejoin = 'round';
+  });
+
+  const contact = document.getElementById('boardContact');
+  const linkedinUrl = i.linkedinUrl || `https://linkedin.com`;
+  contact.innerHTML = `
+    <span><span class="label">Email</span><a href="mailto:${i.email}">${i.email}</a></span>
+    <span><span class="label">GitHub</span><a href="https://github.com/${i.github}" target="_blank" rel="noopener">@${i.github}</a></span>
+    <span><span class="label">LinkedIn</span><a href="${linkedinUrl}" target="_blank" rel="noopener">View Profile</a></span>
+  `;
+
+  // About blurb
+  const about = document.getElementById('boardAbout');
+  if (i.about) {
+    about.classList.add('has-content');
+    about.innerHTML = `
+      <div class="board-about__label">About</div>
+      <div class="board-about__body">${i.about}</div>
+    `;
+  }
+
+  // Highlights / KPI bar
+  const highlights = document.getElementById('boardHighlights');
+  if (Array.isArray(i.highlights) && i.highlights.length) {
+    highlights.innerHTML = i.highlights.map(h => `
+      <div class="board-highlight">
+        <div class="board-highlight__label">${h.label}</div>
+        <div class="board-highlight__value">${h.value}</div>
+      </div>
+    `).join('');
+  }
+
+  // Footer (languages + activities) with real SVG icons
+  const footer = document.getElementById('boardFooter');
+  const cards = [];
+  if (i.languages) {
+    cards.push(`
+      <div class="board-footer__card">
+        <div class="board-footer__label">${lucide('globe')} Languages</div>
+        <div class="board-footer__value">${i.languages}</div>
+      </div>
+    `);
+  }
+  if (i.activities) {
+    cards.push(`
+      <div class="board-footer__card">
+        <div class="board-footer__label">${lucide('medal')} Activities</div>
+        <div class="board-footer__value">${i.activities}</div>
+      </div>
+    `);
+  }
+  footer.innerHTML = cards.join('');
 }
 renderBoardHeader();
 
+// Pull a clean title + role pair out of the existing data fields. The data
+// uses ALL-CAPS strings like "TEFILLIN TIMER · iOS APP" — split on " · " and
+// title-case both halves so the board reads naturally.
+function parseDestination(item) {
+  const raw = item.destination || '';
+  const parts = raw.split('·').map(s => s.trim()).filter(Boolean);
+  const title = toTitleCase(parts[0] || raw);
+  const role  = parts.slice(1).map(toTitleCase).join(' · ');
+  return { title, role };
+}
+
 function renderBoardSections() {
+  // No-op for v3 resume — sections are now hardcoded HTML.
+  if (!document.getElementById('boardSections')) return;
   const data = window.PORTFOLIO_DATA;
   if (!data) return;
   const root = document.getElementById('boardSections');
@@ -4887,58 +8737,99 @@ function renderBoardSections() {
   for (const section of data.sections) {
     const sec = document.createElement('section');
     sec.className = 'board-section' + (section.muted ? ' is-muted' : '');
+    sec.style.setProperty('--sec-color', section.color);
+    sec.style.setProperty('--sec-glow', hexToRgba(section.color, 0.55));
+    sec.style.setProperty('--row-hover-bg', hexToRgba(section.color, 0.07));
+    sec.style.setProperty('--row-headline-bg', hexToRgba(section.color, 0.09));
 
-    const label = document.createElement('div');
-    label.className = 'board-section__label';
-    label.style.color = section.color;
-    label.textContent = '▸ ' + section.label;
-    sec.appendChild(label);
+    sec.style.setProperty('--sec-bg', hexToRgba(section.color, 0.12));
 
-    const cols = document.createElement('div');
-    cols.className = 'board-section__cols';
-    cols.innerHTML = `<span></span><span>FLIGHT</span><span>DESTINATION</span><span>YEAR</span>`;
-    sec.appendChild(cols);
+    const head = document.createElement('div');
+    head.className = 'board-section__head';
+    const sectionTitle = toTitleCase(
+      section.label.split('·')[0].trim()
+    );
+    const sectionSub = section.label.includes('·')
+      ? section.label.split('·').slice(1).map(s => toTitleCase(s.trim())).join(' · ')
+      : '';
+    // Map section id → Lucide icon name
+    const iconMap = {
+      education: 'graduation-cap',
+      experience: 'briefcase',
+      research: 'shield-check',
+      work: 'coffee',
+    };
+    // Airport metaphor — each resume section becomes an area of SMI.
+    const terminalMap = {
+      education: { gate: 'TERMINAL E', name: 'Learning Concourse' },
+      experience: { gate: 'TERMINAL X', name: 'Career Concourse' },
+      research:   { gate: 'CHECKPOINT C', name: 'Security Wing · Disclosures' },
+      work:       { gate: 'DUTY-FREE', name: 'Casual Roles' },
+    };
+    const iconName = iconMap[section.id] || 'briefcase';
+    const term = terminalMap[section.id];
+    head.innerHTML = `
+      <span class="board-section__icon">${lucide(iconName)}</span>
+      <span class="board-section__title">${sectionTitle}</span>
+      <span class="board-section__count">${section.items.length}</span>
+      ${term ? `<span class="board-section__terminal"><span class="gate">${term.gate}</span> · ${term.name}</span>` : ''}
+      ${sectionSub ? `<span class="board-section__sub">${sectionSub}</span>` : ''}
+    `;
+    sec.appendChild(head);
 
     section.items.forEach((item, i) => {
       const row = document.createElement('div');
       row.className = 'board-row';
       row.dataset.id = item.id;
-      row.style.setProperty('--row-color', section.color);
-      row.style.setProperty('--row-bg', hexToRgba(section.color, 0.06));
       const isHeadline = i === 0 && !section.muted;
       if (isHeadline) row.classList.add('is-headline');
 
+      // Monogram (real logo or coloured initial tile fallback)
       const mono = document.createElement('div');
-      mono.className = 'board-row__monogram '
-        + (section.muted ? 'dashed' : (isHeadline ? 'solid' : 'outlined'));
+      mono.className = 'board-row__monogram';
+      mono.style.setProperty('--sec-color', section.color);
       if (item.logo) {
         const img = document.createElement('img');
         img.src = item.logo;
         img.alt = '';
         img.className = 'board-row__logo';
-        img.onerror = () => { mono.removeChild(img); mono.textContent = item.monogram; };
+        img.onerror = () => {
+          mono.classList.add('no-logo');
+          mono.removeChild(img);
+          mono.textContent = item.monogram;
+        };
         mono.appendChild(img);
       } else {
+        mono.classList.add('no-logo');
         mono.textContent = item.monogram;
       }
       row.appendChild(mono);
 
-      const flight = document.createElement('span');
-      flight.className = 'board-row__flight';
-      flight.textContent = item.flight;
-      row.appendChild(flight);
+      // Main column (title + role/sub)
+      const { title, role } = parseDestination(item);
+      const subtitle = item.subtitle ? toTitleCase(item.subtitle) : '';
+      const main = document.createElement('div');
+      main.className = 'board-row__main';
+      main.innerHTML = `
+        <div class="board-row__title">${title}</div>
+        <div class="board-row__role">
+          ${role ? role : ''}
+          ${role && subtitle ? `<span class="sub">${subtitle}</span>` : (subtitle ? subtitle : '')}
+        </div>
+      `;
+      row.appendChild(main);
 
-      const dest = document.createElement('span');
-      dest.className = 'board-row__dest';
-      dest.innerHTML = item.subtitle
-        ? `${item.destination} <span class="sub">— ${item.subtitle}</span>`
-        : item.destination;
-      row.appendChild(dest);
-
-      const year = document.createElement('span');
-      year.className = 'board-row__year';
-      year.textContent = item.year;
-      row.appendChild(year);
+      // Meta column (year, flight code, status pill)
+      const status = (item.status || '').toUpperCase();
+      const isDone = status === 'DONE' || status === 'PAST';
+      const meta = document.createElement('div');
+      meta.className = 'board-row__meta';
+      meta.innerHTML = `
+        <div class="board-row__year">${item.year || ''}</div>
+        <div class="board-row__flight">${item.flight || ''}</div>
+        ${status ? `<div class="board-row__status${isDone ? ' is-done' : ''}">${status}</div>` : ''}
+      `;
+      row.appendChild(meta);
 
       sec.appendChild(row);
     });
@@ -4957,6 +8848,225 @@ function hexToRgba(hex, alpha) {
 
 renderBoardSections();
 
+// Direct-load shortcut: `?board` jumps straight to the resume view (skips the
+// 3D landing). Useful for designing/comparing against the iframed resume.
+if (new URLSearchParams(location.search).has('board')) setMode('board');
+
+/* ═══════════════════════════════════════════════
+   v3 RESUME · runtime helpers
+   - seed edge-light dots along the runway
+   - tick the boarding-pass clock
+   ═══════════════════════════════════════════════ */
+(function v3Init() {
+  const board = document.getElementById('board');
+  if (!board || !board.classList.contains('v3-resume')) return;
+
+  // Seed edge lights along the runway. Use document scroll-height as a
+  // proxy for runway length once content is laid out.
+  function seedEdgeLights() {
+    const r = document.getElementById('v3EdgeLights');
+    if (!r) return;
+    const docH = Math.max(board.scrollHeight, 2400);
+    r.innerHTML = '';
+    const STEP = 56;
+    const frag = document.createDocumentFragment();
+    for (let y = 130; y < docH - 130; y += STEP) {
+      for (const side of ['left', 'right']) {
+        const d = document.createElement('span');
+        d.className = 'v3-edge-light';
+        d.style[side] = '6px';
+        d.style.top = y + 'px';
+        d.style.opacity = (0.85 + Math.random() * 0.15).toFixed(2);
+        frag.appendChild(d);
+      }
+    }
+    r.appendChild(frag);
+  }
+  // Run once after the resume DOM has had a chance to lay out.
+  setTimeout(seedEdgeLights, 50);
+  window.addEventListener('resize', () => setTimeout(seedEdgeLights, 50));
+
+  // Local time tick.
+  const t = document.getElementById('v3LocalTime');
+  if (t) {
+    const tick = () => {
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      t.textContent = `LOCAL · ${hh}:${mm}`;
+    };
+    tick();
+    setInterval(tick, 30 * 1000);
+  }
+})();
+
+/* ═══════════════════════════════════════════════
+   RUNWAY GATES + LIVE PLANE TAXIING
+   The board is treated as an airport diagram. Each
+   resume section gets a numbered gate on the runway
+   strip; the persistent plane fixes onto the runway
+   in the viewport and taxis to whichever gate is in
+   view as the user scrolls.
+   ═══════════════════════════════════════════════ */
+const RUNWAY_GATE_PREFIXES = {
+  education:  'A',
+  experience: 'B',
+  research:   'C',
+  work:       'D',
+};
+
+function renderRunwayGates() {
+  const strip = document.getElementById('runwayStrip');
+  if (!strip || !window.PORTFOLIO_DATA) return;
+  // v3 resume has no .board-inner / runway-gate machinery — bail.
+  const inner = document.querySelector('#board .board-inner');
+  if (!inner) return [];
+  // Drop any existing gates so this can re-run on resize.
+  strip.querySelectorAll('.runway-gate').forEach(g => g.remove());
+  const innerRect = inner.getBoundingClientRect();
+  // We want gate Y relative to the .runway-strip element, which is positioned
+  // inside .board-inner. The strip spans from top:0 of .board-inner down to
+  // bottom:0, so any element's offsetTop relative to .board-inner is the same
+  // Y the gate marker should sit at.
+
+  const gates = [];
+  document.querySelectorAll('#boardSections > .board-section').forEach((sec, i) => {
+    // section.id is on the data; we mapped it via the rendered DOM by index
+    const dataSection = window.PORTFOLIO_DATA.sections[i];
+    if (!dataSection) return;
+    const prefix = RUNWAY_GATE_PREFIXES[dataSection.id] || 'G';
+    dataSection.items.forEach((item, j) => {
+      // Each item-row is roughly stacked under the section header. The row's
+      // offsetParent is .board-inner (since .board-section isn't positioned),
+      // so row.offsetTop is already in .board-inner coords — no need to add
+      // section offsetTop on top of it.
+      const row = sec.querySelectorAll('.board-row')[j];
+      if (!row) return;
+      const rowTop = row.offsetTop + (row.offsetHeight / 2);
+
+      const gate = document.createElement('div');
+      gate.className = 'runway-gate';
+      gate.style.top = `${rowTop}px`;
+      gate.style.setProperty('--gate-color', dataSection.color);
+      gate.dataset.itemId = item.id;
+      gate.dataset.gateY = String(rowTop);
+      const code = `${prefix}${j + 1}`;
+      gate.innerHTML = `
+        <div class="runway-gate__connector"></div>
+        <div class="runway-gate__chip">${code}</div>
+        <div class="runway-gate__name">${(item.destination || item.flight || '').slice(0, 32)}</div>
+      `;
+      strip.appendChild(gate);
+      gates.push({ y: rowTop, color: dataSection.color, code, sectionIdx: i, itemIdx: j });
+    });
+  });
+  return gates;
+}
+
+let _runwayGates = [];
+let _planeArmed  = false;
+
+function recomputeRunwayLayout() {
+  _runwayGates = renderRunwayGates() || [];
+}
+
+function activeGateForViewport() {
+  if (!_runwayGates.length) return null;
+  // The plane sits on whichever gate is closest to the viewport's reading
+  // band (~38% down from the top of the visible area).
+  const board = document.getElementById('board');
+  const scrollTop = board ? board.scrollTop : window.scrollY;
+  const aim = scrollTop + window.innerHeight * 0.38;
+  let best = _runwayGates[0];
+  let bestDist = Math.abs(best.y - aim);
+  for (const g of _runwayGates) {
+    const d = Math.abs(g.y - aim);
+    if (d < bestDist) { best = g; bestDist = d; }
+  }
+  return best;
+}
+
+// Drives a JS tween for the plane's `top` so motion plays even when the
+// browser throttles CSS transitions (e.g. when this is a background tab).
+let _taxiAnim = 0;
+function tweenPlaneTo(plane, fromTop, toTop, duration) {
+  if (_taxiAnim) clearInterval(_taxiAnim);
+  const start = performance.now();
+  const ease = (t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+  plane.style.transition = 'none';
+  _taxiAnim = setInterval(() => {
+    const t = Math.min(1, (performance.now() - start) / duration);
+    const k = ease(t);
+    plane.style.top = `${fromTop + (toTop - fromTop) * k}px`;
+    if (t >= 1) { clearInterval(_taxiAnim); _taxiAnim = 0; }
+  }, 16);
+}
+
+function updateRunwayPlanePosition({ initial = false } = {}) {
+  if (!_planeArmed) return;
+  const plane = document.getElementById('runwayPlane');
+  if (!plane) return;
+  const target = activeGateForViewport();
+  if (!target) return;
+
+  const currentTop = plane.offsetTop;
+  if (initial) {
+    // Snap the plane to the runway threshold first (just-touched-down look),
+    // then taxi to the active gate via a JS tween that keeps running even
+    // when the tab/CSS animations are throttled.
+    plane.style.transition = 'none';
+    plane.style.top = `48px`;
+    void plane.offsetWidth;
+    plane.classList.add('taxiing');
+    tweenPlaneTo(plane, 48, target.y, 1500);
+  } else {
+    if (Math.abs(currentTop - target.y) < 1) return;
+    tweenPlaneTo(plane, currentTop, target.y, 850);
+  }
+}
+
+function armRunwayPlaneFromTouchdown() {
+  // Called at the touchdown flash. We pre-render gates and snap the plane
+  // onto the runway threshold so when the cinematic overlay clears, the
+  // airframe is already on the page in a continuous landing pose.
+  recomputeRunwayLayout();
+  const plane = document.getElementById('runwayPlane');
+  if (!plane) return;
+  plane.style.transition = 'none';
+  plane.style.top = `48px`;
+  void plane.offsetWidth;
+  plane.style.transition = '';
+  plane.classList.add('live');
+  _planeArmed = true;
+}
+
+function startRunwayTaxi() {
+  if (!_planeArmed) return;
+  recomputeRunwayLayout();
+  updateRunwayPlanePosition({ initial: true });
+}
+
+// Manual reposition hook for testing
+window.PORTFOLIO_TAXI_TO_TOP = () => {
+  _planeArmed = true;
+  startRunwayTaxi();
+};
+
+// Keep the plane taxiing as the user scrolls or resizes.
+let _runwayRaf = 0;
+function _scheduleRunwayUpdate() {
+  if (_runwayRaf) return;
+  _runwayRaf = setTimeout(() => {
+    _runwayRaf = 0;
+    updateRunwayPlanePosition();
+  }, 16);
+}
+document.getElementById('board').addEventListener('scroll', _scheduleRunwayUpdate, { passive: true });
+window.addEventListener('resize', () => {
+  recomputeRunwayLayout();
+  _scheduleRunwayUpdate();
+});
+
 function findItemById(id) {
   for (const section of window.PORTFOLIO_DATA.sections) {
     const found = section.items.find(it => it.id === id);
@@ -4973,7 +9083,7 @@ function renderDetail(itemId) {
 
   const stats = (d.stats || []).map(s => `
     <div class="detail-panel__stat" style="border-left-color:${section.color};background:${hexToRgba(section.color, 0.08)}">
-      <div class="detail-panel__stat-label">${s.label}</div>
+      <div class="detail-panel__stat-label">${(s.label || '').toUpperCase()}</div>
       <div class="detail-panel__stat-value" style="color:${section.color}">${s.value}</div>
     </div>
   `).join('');
@@ -4989,18 +9099,20 @@ function renderDetail(itemId) {
   const heroClass = d.hero ? '' : 'is-placeholder';
   const heroContent = d.hero ? '' : '[ ASSET PENDING ]';
 
+  const cleanTitle = toTitleCase(d.title || '');
+  const cleanRole  = toTitleCase(d.role  || '');
   document.getElementById('detailInner').innerHTML = `
-    <div class="detail-panel__pre">▸ FLIGHT ${item.flight} · NOW BOARDING</div>
+    <div class="detail-panel__pre">${item.flight || ''} · Highlighted Role</div>
     <div class="detail-panel__head">
-      <div class="detail-panel__monogram" style="background:${section.color}">${
+      <div class="detail-panel__monogram">${
         item.logo
           ? `<img src="${item.logo}" alt="" class="detail-panel__monogram-img"
                 onerror="this.replaceWith(document.createTextNode('${item.monogram}'))">`
           : item.monogram
       }</div>
       <div>
-        <div class="detail-panel__title">${d.title}</div>
-        <div class="detail-panel__role">${d.role}</div>
+        <div class="detail-panel__title">${cleanTitle}</div>
+        <div class="detail-panel__role">${cleanRole}</div>
       </div>
     </div>
     <div class="detail-panel__hero ${heroClass}" style="${heroStyle}">${heroContent}</div>
@@ -5020,12 +9132,16 @@ function closeDetail() {
 }
 
 // Delegated click handler for all rows (covers both initial render and any future re-renders)
-document.getElementById('boardSections').addEventListener('click', e => {
-  const row = e.target.closest('.board-row');
-  if (row && row.dataset.id) renderDetail(row.dataset.id);
-});
+const _boardSections = document.getElementById('boardSections');
+if (_boardSections) {
+  _boardSections.addEventListener('click', e => {
+    const row = e.target.closest('.board-row');
+    if (row && row.dataset.id) renderDetail(row.dataset.id);
+  });
+}
 
-document.getElementById('detailClose').addEventListener('click', closeDetail);
+const _detailClose = document.getElementById('detailClose');
+if (_detailClose) _detailClose.addEventListener('click', closeDetail);
 
 // Esc closes the panel
 document.addEventListener('keydown', e => {
@@ -5041,6 +9157,16 @@ document.getElementById('board').addEventListener('click', e => {
   if (panel.contains(e.target)) return;
   if (e.target.closest('.board-row')) return; // row click is handled separately, not a "close" click
   closeDetail();
+});
+
+// "Resume" button in the top nav — jumps straight to the board view, bypassing
+// the airplane click + takeoff sequence. Useful for visitors who just want
+// the resume without playing the intro.
+document.getElementById('jumpToResume').addEventListener('click', (e) => {
+  e.preventDefault();
+  if (portfolioMode === 'board') return;
+  if (povActive && typeof exitPov === 'function') exitPov();
+  triggerBoardReveal();
 });
 
 document.getElementById('boardBack').addEventListener('click', () => {
