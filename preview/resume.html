@@ -840,6 +840,7 @@ hr.rule {
   font-size: 22px;
   color: var(--sec);
   position: relative;
+  overflow: hidden;
 }
 .row__mono::after {
   content: "";
@@ -848,7 +849,18 @@ hr.rule {
   border: 1px dashed var(--sec);
   border-radius: 4px;
   opacity: 0.25;
+  pointer-events: none;
 }
+.row__mono img {
+  position: relative;
+  z-index: 1;
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+  display: block;
+}
+.row__mono.has-logo::after { display: none; }
+.row__mono.has-logo { background: #fff; }
 
 .row__main { min-width: 0; }
 .row__title {
@@ -1153,7 +1165,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row is-headline">
-        <div class="row__mono">N</div>
+        <div class="row__mono has-logo"><img src="../assets/logos/nyu.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('N'));"></div>
         <div class="row__main">
           <div class="row__title">New York University</div>
           <div class="row__role">
@@ -1171,7 +1183,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">S</div>
+        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=smc.edu&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Santa Monica College</div>
           <div class="row__role">
@@ -1187,7 +1199,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">L</div>
+        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=piercecollege.edu&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('L'));"></div>
         <div class="row__main">
           <div class="row__title">Los Angeles Pierce College</div>
           <div class="row__role">
@@ -1203,7 +1215,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">C</div>
+        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=calabasashigh.org&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('C'));"></div>
         <div class="row__main">
           <div class="row__title">Calabasas High School</div>
           <div class="row__role">
@@ -1251,7 +1263,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">S</div>
+        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=seniorsupportai.org&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Senior Support AI · org</div>
           <div class="row__role">
@@ -1285,7 +1297,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">W</div>
+        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=webutation.net&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
         <div class="row__main">
           <div class="row__title">Webutation, Inc</div>
           <div class="row__role">
@@ -1317,7 +1329,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row is-headline">
-        <div class="row__mono">H</div>
+        <div class="row__mono has-logo"><img src="../assets/logos/hinge.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('H'));"></div>
         <div class="row__main">
           <div class="row__title">Hinge</div>
           <div class="row__role">
@@ -1333,7 +1345,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">W</div>
+        <div class="row__mono has-logo"><img src="../assets/logos/wix.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
         <div class="row__main">
           <div class="row__title">Wix · com</div>
           <div class="row__role">
@@ -1349,7 +1361,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">V</div>
+        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=vibecode.com&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('V'));"></div>
         <div class="row__main">
           <div class="row__title">Vibecode</div>
           <div class="row__role">
@@ -1381,7 +1393,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row">
-        <div class="row__mono">S</div>
+        <div class="row__mono has-logo"><img src="../assets/logos/starbucks.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Starbucks</div>
           <div class="row__role">
@@ -1397,7 +1409,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono">S</div>
+        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=sloansicecream.com&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Sloan&rsquo;s Ice Cream LLC</div>
           <div class="row__role">
