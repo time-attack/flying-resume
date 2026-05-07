@@ -320,7 +320,7 @@ window.PORTFOLIO_DATA = {
               { label: 'STATUS', value: 'ACKNOWLEDGED' },
             ],
             body: [
-              'Authentication bypass in the Vibecode app\'s SSH flow allowing unauthorized access. Reported through responsible disclosure.',
+              'Authentication bypass in the Vibecodeapp app\'s SSH flow allowing unauthorized access. Reported through responsible disclosure.',
             ],
             links: [
               { label: '→ FULL WRITEUP', href: 'blog-vibecode-ssh.html', primary: true },
