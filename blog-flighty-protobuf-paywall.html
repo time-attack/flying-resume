@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flighty Paywall · Protobuf Trust Boundary · Sina Matian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&amp;family=Syne:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f1e3;
+    --paper:#fffaf0;
+    --ink:#1c1916;
+    --muted:#5b534d;
+    --line:#ddd2bf;
+    --accent:#c76421;
+    --accent-soft:#f1e1ca;
+    --safe:#306b45;
+    --safe-soft:#e6f1e9;
+    --code-bg:#1c1916;
+    --code-ink:#f1e1ca;
+  }
+
+  *, *::before, *::after { box-sizing:border-box; }
+
+  html { scroll-behavior:smooth; }
+
+  body {
+    margin:0;
+    background:linear-gradient(180deg, #f5efe1 0%, #f7f1e3 100%);
+    color:var(--ink);
+    font-family:'Newsreader', Georgia, serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a { color:inherit; }
+
+  .shell {
+    width:min(820px, calc(100vw - 32px));
+    margin:0 auto;
+    padding:28px 0 72px;
+  }
+
+  .topbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:48px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--line);
+  }
+
+  .brand {
+    font-family:'Syne', sans-serif;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.28em;
+    text-decoration:none;
+    text-transform:uppercase;
+  }
+
+  .topbar nav {
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+
+  .topbar nav a {
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    text-decoration:none;
+    text-transform:uppercase;
+    letter-spacing:.16em;
+  }
+
+  .eyebrow,
+  .meta-row,
+  .status,
+  .safe-note {
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .eyebrow {
+    font-size:11px;
+    color:var(--accent);
+    letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+
+  header h1 {
+    margin:12px 0 18px;
+    font-family:'Syne', sans-serif;
+    font-size:clamp(2.2rem, 6.4vw, 3.6rem);
+    line-height:1;
+    letter-spacing:-.04em;
+  }
+
+  .lede {
+    margin:0;
+    color:var(--ink);
+    font-size:1.22rem;
+    line-height:1.72;
+  }
+
+  .meta-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:20px;
+    margin-bottom:36px;
+  }
+
+  .meta-row span {
+    padding:8px 10px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+
+  article {
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:30px 28px 36px;
+  }
+
+  section + section {
+    margin-top:30px;
+    padding-top:30px;
+    border-top:1px solid var(--line);
+  }
+
+  h2 {
+    margin:0 0 14px;
+    font-family:'Syne', sans-serif;
+    font-size:1.5rem;
+    letter-spacing:-.02em;
+  }
+
+  h3 {
+    margin:24px 0 10px;
+    font-family:'Syne', sans-serif;
+    font-size:1.12rem;
+    letter-spacing:-.01em;
+  }
+
+  p {
+    margin:0 0 14px;
+    font-size:1.1rem;
+    line-height:1.8;
+  }
+
+  p:last-child { margin-bottom:0; }
+
+  .summary-box {
+    padding:18px 18px 18px 20px;
+    background:var(--accent-soft);
+    border-left:3px solid var(--accent);
+  }
+
+  ul, ol {
+    margin:0 0 16px;
+    padding-left:22px;
+  }
+
+  li {
+    margin:0 0 10px;
+    font-size:1.05rem;
+    line-height:1.74;
+  }
+
+  li:last-child { margin-bottom:0; }
+
+  ol li::marker { font-family:'JetBrains Mono', monospace; color:var(--accent); }
+
+  pre {
+    margin:18px 0;
+    padding:16px 18px;
+    background:var(--code-bg);
+    color:var(--code-ink);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    line-height:1.6;
+    overflow-x:auto;
+    border:1px solid #2c2823;
+    white-space:pre;
+  }
+
+  pre code {
+    background:transparent;
+    padding:0;
+    color:inherit;
+    font-size:inherit;
+  }
+
+  code {
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.9em;
+    background:var(--accent-soft);
+    color:#5a2e10;
+    padding:2px 6px;
+    border-radius:3px;
+  }
+
+  table {
+    width:100%;
+    border-collapse:collapse;
+    margin:18px 0;
+    font-size:1rem;
+  }
+
+  th, td {
+    border:1px solid var(--line);
+    padding:10px 12px;
+    text-align:left;
+    vertical-align:top;
+    line-height:1.6;
+  }
+
+  th {
+    background:var(--accent-soft);
+    font-family:'Syne', sans-serif;
+    font-size:0.92rem;
+    letter-spacing:.02em;
+  }
+
+  td code {
+    font-size:0.85em;
+  }
+
+  hr {
+    margin:30px 0;
+    border:none;
+    border-top:1px solid var(--line);
+  }
+
+  .status,
+  .safe-note {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 11px;
+    font-size:10px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    border:1px solid var(--line);
+  }
+
+  .status {
+    background:#f7e6db;
+    color:#7a3813;
+    border-color:#dfbfaa;
+  }
+
+  .safe-note {
+    background:var(--safe-soft);
+    color:var(--safe);
+    border-color:#bed5c7;
+  }
+
+  .back-link {
+    display:inline-block;
+    margin-top:28px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--accent);
+    letter-spacing:.16em;
+    text-decoration:none;
+    text-transform:uppercase;
+  }
+
+  footer {
+    margin-top:24px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+  }
+
+  @media (max-width: 640px) {
+    .shell { width:min(100vw - 24px, 820px); }
+    .topbar {
+      flex-direction:column;
+      align-items:flex-start;
+      margin-bottom:36px;
+    }
+    article { padding:22px 18px 28px; }
+    .lede { font-size:1.1rem; }
+    p, li { font-size:1rem; }
+    pre { font-size:11.5px; padding:14px; }
+    th, td { font-size:0.92rem; padding:8px 10px; }
+  }
+</style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <a class="brand" href="index.html">dripped</a>
+      <nav aria-label="Pages">
+        <a href="blog.html">Blog</a>
+        <a href="index.html">Airport</a>
+      </nav>
+    </div>
+
+    <header>
+      <div class="eyebrow">Story 02 / Reverse Engineering Write-up</div>
+      <h1>Trying to Secure Your App Paywalls? Don&rsquo;t Do What Flighty Did</h1>
+      <p class="lede">
+        A practical lesson on why &ldquo;the response looks encrypted&rdquo; almost never means the app is secure, and a step-by-step walkthrough of how I reconstructed Flighty&rsquo;s protobuf schema from a stripped Mach-O binary and rewrote subscription state in transit.
+      </p>
+      <div class="meta-row" aria-label="Article metadata">
+        <span>Published May 7, 2026</span>
+        <span>Reverse Engineering</span>
+        <span>iOS / Protobuf</span>
+        <span>Public Write-up</span>
+      </div>
+    </header>
+
+    <article>
+      <section>
+        <h2>When a Paywall Bug Looks &ldquo;Encrypted&rdquo;: What Is Usually Happening</h2>
+        <p>This is a practical lesson for security researchers and developers.</p>
+        <p>
+          If you are testing an app paywall and get stuck because the response body looks encoded, compressed, or unreadable, that does <strong>not</strong> automatically mean &ldquo;secure crypto&rdquo; or &ldquo;dead end.&rdquo; In many modern mobile stacks, you are often looking at <strong>serialized transport data</strong> (commonly Protocol Buffers), not business logic that is truly hidden.
+        </p>
+        <p>The same pattern appears again and again:</p>
+        <ul>
+          <li>app uses protobuf instead of JSON for API payloads,</li>
+          <li>client still receives entitlement/subscription state in that payload,</li>
+          <li>a superficial inspection misses the vulnerable trust boundary,</li>
+          <li>researchers assume the traffic is opaque and stop too early.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Core Lesson</h2>
+        <div class="summary-box">
+          <p>The paywall bug hunt usually fails at the same point: people stop at the encoding layer.</p>
+        </div>
+        <p>The correct mental model is:</p>
+        <ol>
+          <li><strong>Transport format</strong> is not security.</li>
+          <li><strong>Readable UI state</strong> still comes from parsable server data.</li>
+          <li><strong>Authorization mistakes</strong> can survive any wire format.</li>
+        </ol>
+        <p>In other words: just because the response isn&rsquo;t readable does not mean the app is secure.</p>
+      </section>
+
+      <section>
+        <h2>Why This Trips Up Researchers</h2>
+        <p>Many offensive workflows are JSON-first by default. When a target switches to protobuf:</p>
+        <ul>
+          <li>proxies show binary blobs,</li>
+          <li>fields are unnamed,</li>
+          <li>nested messages are not obvious,</li>
+          <li>entitlement flags are harder to spot.</li>
+        </ul>
+        <p>
+          This is essentially the squidward chair meme for cybersecurity researchers. I am sure every security researcher has approached an app that looks incredibly vibecoded and easy to hack, but upon looking at the traffic you realize that it is some weird proprietary format or protobuf and you give up. This is what this post is about.
+        </p>
+      </section>
+
+      <section>
+        <h2>Why This Also Matters for Developers</h2>
+        <p>
+          Switching from JSON to protobuf improves performance and payload size, and can also steer away some talented reverse engineers, but it does <strong>not</strong> fix:
+        </p>
+        <ul>
+          <li>insecure client trust in purchase state,</li>
+          <li>weak server-side authorization checks,</li>
+          <li>business logic errors (or really any IDOR).</li>
+        </ul>
+        <p>If sensitive decisions are made client-side or based on mutable state, the attack surface remains the same. It just appears more secure.</p>
+      </section>
+
+      <section>
+        <h2>What Is Usually Happening Technically</h2>
+        <p>In these cases, the app is often returning protobuf messages that include:</p>
+        <ul>
+          <li>user/account records,</li>
+          <li>subscription / purchase objects,</li>
+          <li>status enums (active, trial, expired, canceled),</li>
+          <li>timestamp fields (purchase/expiry/renewal),</li>
+          <li>feature flags or entitlement lists.</li>
+        </ul>
+        <p>The data is there. It is just not rendered as plain JSON.</p>
+      </section>
+
+      <section>
+        <h2>Methodology: What to Do When Responses Are Unreadable</h2>
+        <p>Use this sequence when you hit an &ldquo;encoded&rdquo; paywall response:</p>
+        <ol>
+          <li>
+            <strong>Identify protocol hints.</strong> Look at headers, endpoint behavior, and payload characteristics. Check for binary responses, content-type hints, repeated field structures, and varint-like patterns.
+          </li>
+          <li>
+            <strong>Confirm it is serialization, not encryption.</strong> Attempt deterministic decode paths (protobuf, compression, framing). If parse attempts produce structured fields, you are in business logic territory again.
+          </li>
+          <li>
+            <strong>Build/borrow a parser.</strong> Start with raw field extraction (field number, wire type, value). Add semantic mappings iteratively (<code>field_n -&gt; meaning</code>) as you observe traffic.
+          </li>
+          <li>
+            <strong>Map paywall-relevant fields.</strong> Track subscription status, product IDs, timestamps, and entitlement switches. Compare before/after account states (free, trial, paid, expired).
+          </li>
+          <li>
+            <strong>Test trust boundaries.</strong> Verify which side (server vs client) enforces premium access. Confirm whether altered state can unlock paid behavior. Validate replay, stale state, and downgrade/upgrade edge cases.
+          </li>
+          <li>
+            <strong>Review the binary or runtime for revealing information to aid reverse engineering.</strong> Strings, offsets, file formats. Files with purchase/entitlement related data (<code>Subscriptions.js</code>, <code>RestorePurchases.swift</code>, etc.).
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Common Anti-Patterns to Avoid</h2>
+        <ul>
+          <li>&ldquo;Binary equals encrypted, give up.&rdquo;</li>
+          <li>&ldquo;Client UI says premium, so backend must be secure.&rdquo;</li>
+          <li>&ldquo;We migrated to protobuf, therefore paywall is safer.&rdquo;</li>
+          <li>&ldquo;No <code>.proto</code> files means analysis is impossible.&rdquo;</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>How We Actually Decoded Flighty: A Step-by-Step Walkthrough</h2>
+        <p>
+          Everything above is the general lesson. What follows is how we applied it to a real target &mdash; the Flighty iOS app &mdash; from initial binary analysis through to fully automated protobuf interception and modification.
+        </p>
+
+        <h3>Step 0: What We Were Looking At</h3>
+        <p>
+          Flighty is a premium flight tracking iOS app. Traffic proxied through mitmproxy showed API calls to <code>https://api.flightyapp.com</code> with binary response bodies &mdash; no JSON anywhere. The main endpoint of interest was <code>/v1/sync/</code>, which returned what appeared to be a large binary blob. This is the endpoint called to sync your purchases and premium state (what happens when you click restore purchases). Content-type headers were minimal, and did not leave us with any revealing information on how to decode it. The immediate question: is this some weird proprietary binary format, encrypted, or just serialized?
+        </p>
+
+        <h3>Step 1: Confirming the Wire Format Is Protobuf</h3>
+        <p>Before touching the binary, we examined the raw bytes from intercepted responses. Key indicators that pointed to Protocol Buffers:</p>
+        <ul>
+          <li><strong>Varint patterns:</strong> The leading bytes of fields followed varint encoding (high bit continuation, 7-bit payloads).</li>
+          <li><strong>Tag structure:</strong> Bytes decoded cleanly as <code>(field_number &lt;&lt; 3) | wire_type</code>, with wire types 0 (varint), 2 (length-delimited), and 5 (32-bit) appearing repeatedly.</li>
+          <li><strong>No magic bytes or framing:</strong> Unlike gzip, MessagePack, or CBOR, there was no file header &mdash; just raw tag-length-value sequences. If you were to open any file like a ZIP file in a text editor, you will see headers that specify what kind of file it is (this is for your operating system to understand what to do with the file). However if you are developing an app and want to implement every step necessary to prevent hackers from touching it, you would not want to include these headers. This is a good indicator that this is not some proprietary format or encryption but simply a format like protobuf.</li>
+          <li><strong>SwiftProtobuf dependency visible in the app bundle:</strong> The <code>.app</code> directory contained <code>SwiftProtobuf_SwiftProtobuf.bundle</code>, confirming the app links against Apple&rsquo;s official SwiftProtobuf library. Finding these libraries is always a good indicator that the app is not using a proprietary format or encryption but simply a format like protobuf.</li>
+        </ul>
+        <p>
+          At this point we knew: this is just standard protobuf, no encryption or compression wrapper. Just binary serialization without a <code>.proto</code> schema to reference.
+        </p>
+
+        <h3>Step 2: Reading the Flighty Binary for Protobuf Metadata</h3>
+        <p>
+          At this point we need to be looking for how the app interprets this data. Remember the Flighty app is an iOS app, so it ships as a Mach-O binary. I ran string extraction and targeted searches against it to pull out protobuf-related metadata. These need to be <em>somewhere</em> in the app so it can understand how to read the raw mess it&rsquo;s getting from the server.
+        </p>
+
+        <h3>2a. Finding All Proto Message Type Names</h3>
+<pre><code>strings Flighty | grep -i 'FlightyAPI' | head -40</code></pre>
+        <p>This revealed every protobuf message class that SwiftProtobuf generated in the app:</p>
+<pre><code>FlightyAPIRemoteSubscription
+FlightyAPIRemoteUser
+FlightyAPISyncResponseProto
+FlightyAPISyncResponseData
+FlightyAPISyncRequestProto
+FlightyAPISyncChangeRequestProto
+FlightyAPIReceiptRequestProto
+FlightyAPISubscribeFlightResponseProto
+FlightyAPISharingSubscribeFlightResponseProto
+FlightyAPIRemoteUserFlight
+FlightyAPIRemoteTicket
+FlightyAPIRemoteFlight
+FlightyAPIRemoteAirport
+FlightyAPIRemoteAirline
+FlightyAPIRemoteProfile
+FlightyAPIRemoteAircraftType
+FlightyAPIStartLiveActivityRequest
+... (and many more)</code></pre>
+        <p>At this point, we can basically start celebrating. The hard part is over. We know it&rsquo;s protobuf, and we know the message types. The only remaining question is what do they mean?</p>
+        <p>
+          Each of these corresponds to a <code>message</code> definition in the original <code>.proto</code> file that Flighty&rsquo;s developers wrote. SwiftProtobuf embeds the full class name as a string literal for reflection/debugging purposes.
+        </p>
+
+        <h3>2b. Extracting Proto Wire Field Names</h3>
+        <p>
+          Ok so this is the part that probably looks weird in the final write-up because the grep command I show has very specific search terms. Like, how did I already know to search for <code>connecting_flight</code> or <code>payment_plan_cohort</code>? I didn&rsquo;t. Let me explain how I actually got there.
+        </p>
+        <p>The first thing I did was just dump <em>every</em> string from the binary. Just straight up:</p>
+<pre><code>strings Flighty | less</code></pre>
+        <p>
+          This gives you tens of thousands of lines. Most of it is garbage &mdash; framework paths, ObjC selectors, random UI text, etc. But if you scroll through it (or pipe it to a file and search), you start noticing a pattern: there are clusters of <code>snake_case</code> strings that look suspiciously like protobuf field names. Things like <code>user_id</code>, <code>flight_id</code>, <code>seat_number</code>, <code>departure_airport</code>. Swift uses camelCase. These aren&rsquo;t Swift property names. They&rsquo;re proto wire names, and the important thing is they&rsquo;re just sitting there as plain strings.
+        </p>
+        <p>
+          Once I spotted the pattern, I started grepping for clusters of them. I&rsquo;d find one like <code>connecting_flight</code>, notice it appeared near other flight-related field names, and use those to pull out more. This is an iterative process: you find a few, grep for related terms, find more, repeat. Eventually I had the full set:
+        </p>
+<pre><code># These are the search terms I ended up with AFTER the iterative discovery process
+strings Flighty | grep -i 'connecting_flight\|flight_profiles\|latest_timestamp\|payment_plan_cohort\|download_url\|share_url\|h3_cell' | sort -u</code></pre>
+        <p>Result &mdash; the actual proto wire names used on the wire:</p>
+<pre><code>connecting_flight
+connecting_flight_profiles
+connecting_flight_ticket
+download_url
+flight_profiles
+h3_cell_level5
+h3_cell_level8
+latest_timestamp
+payment_plan_cohort
+share_url</code></pre>
+        <p>And the ones I cared about most &mdash; the subscription and user-related fields:</p>
+<pre><code>user_flight, user_id, flight_id, push_token, live_activity_id,
+bundle_id, is_sandbox, replaces_live_activity_id, is_friends_flight,
+device_id, device_model, device_manufacturer, product_id, start_date,
+end_date, airport_id, start_time, end_time, flight_number,
+departure_airport, arrival_airport, departure_time, arrival_time,
+cloud_user_id, owner_user_id, event_id, seat_number, seat_position,
+cabin_class, flight_id_a, flight_id_b, next_refresh, all_flights</code></pre>
+        <p>
+          These are the names that SwiftProtobuf uses in its <code>_protobuf_nameMap</code> &mdash; the mapping that converts between Swift property names and proto wire field names. Once you have these, you basically have the vocabulary for every field in the schema. You don&rsquo;t know the field <em>numbers</em> yet (that comes later from traffic), but you know what each field is called and roughly what it does.
+        </p>
+
+        <h3>2c. Finding <code>_StorageClass</code> Patterns</h3>
+        <p>
+          SwiftProtobuf uses <code>_StorageClass</code> for messages with many fields (an optimization to avoid stack-allocating large structs). I searched for it using this command:
+        </p>
+<pre><code>strings Flighty | grep '_StorageClass'</code></pre>
+        <p>
+          This told us which messages had complex internal storage, i.e., which ones had many fields and nested sub-messages: <code>SyncChangeRequestProto</code>, <code>RemoteFlight</code>, <code>RemoteAirport</code>, <code>RemoteAirline</code>, <code>AirportWeatherProto</code>, etc.
+        </p>
+
+        <h3>2d. Extracting In-App Purchase Product IDs</h3>
+<pre><code>strings Flighty | grep 'com.flightyapp.flighty' | grep -i 'plan\|lifetime\|family\|pass\|flight\|holiday' | sort -u</code></pre>
+        <p>Output:</p>
+<pre><code>family.monthlyPlan
+family.upgrade.lifetime
+family.yearlyPlan
+holiday2020Monthly
+lifetime
+singleFlight
+weekPass</code></pre>
+        <p>Combined with standard naming conventions, the full product ID set:</p>
+<pre><code>com.flightyapp.flighty.weeklyPlan
+com.flightyapp.flighty.monthlyPlan
+com.flightyapp.flighty.yearlyPlan
+com.flightyapp.flighty.lifetime
+com.flightyapp.flighty.family.monthlyPlan
+com.flightyapp.flighty.family.yearlyPlan
+com.flightyapp.flighty.family.upgrade.lifetime
+com.flightyapp.flighty.holiday2020Monthly</code></pre>
+
+        <h3>2e. Extracting Enum Values and User Types</h3>
+        <p>Same story as 2b &mdash; the final grep command looks like I already knew the answer. I didn&rsquo;t. Here&rsquo;s how I actually found these.</p>
+        <p>
+          When you&rsquo;re scrolling through the <code>strings</code> output from step 2b, you notice another pattern alongside the snake_case field names: there are clusters of <code>ALL_CAPS</code> strings that look like enum values. Things like <code>ACTIVE</code>, <code>EXPIRED</code>, <code>LAPSED</code>, <code>ANONYMOUS</code>, <code>PRO</code>, <code>FREE</code>. These stand out because normal Swift code doesn&rsquo;t produce many ALL_CAPS strings in the binary &mdash; but protobuf enum values do, because SwiftProtobuf embeds the wire-format enum names for serialization.
+        </p>
+        <p>
+          I also already knew from step 2a that there&rsquo;s a class called <code>FlightyAPIRemoteSubscription</code> and <code>FlightyAPIRemoteUser</code>. So I started grepping for strings that looked like they could be enum values for those types &mdash; status words, user type words, plan type words. Once I found a few, I cross-referenced by looking at what strings appeared <em>near</em> them in the binary (strings that are part of the same NameMap tend to be stored close together in the data section).
+        </p>
+<pre><code># the search terms I built up after finding initial enum-looking strings
+strings Flighty | grep -iE 'ANONYMOUS|BASELINE|NOT_DETERMINED|CONTROL|ProUserType'</code></pre>
+        <p>
+          From this, plus SwiftProtobuf&rsquo;s <code>AllCases</code> reflection metadata (which stores enum cases in declaration order), I recovered the full <code>ProUserType</code> enum:
+        </p>
+<pre><code>MONTHLY = 0, YEARLY = 1, COMP = 2, LIFETIME = 3, WEEKLY = 4,
+WEEK_PASS = 5, SINGLE_FLIGHT = 6, MONTHLY_FAMILY = 7,
+YEARLY_FAMILY = 8, LIFETIME_FAMILY = 9, LIFETIME_FAMILY_UPGRADE = 10,
+HOLIDAY_2020_MONTHLY = 11</code></pre>
+        <p>
+          Now here&rsquo;s the part that tripped me up for a bit and is genuinely interesting: on the wire, the string <code>"BASELINE"</code> maps to <code>ProUserType.lifetime</code>. Not <code>"LIFETIME"</code> &mdash; <code>"BASELINE"</code>. The SwiftProtobuf <code>NameMap</code> maps proto wire names to Swift enum cases, and Flighty&rsquo;s developers chose &ldquo;BASELINE&rdquo; as the wire name for the lifetime plan. I&rsquo;m guessing this was an internal name from early development that stuck around. This is the kind of non-obvious detail that only comes from reading the binary. You would never guess &ldquo;BASELINE&rdquo; means &ldquo;lifetime&rdquo; from looking at traffic alone &mdash; you&rsquo;d just see the string &ldquo;BASELINE&rdquo; and have no idea what it means.
+        </p>
+        <p>
+          Similarly, I found the subscription status enum: <code>ACTIVE = 0, LAPSED = 1, EXPIRED = 2</code>, and the user type field uses plain strings on the wire: <code>"PRO"</code>, <code>"FREE"</code>, <code>"ANONYMOUS"</code>. Those ones are at least self-explanatory.
+        </p>
+
+        <h3>2f. Finding Source File Paths (Leaked from Debug Info)</h3>
+        <p>The binary contained embedded Swift source file paths from the build machine:</p>
+<pre><code>/Volumes/workspace/repository/Modules/Sources/Paywall/Paywall V3/PaywallV3Coordinator.swift
+/Volumes/workspace/repository/Modules/Sources/Paywall/Paywall V3/PaywallV3ViewModel.swift
+/Volumes/workspace/repository/SharedModules/Sources/FlightyCore/Subscription/SubscriptionService.swift
+/Volumes/workspace/repository/SharedModules/Sources/FlightyCore/Subscription/PurchaseFlow.swift
+/Volumes/workspace/repository/SharedModules/Sources/FlightyCore/Subscription/PaymentQueueObserver.swift
+/Volumes/workspace/repository/Modules/Sources/PromoCodes/LifetimePromoCodeManager.swift
+/Volumes/workspace/repository/App Features/Search/Sources/SearchV2Feature/SearchPaywallDecider.swift
+/Volumes/workspace/repository/App Features/OnLaunchPopups/Sources/OnLaunchPopups/Paywall On Launch/PaywallOnLaunchDecisionMaker.swift</code></pre>
+        <p>
+          These told us exactly how the codebase was organized: the <code>Paywall</code> module, <code>SubscriptionService</code>, <code>PurchaseFlow</code>, and <code>PaywallDecider</code> classes. This informed which fields in the protobuf schema were paywall-relevant.
+        </p>
+
+        <h3>Step 3: Reconstructing the <code>.proto</code> Schema</h3>
+        <p>
+          Right now, all of the metadata and binary mappings are found. Now all that is left is to rewrite it with our own mappings so we can easily modify it. We create a <code>.proto</code> file with the mappings, called <code>flighty_reconstructed.proto</code>.
+        </p>
+        <p>The process:</p>
+        <ol>
+          <li>Start with each <code>FlightyAPI*</code> class name &rarr; create a <code>message</code> block.</li>
+          <li>Use the wire field names and <code>_NameMap</code> data to assign field names.</li>
+          <li>Determine field numbers from the declaration order in the binary&rsquo;s reflection metadata (SwiftProtobuf stores fields in proto-field-number order).</li>
+          <li>Infer field types from wire type analysis of captured traffic (varint &rarr; int/bool/enum, length-delimited &rarr; string/bytes/sub-message, 32-bit &rarr; float, 64-bit &rarr; double).</li>
+          <li>Cross-reference with the <code>_StorageClass</code> fields to identify nested messages.</li>
+        </ol>
+        <p>The reconstructed schema covered 24 entity types in <code>SyncResponseData</code> alone:</p>
+<pre><code>message SyncResponseData {
+    repeated RemoteAirport remote_airport = 1;
+    repeated RemoteAirline remote_airline = 2;
+    repeated RemoteConnectedFriendPushSetting remote_connected_friend_push_setting = 3;
+    repeated RemoteConnectedFriendRelationship remote_connected_friend_relationship = 4;
+    repeated RemoteConnection remote_connection = 5;
+    repeated RemoteHowDidYouHearAboutUsAnswer remote_how_did_you_hear_about_us_answer = 6;
+    repeated RemoteEmailForwardingAddress remote_email_forwarding_address = 7;
+    repeated RemoteProfile remote_profile = 8;
+    repeated RemotePushSetting remote_push_setting = 9;
+    repeated RemoteSingleFriendFlightPushSetting remote_single_friend_flight_push_setting = 10;
+    repeated RemoteSubscription remote_subscription = 11;     // *** SUBSCRIPTION HERE ***
+    repeated RemoteTicket remote_ticket = 12;
+    repeated RemoteTripitAccount remote_tripit_account = 13;
+    repeated RemoteUser remote_user = 14;                     // *** USER TYPE HERE ***
+    repeated RemoteUserFlight remote_user_flight = 15;
+    // ... fields 16-24 for contacts, live activity, metro areas, etc.
+}</code></pre>
+        <p>
+          The two paywall-critical fields: <strong>field 11</strong> (<code>RemoteSubscription</code>) carries subscription status/expiration/product, and <strong>field 14</strong> (<code>RemoteUser</code>) carries the <code>user_type</code> (PRO/FREE) and <code>pro_user_type</code> (BASELINE/WEEKLY/etc).
+        </p>
+
+        <h3>Step 4: Building the CLI Protobuf Decoder (<code>flighty_proto_decoder.py</code>)</h3>
+        <p>
+          With the schema reconstructed, I wrote a standalone Python decoder that could parse raw protobuf binary into human-readable output. This was <strong>not</strong> generated from a <code>.proto</code> file with <code>protoc</code> &mdash; it was hand-built as a raw wire-format parser with our reconstructed field mappings layered on top. But of course, I did input all of my mappings into Claude and told it to make the files for me (I am quite lazy).
+        </p>
+        <p><strong>Key capabilities of the decoder:</strong></p>
+        <ul>
+          <li><strong>Raw wire format parsing:</strong> Implements the full protobuf wire format spec &mdash; varint decoding, length-delimited field extraction, 32-bit and 64-bit fixed fields, tag parsing (<code>field_number &lt;&lt; 3 | wire_type</code>).</li>
+          <li><strong>Recursive sub-message resolution:</strong> When a length-delimited field is known to contain a sub-message (via our <code>FIELD_TYPE_MAP</code>), the decoder recurses into it and applies the correct field name mapping.</li>
+          <li><strong>Timestamp detection:</strong> Automatically detects Google Protobuf Timestamp sub-messages (field 1: seconds, field 2: nanos) and renders them as ISO 8601 dates.</li>
+          <li><strong>Enum resolution:</strong> Maps varint values to human-readable enum names (<code>0 &rarr; ACTIVE</code>, <code>1 &rarr; LAPSED</code>, <code>2 &rarr; EXPIRED</code> for subscription status; <code>0 &rarr; PRO</code>, <code>1 &rarr; FREE</code> for user type).</li>
+          <li><strong>Multiple input formats:</strong> Accepts binary files, hex strings, or base64 from stdin.</li>
+        </ul>
+        <p>Usage examples:</p>
+<pre><code># Decode a captured sync response
+python3 flighty_proto_decoder.py response.bin --type SyncResponseProto
+
+# Decode base64 from clipboard
+pbpaste | python3 flighty_proto_decoder.py --stdin --type RemoteSubscription
+
+# Decode hex from mitmproxy
+python3 flighty_proto_decoder.py --hex '0a0474657374' --type RemoteSubscription
+
+# List all known message types and their fields
+python3 flighty_proto_decoder.py --list-types</code></pre>
+        <p>
+          The decoder&rsquo;s field mapping tables (lines 38-211 of the script) are the core intellectual output of the binary analysis &mdash; each one maps a field number to its name and expected type, derived from the binary strings work in Step 2.
+        </p>
+
+        <h3>Step 5: Building the MITM Subscription Modifier (<code>flighty_mitm_modifier.py</code>) (the fun part)</h3>
+        <p>
+          Once we could read the protobuf, the next step was to modify it in transit. To do this, use mitmproxy. Mitmproxy is a Python library that lets you make a man-in-the-middle proxy and dynamically read/write request data. Mitmproxy lets you use Python scripts to map out what to read/write, so I wrote a Flighty mitm script.
+        </p>
+        <p><strong>What it modifies:</strong></p>
+        <ol>
+          <li>
+            <strong><code>RemoteSubscription</code> (field 11 of SyncResponseData):</strong>
+            <ul>
+              <li><code>product_id</code> &rarr; <code>com.flightyapp.flighty.lifetime</code></li>
+              <li><code>expiration_date</code> &rarr; 50 years from now (unix timestamp)</li>
+              <li><code>status</code> &rarr; <code>0</code> (ACTIVE)</li>
+              <li><code>autorenewing</code> &rarr; <code>true</code></li>
+            </ul>
+          </li>
+          <li>
+            <strong><code>RemoteUser</code> (field 14 of SyncResponseData):</strong>
+            <ul>
+              <li><code>user_type</code> (string field 2) &rarr; <code>"PRO"</code> (from <code>"ANONYMOUS"</code> or <code>"FREE"</code>)</li>
+              <li><code>pro_user_type</code> (string field 7) &rarr; <code>"BASELINE"</code> (the wire name for lifetime)</li>
+              <li>Feature flags (field 8, repeated sub-messages) &rarr; replaces any <code>"UPGRADE"</code> values with <code>"NONE"</code> to suppress upgrade prompts in the toolbar</li>
+            </ul>
+          </li>
+        </ol>
+        <p><strong>How it works technically:</strong></p>
+        <p>The modifier operates at the raw protobuf wire level. It does not use compiled protobuf libraries. Instead, it:</p>
+        <ol>
+          <li>Parses the <code>SyncResponseProto</code> top-level fields.</li>
+          <li>For each <code>field 2</code> (SyncResponseData), it recurses in.</li>
+          <li>Inside SyncResponseData, it finds <code>field 11</code> (RemoteSubscription) and <code>field 14</code> (RemoteUser).</li>
+          <li>For each, it parses the sub-message fields, replaces the target fields with new encoded values, and preserves all other fields byte-for-byte.</li>
+          <li>It re-encodes each modified sub-message with proper length-delimited framing and reassembles the complete response.</li>
+        </ol>
+        <p>
+          The encoding functions (<code>encode_varint</code>, <code>encode_tag</code>, <code>encode_length_delimited</code>, <code>encode_string_field</code>, <code>encode_timestamp</code>) are the inverse of the decoder and produce valid protobuf wire format.
+        </p>
+        <p><strong>mitmproxy usage:</strong></p>
+<pre><code># Auto-intercept and modify all sync responses
+mitmproxy -s flighty_mitm_modifier.py
+
+# Or use mitmdump for headless operation
+mitmdump -s flighty_mitm_modifier.py
+
+# Standalone: modify a captured file
+python3 flighty_mitm_modifier.py --input response.bin --output modified.bin</code></pre>
+        <p>
+          The modifier also copies modified response bytes to the macOS clipboard (<code>pbcopy</code>) for quick inspection. This was something I added in realtime because I got confused on something while debugging. It&rsquo;s not actually a necessary feature.
+        </p>
+
+        <h3>Step 6: Building the Web-Based Decoder UI (<code>flighty_decoder_web.py</code>)</h3>
+        <p>
+          To streamline the decode-inspect-modify cycle, I vibecoded a full web interface &mdash; a Python HTTP server with an embedded HTML/CSS/JS frontend that doubles as a mitmproxy addon. To be 100% honest, I didn&rsquo;t write or design any of this part. I just asked Claude Code to do the entire part for me.
+        </p>
+        <p><strong>Two modes of operation:</strong></p>
+        <ol>
+          <li><strong>Paste-to-decode:</strong> Open <code>http://localhost:5555</code>, paste hex or base64 protobuf data, select the message type, and get an instant decoded view with syntax highlighting.</li>
+          <li><strong>Live capture feed:</strong> When loaded as a mitmproxy addon, it auto-captures every protobuf request and response from <code>api.flightyapp.com</code> and displays them in a real-time scrolling feed with decoded JSON.</li>
+        </ol>
+        <p><strong>Architecture:</strong></p>
+        <ul>
+          <li>A <code>ThreadedHTTPServer</code> on port 5555 serves the UI and a REST API.</li>
+          <li><code>POST /api/decode</code> accepts <code>{data, format, type, output}</code> and returns decoded JSON or YAML-like output.</li>
+          <li><code>GET /api/feed</code> returns the last 50 captured protobuf messages.</li>
+          <li><code>POST /api/feed/clear</code> clears the capture buffer.</li>
+          <li>The mitmproxy addon class (<code>FlightyProtoCapture</code>) hooks <code>request()</code> and <code>response()</code> flows, filters for <code>api.flightyapp.com</code>, and feeds raw bytes into the capture store.</li>
+          <li>The frontend uses <code>JetBrains Mono</code> and <code>Inter</code> fonts, a dark theme with HSL-tuned colors, and custom syntax highlighting that color-codes keys, strings, numbers, enums, timestamps, and binary data.</li>
+        </ul>
+        <p><strong>Usage:</strong></p>
+<pre><code># Full stack: decode + modify + web UI
+mitmweb -s flighty_decoder_web.py -s flighty_mitm_modifier.py
+
+# Standalone decoder (no proxy)
+python3 flighty_decoder_web.py
+# Then open http://localhost:5555</code></pre>
+        <p>
+          The live feed auto-refreshes every 3 seconds and supports expanding/collapsing individual entries, copying decoded JSON, and copying raw hex.
+        </p>
+
+        <h3>Step 7: Verifying with Real Traffic</h3>
+        <p>With all tools operational, I confirmed the following from actual intercepted Flighty sync responses.</p>
+        <p><strong>Wire format structure (confirmed):</strong></p>
+<pre><code>SyncResponseProto {
+    field 1: SyncPagination { field 1: next_url (string) }
+    field 2: SyncResponseData {  (repeated)
+        field 11: RemoteSubscription {
+            field 1: id (string)
+            field 2: product_id (string)
+            field 3: purchase_date (Timestamp { field 1: seconds })
+            field 4: expiration_date (Timestamp { field 1: seconds })
+            field 5: autorenewing (bool)
+            field 7: status (enum: 0=ACTIVE, 1=LAPSED, 2=EXPIRED)
+            field 9: created (Timestamp)
+            field 10: updated (Timestamp)
+        }
+        field 14: RemoteUser {
+            field 1: user_id (string)
+            field 2: user_type (string: "ANONYMOUS" | "PRO" | "FREE")
+            field 3: auth_token (string: JWT)
+            field 4: created (Timestamp)
+            field 5: updated (Timestamp)
+            field 7: pro_user_type (string: "NOT_DETERMINED" | "BASELINE" | "WEEKLY" | ...)
+            field 8: feature_flags (repeated sub-messages)
+        }
+    }
+}</code></pre>
+        <p>
+          Note: the actual field numbers for <code>RemoteSubscription</code> differed slightly from what we initially estimated from binary ordering alone. For instance, <code>purchase_date</code> ended up on field 3 (not 5), <code>expiration_date</code> on field 4 (not 6), and <code>status</code> on field 7 (not 4). This is exactly why Step 7 (traffic verification) matters &mdash; binary analysis gives you the schema vocabulary, but traffic confirms the exact field numbering.
+        </p>
+        <p><strong>What the subscription data looked like decoded:</strong></p>
+<pre><code>remote_subscription:
+  id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  product_id: "com.flightyapp.flighty.weeklyPlan"
+  purchase_date:
+    _timestamp: "2026-04-30 12:34:56 UTC"
+    seconds: 1777700096
+  expiration_date:
+    _timestamp: "2026-05-07 12:34:56 UTC"
+    seconds: 1778304896
+  autorenewing: true
+  status: EXPIRED   # &lt;- the field we cared about</code></pre>
+      </section>
+
+      <section>
+        <h2>Summary of Artifacts Produced</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>flighty_reconstructed.proto</code></td>
+              <td>Full reconstructed <code>.proto</code> schema (362 lines) &mdash; message definitions, enums, field numbers, all from binary analysis</td>
+            </tr>
+            <tr>
+              <td><code>flighty_proto_decoder.py</code></td>
+              <td>CLI raw protobuf decoder with Flighty field mappings (559 lines) &mdash; decode any intercepted response to named fields</td>
+            </tr>
+            <tr>
+              <td><code>flighty_mitm_modifier.py</code></td>
+              <td>mitmproxy addon that rewrites subscription status, user type, and feature flags in transit (557 lines)</td>
+            </tr>
+            <tr>
+              <td><code>flighty_decoder_web.py</code></td>
+              <td>Web UI + mitmproxy addon for live capture and paste-to-decode (1265 lines) &mdash; full-stack decode/inspect tool</td>
+            </tr>
+            <tr>
+              <td><code>retail-sync-response.json</code></td>
+              <td>Reference capture of a decoded sync response for comparison</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Key Takeaways from the Flighty Case</h2>
+        <ol>
+          <li><strong>No <code>.proto</code> files required.</strong> We reconstructed the entire schema from the compiled binary alone, using string extraction, reflection metadata, and traffic verification.</li>
+          <li><strong>SwiftProtobuf leaves a rich metadata trail.</strong> The <code>_NameMap</code> structures, <code>_ProtoNameProviding</code> protocol conformances, <code>_StorageClass</code> patterns, and <code>AllCases</code> enum declarations all survive compilation and are recoverable with <code>strings</code>.</li>
+          <li><strong>Wire names &ne; Swift property names.</strong> The mapping <code>"BASELINE" &rarr; ProUserType.lifetime</code> is non-obvious and can only be found in the binary&rsquo;s NameMap data. This is both a real-world example of security-through-obscurity failing and a reminder to always check both sides of the mapping.</li>
+          <li><strong>The subscription state was entirely client-trusted.</strong> The sync response delivers <code>RemoteSubscription.status</code> and <code>RemoteUser.user_type</code> to the client, and the client renders the paywall based on these values. Modifying them in transit changes the app&rsquo;s behavior immediately.</li>
+          <li><strong>The total effort from &ldquo;binary blob&rdquo; to &ldquo;working exploit&rdquo; was iterative but mechanical.</strong> Each step is very natural, going from confirm format &rarr; extract metadata &rarr; build decoder &rarr; build modifier &rarr; verify. Is it tedious? Yes. But it is important that we do not just stop researching at &ldquo;the response is in binary -_-&rdquo;.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>What I Redacted</h2>
+        <div class="safe-note">Public-safe version</div>
+        <ul style="margin-top:14px;">
+          <li>Real account identifiers, auth tokens, JWT contents, and any user-identifying fields from captured traffic.</li>
+          <li>Specific bypass payloads or exact replay sequences that would turn this post into a copy-paste exploit kit.</li>
+          <li>Any details that would help unpaid users abuse the live service today.</li>
+        </ul>
+      </section>
+
+      <a class="back-link" href="blog.html">Back to Blog</a>
+    </article>
+
+    <footer>dripped archive / selective disclosure / 2026</footer>
+  </main>
+</body>
+</html>
