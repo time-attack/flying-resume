@@ -552,12 +552,22 @@ hr.rule {
   letter-spacing: 0.02em;
   box-shadow: 0 12px 22px -10px rgba(180, 80, 30, 0.55);
   position: relative;
+  overflow: hidden;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: relative;
+  z-index: 1;
 }
 .avatar::after {
   content: "";
   position: absolute; inset: -4px;
   border-radius: 50%;
   border: 1px dashed var(--paper-line);
+  pointer-events: none;
 }
 .id__main { min-width: 0; }
 .id__name {
@@ -1105,7 +1115,7 @@ hr.rule {
 
   <!-- Identity -->
   <section class="identity" aria-label="Identity">
-    <div class="avatar">SM</div>
+    <div class="avatar"><img src="../assets/headshot.png" alt="Sina Matian" onerror="this.replaceWith(document.createTextNode('SM'));"></div>
     <div class="id__main">
       <div class="id__name">Sina Matian <span class="id__check" title="Verified">✓</span></div>
       <div class="id__head">Cybersecurity &amp; AI Researcher · 10+ Approved Bug Bounties</div>
@@ -1183,7 +1193,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=smc.edu&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
+        <div class="row__mono has-logo"><img src="../assets/logos/smc.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Santa Monica College</div>
           <div class="row__role">
@@ -1199,7 +1209,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=piercecollege.edu&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('L'));"></div>
+        <div class="row__mono has-logo"><img src="../assets/logos/piercecollege.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('L'));"></div>
         <div class="row__main">
           <div class="row__title">Los Angeles Pierce College</div>
           <div class="row__role">
@@ -1215,7 +1225,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=calabasashigh.org&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('C'));"></div>
+        <div class="row__mono has-logo"><img src="../assets/logos/calabasas-hs.jpg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('C'));"></div>
         <div class="row__main">
           <div class="row__title">Calabasas High School</div>
           <div class="row__role">
@@ -1245,7 +1255,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row is-headline">
-        <div class="row__mono">T</div>
+        <div class="row__mono has-logo"><img src="../assets/logos/tefillin-timer.jpg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('T'));"></div>
         <div class="row__main">
           <div class="row__title">Tefillin Timer</div>
           <div class="row__role">
@@ -1263,7 +1273,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=seniorsupportai.org&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
+        <div class="row__mono">S</div>
         <div class="row__main">
           <div class="row__title">Senior Support AI · org</div>
           <div class="row__role">
@@ -1297,7 +1307,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=webutation.net&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
+        <div class="row__mono has-logo"><img src="../assets/logos/webutation.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
         <div class="row__main">
           <div class="row__title">Webutation, Inc</div>
           <div class="row__role">
@@ -1361,7 +1371,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=vibecode.com&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('V'));"></div>
+        <div class="row__mono has-logo"><img src="../assets/logos/vibecode.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('V'));"></div>
         <div class="row__main">
           <div class="row__title">Vibecode</div>
           <div class="row__role">
@@ -1409,7 +1419,7 @@ hr.rule {
         </div>
       </div>
       <div class="row">
-        <div class="row__mono has-logo"><img src="https://www.google.com/s2/favicons?domain=sloansicecream.com&sz=128" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
+        <div class="row__mono has-logo"><img src="../assets/logos/sloansicecream.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
         <div class="row__main">
           <div class="row__title">Sloan&rsquo;s Ice Cream LLC</div>
           <div class="row__role">
