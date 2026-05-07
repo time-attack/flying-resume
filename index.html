@@ -3432,14 +3432,14 @@ body.board-view .v3-resume { display: block !important; }
   <div id="loader"><div class="ring"></div></div>
 
   <nav class="site-nav" aria-label="Site">
-    <a href="#resume" id="jumpToResume">Resume</a>
+    <a href="preview/resume.html" id="jumpToResume">Resume</a>
     <a href="blog.html">Blog</a>
   </nav>
 
   <header class="header">
-    <div class="mark">SINA MATIAN · PORTFOLIO · KLAX → SMI</div>
-    <h1>Sina<br><span class="italic">Matian</span></h1>
-    <p class="sub">Departing LAX · <span>Click the plane to fly</span></p>
+    <div class="mark">KLAX · 33.9416°N 118.4085°W</div>
+    <h1>Los Angeles<br>International<br><span class="italic">Airport</span></h1>
+    <p class="sub">3D Airport Diagram · <span>Interactive Model</span></p>
   </header>
 
   <aside class="legend">
@@ -9163,16 +9163,6 @@ document.getElementById('board').addEventListener('click', e => {
   if (panel.contains(e.target)) return;
   if (e.target.closest('.board-row')) return; // row click is handled separately, not a "close" click
   closeDetail();
-});
-
-// "Resume" button in the top nav — jumps straight to the board view, bypassing
-// the airplane click + takeoff sequence. Useful for visitors who just want
-// the resume without playing the intro.
-document.getElementById('jumpToResume').addEventListener('click', (e) => {
-  e.preventDefault();
-  if (portfolioMode === 'board') return;
-  if (povActive && typeof exitPov === 'function') exitPov();
-  triggerBoardReveal();
 });
 
 document.getElementById('boardBack').addEventListener('click', () => {
