@@ -4,200 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Blog · Sina Matian</title>
+<meta name="description" content="Bug bounty write-ups, reverse engineering walkthroughs, and security postmortems. Public versions only — sensitive details redacted.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&amp;family=Syne:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:#f7f1e3;
-    --paper:#fffaf0;
-    --ink:#1c1916;
-    --muted:#5b534d;
-    --line:#ddd2bf;
-    --accent:#c76421;
-    --accent-soft:#f1e1ca;
-  }
-
-  *, *::before, *::after { box-sizing:border-box; }
-
-  body {
-    margin:0;
-    background:linear-gradient(180deg, #f5efe1 0%, #f7f1e3 100%);
-    color:var(--ink);
-    font-family:'Newsreader', Georgia, serif;
-    -webkit-font-smoothing:antialiased;
-  }
-
-  a { color:inherit; }
-
-  .shell {
-    width:min(860px, calc(100vw - 32px));
-    margin:0 auto;
-    padding:28px 0 72px;
-  }
-
-  .topbar {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    margin-bottom:56px;
-    padding-bottom:16px;
-    border-bottom:1px solid var(--line);
-  }
-
-  .brand {
-    font-family:'Syne', sans-serif;
-    font-size:13px;
-    font-weight:800;
-    letter-spacing:.28em;
-    text-decoration:none;
-    text-transform:uppercase;
-  }
-
-  .topbar nav {
-    display:flex;
-    flex-wrap:wrap;
-    gap:14px;
-  }
-
-  .topbar nav a {
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:var(--muted);
-    text-decoration:none;
-    text-transform:uppercase;
-    letter-spacing:.16em;
-  }
-
-  .hero {
-    margin-bottom:44px;
-  }
-
-  .eyebrow {
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:var(--accent);
-    letter-spacing:.18em;
-    text-transform:uppercase;
-  }
-
-  h1 {
-    margin:12px 0 14px;
-    font-family:'Syne', sans-serif;
-    font-size:clamp(2.7rem, 9vw, 4.9rem);
-    line-height:.94;
-    letter-spacing:-.04em;
-  }
-
-  .hero p {
-    max-width:42rem;
-    margin:0;
-    color:var(--muted);
-    font-size:1.14rem;
-    line-height:1.75;
-  }
-
-  .note {
-    margin-top:18px;
-    display:inline-block;
-    padding:10px 12px;
-    background:var(--accent-soft);
-    border-left:3px solid var(--accent);
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:#6a3a16;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-  }
-
-  .section-title {
-    margin:0 0 18px;
-    font-family:'Syne', sans-serif;
-    font-size:1.15rem;
-    letter-spacing:.02em;
-  }
-
-  .story-list {
-    display:grid;
-    gap:18px;
-  }
-
-  .story-card {
-    display:block;
-    padding:24px;
-    background:var(--paper);
-    border:1px solid var(--line);
-    text-decoration:none;
-    transition:border-color .2s ease, transform .2s ease, box-shadow .2s ease;
-  }
-
-  .story-card:hover,
-  .story-card:focus-visible {
-    transform:translateY(-2px);
-    border-color:#c7af90;
-    box-shadow:0 16px 30px rgba(56,41,25,.08);
-    outline:none;
-  }
-
-  .story-meta {
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-bottom:12px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    color:var(--muted);
-    letter-spacing:.14em;
-    text-transform:uppercase;
-  }
-
-  .story-card h2 {
-    margin:0 0 10px;
-    font-family:'Syne', sans-serif;
-    font-size:1.8rem;
-    line-height:1.05;
-    letter-spacing:-.03em;
-  }
-
-  .story-card p {
-    margin:0;
-    color:var(--muted);
-    font-size:1.04rem;
-    line-height:1.72;
-  }
-
-  .story-arrow {
-    margin-top:18px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:var(--accent);
-    letter-spacing:.16em;
-    text-transform:uppercase;
-  }
-
-  footer {
-    margin-top:56px;
-    padding-top:16px;
-    border-top:1px solid var(--line);
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    color:var(--muted);
-    letter-spacing:.16em;
-    text-transform:uppercase;
-  }
-
-  @media (max-width: 640px) {
-    .shell { width:min(100vw - 24px, 860px); }
-    .topbar {
-      flex-direction:column;
-      align-items:flex-start;
-      margin-bottom:40px;
-    }
-    .story-card { padding:20px; }
-    .story-card h2 { font-size:1.45rem; }
-  }
-</style>
+<link rel="stylesheet" href="assets/blog.css">
 </head>
 <body>
   <main class="shell">
@@ -208,42 +19,55 @@
       </nav>
     </div>
 
-    <section class="hero">
-      <div class="eyebrow">Bug Bounty Write-ups</div>
-      <h1>Blog</h1>
+    <section class="index-hero" aria-labelledby="hero-title">
+      <div class="terminal-line"><span>Case Files / Public Index</span></div>
+      <h1 id="hero-title">Field Notes from the Paywall</h1>
       <p>
-        A simple archive of write-ups, report breakdowns, and postmortems. Each story now lives on its own page so the index stays clean and the reading experience stays focused.
+        Bug bounty write-ups, reverse engineering walkthroughs, and security postmortems. Each story is a self-contained read on a specific trust boundary that quietly failed.
       </p>
-      <div class="note">Public versions only. Sensitive details are redacted.</div>
+      <div class="disclosure-bar" aria-label="Disclosure status">
+        <span class="disclosure-chip">Public versions only</span>
+        <span class="disclosure-chip disclosure-chip--accent">Selective disclosure</span>
+        <span class="disclosure-chip disclosure-chip--warn">Sensitive details redacted</span>
+      </div>
     </section>
 
     <section aria-labelledby="stories-title">
-      <h2 class="section-title" id="stories-title">Stories</h2>
+      <h2 class="section-title" id="stories-title"><span>Stories</span></h2>
       <div class="story-list">
+
         <a class="story-card" href="blog-flighty-protobuf-paywall.html">
-          <div class="story-meta">
-            <span>May 7, 2026</span>
-            <span>Reverse Engineering</span>
-            <span>iOS / Protobuf</span>
+          <div class="story-card__num">02</div>
+          <div class="story-card__body">
+            <div class="story-card__meta">
+              <span>May 7, 2026</span>
+              <span class="tag-info">iOS · Protobuf</span>
+              <span class="tag-accent">Reverse Engineering</span>
+            </div>
+            <h2>Trying to Secure Your App Paywalls? Don&rsquo;t Do What Flighty Did</h2>
+            <p>
+              Why &ldquo;the response looks encrypted&rdquo; almost never means the app is secure &mdash; and a step-by-step walkthrough of reconstructing Flighty&rsquo;s protobuf schema from a Mach-O binary and rewriting subscription state in transit.
+            </p>
+            <div class="story-card__arrow">Read case file</div>
           </div>
-          <h2>Trying to Secure Your App Paywalls? Don&rsquo;t Do What Flighty Did</h2>
-          <p>
-            Why &ldquo;the response looks encrypted&rdquo; almost never means the app is secure &mdash; and a step-by-step walkthrough of reconstructing Flighty&rsquo;s protobuf schema from a Mach-O binary and rewriting subscription state in transit.
-          </p>
-          <div class="story-arrow">Read Article</div>
         </a>
+
         <a class="story-card" href="blog-hinge-paywall-bypass.html">
-          <div class="story-meta">
-            <span>Dec 1, 2025</span>
-            <span>Business Logic</span>
-            <span>Informative</span>
+          <div class="story-card__num">01</div>
+          <div class="story-card__body">
+            <div class="story-card__meta">
+              <span>Dec 1, 2025</span>
+              <span class="tag-warn">Business Logic</span>
+              <span class="tag-safe">Closed · Informative</span>
+            </div>
+            <h2>Authorization Bypass Let Free Users Reach Premium Hinge Features Through the API</h2>
+            <p>
+              A redacted write-up about a subscription boundary that existed in the interface, but not where it mattered most: backend authorization.
+            </p>
+            <div class="story-card__arrow">Read case file</div>
           </div>
-          <h2>Authorization Bypass Let Free Users Reach Premium Hinge Features Through the API</h2>
-          <p>
-            A redacted write-up about a subscription boundary that existed in the interface, but not where it mattered most: backend authorization.
-          </p>
-          <div class="story-arrow">Read Article</div>
         </a>
+
       </div>
     </section>
 

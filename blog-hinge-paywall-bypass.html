@@ -4,258 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hinge Paywall Bypass · Sina Matian</title>
+<meta name="description" content="A redacted write-up about a Hinge subscription boundary that existed in the interface, but not where it mattered most: backend authorization.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&amp;family=Syne:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:#f7f1e3;
-    --paper:#fffaf0;
-    --ink:#1c1916;
-    --muted:#5b534d;
-    --line:#ddd2bf;
-    --accent:#c76421;
-    --accent-soft:#f1e1ca;
-    --safe:#306b45;
-    --safe-soft:#e6f1e9;
-  }
-
-  *, *::before, *::after { box-sizing:border-box; }
-
-  html { scroll-behavior:smooth; }
-
-  body {
-    margin:0;
-    background:linear-gradient(180deg, #f5efe1 0%, #f7f1e3 100%);
-    color:var(--ink);
-    font-family:'Newsreader', Georgia, serif;
-    -webkit-font-smoothing:antialiased;
-  }
-
-  a { color:inherit; }
-
-  .shell {
-    width:min(780px, calc(100vw - 32px));
-    margin:0 auto;
-    padding:28px 0 72px;
-  }
-
-  .topbar {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    margin-bottom:48px;
-    padding-bottom:16px;
-    border-bottom:1px solid var(--line);
-  }
-
-  .brand {
-    font-family:'Syne', sans-serif;
-    font-size:13px;
-    font-weight:800;
-    letter-spacing:.28em;
-    text-decoration:none;
-    text-transform:uppercase;
-  }
-
-  .topbar nav {
-    display:flex;
-    flex-wrap:wrap;
-    gap:14px;
-  }
-
-  .topbar nav a {
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:var(--muted);
-    text-decoration:none;
-    text-transform:uppercase;
-    letter-spacing:.16em;
-  }
-
-  .eyebrow,
-  .meta-row,
-  .status,
-  .safe-note {
-    font-family:'JetBrains Mono', monospace;
-  }
-
-  .eyebrow {
-    font-size:11px;
-    color:var(--accent);
-    letter-spacing:.18em;
-    text-transform:uppercase;
-  }
-
-  header h1 {
-    margin:12px 0 18px;
-    font-family:'Syne', sans-serif;
-    font-size:clamp(2.4rem, 7vw, 4rem);
-    line-height:.98;
-    letter-spacing:-.04em;
-  }
-
-  .lede {
-    margin:0;
-    color:var(--ink);
-    font-size:1.28rem;
-    line-height:1.72;
-  }
-
-  .meta-row {
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-top:20px;
-    margin-bottom:36px;
-  }
-
-  .meta-row span {
-    padding:8px 10px;
-    background:var(--paper);
-    border:1px solid var(--line);
-    font-size:10px;
-    color:var(--muted);
-    letter-spacing:.14em;
-    text-transform:uppercase;
-  }
-
-  article {
-    background:var(--paper);
-    border:1px solid var(--line);
-    padding:30px 28px 36px;
-  }
-
-  section + section {
-    margin-top:30px;
-    padding-top:30px;
-    border-top:1px solid var(--line);
-  }
-
-  h2 {
-    margin:0 0 12px;
-    font-family:'Syne', sans-serif;
-    font-size:1.35rem;
-    letter-spacing:-.02em;
-  }
-
-  p {
-    margin:0 0 14px;
-    font-size:1.12rem;
-    line-height:1.82;
-  }
-
-  p:last-child { margin-bottom:0; }
-
-  .summary-box {
-    padding:18px 18px 18px 20px;
-    background:var(--accent-soft);
-    border-left:3px solid var(--accent);
-  }
-
-  ul {
-    margin:0;
-    padding-left:22px;
-  }
-
-  li {
-    margin:0 0 12px;
-    font-size:1.08rem;
-    line-height:1.75;
-  }
-
-  li:last-child { margin-bottom:0; }
-
-  .timeline {
-    display:grid;
-    gap:18px;
-  }
-
-  .timeline-item {
-    padding-bottom:18px;
-    border-bottom:1px solid var(--line);
-  }
-
-  .timeline-item:last-child {
-    padding-bottom:0;
-    border-bottom:none;
-  }
-
-  .timeline-date {
-    margin-bottom:8px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:var(--muted);
-    letter-spacing:.14em;
-    text-transform:uppercase;
-  }
-
-  .timeline-item strong {
-    display:block;
-    margin-bottom:8px;
-    font-family:'Syne', sans-serif;
-    font-size:1.12rem;
-  }
-
-  .status,
-  .safe-note {
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:9px 11px;
-    font-size:10px;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    border:1px solid var(--line);
-  }
-
-  .status {
-    background:#f7e6db;
-    color:#7a3813;
-    border-color:#dfbfaa;
-  }
-
-  .safe-note {
-    background:var(--safe-soft);
-    color:var(--safe);
-    border-color:#bed5c7;
-  }
-
-  .back-link {
-    display:inline-block;
-    margin-top:28px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:var(--accent);
-    letter-spacing:.16em;
-    text-decoration:none;
-    text-transform:uppercase;
-  }
-
-  footer {
-    margin-top:24px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    color:var(--muted);
-    letter-spacing:.16em;
-    text-transform:uppercase;
-  }
-
-  @media (max-width: 640px) {
-    .shell { width:min(100vw - 24px, 780px); }
-    .topbar {
-      flex-direction:column;
-      align-items:flex-start;
-      margin-bottom:36px;
-    }
-    article { padding:22px 20px 28px; }
-    .lede { font-size:1.14rem; }
-    p, li { font-size:1.03rem; }
-  }
-</style>
+<link rel="stylesheet" href="assets/blog.css">
 </head>
 <body>
+  <div class="progress" id="progress"></div>
   <main class="shell">
     <div class="topbar">
       <a class="brand" href="index.html">dripped</a>
@@ -265,88 +21,90 @@
       </nav>
     </div>
 
-    <header>
-      <div class="eyebrow">Story 01 / Bug Bounty Write-up</div>
+    <header class="article-header">
+      <div class="case-eyebrow">Case File 01 · Bug Bounty Write-up</div>
       <h1>Authorization Bypass Let Free Users Reach Premium Hinge Features Through the API</h1>
       <p class="lede">
-        This write-up covers a moment where loneliness, an empty wallet, and a security mindset collided. Hinge showed me profiles that were clearly positioned as premium-only, and that raised a simple question: was the paywall actually enforced on the backend, or was it mostly a design decision in the app?
+        A moment where loneliness, an empty wallet, and a security mindset collided. Hinge showed me profiles that were clearly positioned as premium-only, and that raised a simple question: was the paywall actually enforced on the backend, or was it mostly a design decision in the app?
       </p>
       <div class="meta-row" aria-label="Article metadata">
         <span>Reported Dec 1, 2025</span>
-        <span>Closed Informative</span>
-        <span>Business Logic</span>
-        <span>Redacted Public Version</span>
+        <span class="tag-safe">Closed · Informative</span>
+        <span class="tag-warn">Business Logic</span>
+        <span>Redacted public version</span>
       </div>
     </header>
 
     <article>
-      <section>
-        <h2>Hacker Summary</h2>
-        <div class="summary-box">
+
+      <section id="tldr">
+        <h2 data-num="§00">TL;DR</h2>
+        <div class="callout callout--insight">
+          <div class="callout__label">Hacker Summary</div>
           <p>
-            The core issue was a backend authorization gap. Some profiles were visually locked behind a premium upsell, but the server did not appear to re-check entitlement strongly enough before accepting follow-up actions tied to those profiles. That made the paid restriction feel more like a UI rule than an actual access-control boundary.
+            The core issue was a backend authorization gap. Some profiles were visually locked behind a premium upsell, but the server did not appear to re-check entitlement strongly enough before accepting follow-up actions tied to those profiles. The paid restriction felt more like a UI rule than an actual access-control boundary.
           </p>
         </div>
       </section>
 
-      <section>
-        <h2>How I Ended Up Looking At It</h2>
-        <p>
+      <section id="how">
+        <h2 data-num="§01">How I Ended Up Looking At It</h2>
+        <p class="dropcap">
           I downloaded Hinge at a point where I was both lonely and broke, which is not a great combination when you also happen to be extremely picky. I started using the app like most people do: liking profiles that matched what I found attractive, and passing on the ones that did not.
         </p>
         <p>
           What most users do not really think about is that every one of those decisions is training data. You are teaching the recommendation system what you respond to, what you ignore, and what kind of profile will probably make you stop scrolling. After enough of that, the app starts to build a sharper model of your taste than it had on day one.
         </p>
         <p>
-          That is why the Standouts feature caught my attention. From a product perspective, it makes sense: if the system thinks certain profiles are unusually strong matches for you, those are exactly the profiles it wants to monetize. Instead of a normal like, you are nudged toward a paid interaction through roses. The whole flow is designed to say, “These are too good for the free tier.”
+          That is why the Standouts feature caught my attention. From a product perspective, it makes sense: if the system thinks certain profiles are unusually strong matches for you, those are exactly the profiles it wants to monetize. Instead of a normal like, you are nudged toward a paid interaction through roses. The whole flow is designed to say, &ldquo;these are too good for the free tier.&rdquo;
         </p>
       </section>
 
-      <section>
-        <h2>What Made Me Curious</h2>
+      <section id="curious">
+        <h2 data-num="§02">What Made Me Curious</h2>
         <p>
           The thing that bothered me was architectural, not emotional. A regular profile and a standout profile are still just profiles in the backend system. The difference is supposed to be in what your account is allowed to do with them. So once I saw a profile in Standouts that I liked, but could not pay to interact with, the obvious question became: where is that rule actually enforced?
         </p>
-        <p>
-          If the answer is “only in the interface,” then the premium boundary is weak. If the answer is “on the server, every time,” then the system should reject anything outside your entitlement no matter what the client tries to do.
-        </p>
+        <div class="pull-quote">
+          If the answer is &ldquo;only in the interface,&rdquo; then the premium boundary is weak. If the answer is &ldquo;on the server, every time,&rdquo; then the system should reject anything outside your entitlement no matter what the client tries to do.
+        </div>
       </section>
 
-      <section>
-        <h2>What Actually Happened</h2>
+      <section id="actually">
+        <h2 data-num="§03">What Actually Happened</h2>
         <p>
           I compared the normal free interaction flow with the premium-facing one and found that the app was still receiving enough information about gated profiles for them to be represented on the client side. In other words, the app already knew those profiles existed and had enough context to render them as special, paid-only entries.
         </p>
         <p>
-          That by itself is not always a bug. Sometimes clients receive extra data and still cannot do anything dangerous with it. The real issue came next: the action flow for a normal free like appeared to trust the profile reference more than it trusted the user’s subscription state. Once a gated profile had been represented on the client, the backend did not seem to draw a hard enough line between “this is a valid profile” and “this account is allowed to act on this profile.”
+          That by itself is not always a bug. Sometimes clients receive extra data and still cannot do anything dangerous with it. The real issue came next: the action flow for a normal free like appeared to trust the profile reference more than it trusted the user&rsquo;s subscription state. Once a gated profile had been represented on the client, the backend did not seem to draw a hard enough line between &ldquo;this is a valid profile&rdquo; and &ldquo;this account is allowed to act on this profile.&rdquo;
         </p>
         <p>
-          So the issue was not that I discovered some secret profile database or broke into hidden infrastructure. It was simpler than that, and in a way more common: the app presented a premium restriction in the user experience, but the backend appeared willing to process a standard interaction against a premium-target profile anyway. That is why the whole thing felt less like “cracking” something and more like watching a product boundary dissolve once you looked beneath the UI.
+          So the issue was not that I discovered some secret profile database or broke into hidden infrastructure. It was simpler than that, and in a way more common: the app presented a premium restriction in the user experience, but the backend appeared willing to process a standard interaction against a premium-target profile anyway. That is why the whole thing felt less like &ldquo;cracking&rdquo; something and more like watching a product boundary dissolve once you looked beneath the UI.
         </p>
       </section>
 
-      <section>
-        <h2>Why Standouts Was The Tell</h2>
+      <section id="standouts">
+        <h2 data-num="§04">Why Standouts Was The Tell</h2>
         <p>
-          Standouts was the perfect place to notice the flaw because it is built around scarcity. The app is effectively saying, “We know you are going to want these people more, so this path costs extra.” That means the value of the feature depends entirely on the backend being able to separate ordinary interactions from premium ones.
+          Standouts was the perfect place to notice the flaw because it is built around scarcity. The app is effectively saying, &ldquo;we know you are going to want these people more, so this path costs extra.&rdquo; That means the value of the feature depends entirely on the backend being able to separate ordinary interactions from premium ones.
         </p>
         <p>
-          If that separation only exists as a button choice in the interface, then the monetization model is fragile. The moment the client can still identify those premium profiles and the server still accepts an ordinary interaction pattern against them, the distinction between “free” and “paid” stops being meaningful.
+          If that separation only exists as a button choice in the interface, then the monetization model is fragile. The moment the client can still identify those premium profiles and the server still accepts an ordinary interaction pattern against them, the distinction between &ldquo;free&rdquo; and &ldquo;paid&rdquo; stops being meaningful.
         </p>
       </section>
 
-      <section>
-        <h2>The Rundown</h2>
+      <section id="rundown">
+        <h2 data-num="§05">The Rundown</h2>
         <p>
           At a high level, the flow looked like this: Hinge used my swiping history to get better at predicting what I would like, surfaced unusually strong matches in a premium lane, and then relied on the app to steer me into a paid action. But the account boundary behind that lane did not appear to be enforced strongly enough once the client had the relevant profile context.
         </p>
         <p>
-          That meant the core mistake was not “the app showed me attractive people.” The mistake was that the app and backend did not agree on what my free account was actually allowed to do with those profiles after they had already been selected and delivered into the client experience.
+          That meant the core mistake was not &ldquo;the app showed me attractive people.&rdquo; The mistake was that the app and backend did not agree on what my free account was actually allowed to do with those profiles after they had already been selected and delivered into the client experience.
         </p>
       </section>
 
-      <section>
-        <h2>Impact</h2>
+      <section id="impact">
+        <h2 data-num="§06">Impact</h2>
         <ul>
           <li>Premium-only interactions could be reached by unpaid users if entitlement checks were not enforced at the server layer.</li>
           <li>Profile details that looked intentionally hidden in the app could still leak through backend behavior earlier than users expected.</li>
@@ -354,59 +112,58 @@
         </ul>
       </section>
 
-      <section>
-        <h2>Timeline</h2>
+      <section id="timeline">
+        <h2 data-num="§07">Timeline</h2>
         <div class="timeline">
           <div class="timeline-item">
-            <div class="timeline-date">December 1, 2025 / 11:58 PM UTC</div>
+            <div class="timeline-date">Dec 1, 2025 · 11:58 PM UTC</div>
             <strong>Report submitted</strong>
-            <p>
-              The report described the mismatch between the premium interface and the backend checks, supported by screenshots and traffic captures.
-            </p>
+            <p>The report described the mismatch between the premium interface and the backend checks, supported by screenshots and traffic captures.</p>
           </div>
           <div class="timeline-item">
-            <div class="timeline-date">December 2, 2025 / shortly after submission</div>
+            <div class="timeline-date">Dec 2, 2025 · shortly after</div>
             <strong>Follow-up comment added</strong>
-            <p>
-              A short follow-up noted that the previously restricted interaction appeared to work in practice, which reinforced that the issue was not just hypothetical.
-            </p>
+            <p>A short follow-up noted that the previously restricted interaction appeared to work in practice, which reinforced that the issue was not just hypothetical.</p>
           </div>
           <div class="timeline-item">
-            <div class="timeline-date">December 2, 2025 / 11:56 AM UTC</div>
+            <div class="timeline-date">Dec 2, 2025 · 11:56 AM UTC</div>
             <strong>Report closed as informative</strong>
-            <p>
-              The triage response classified the behavior as paywall circumvention and business-rule enforcement failure rather than a traditional security bug with deeper system compromise.
-            </p>
+            <p>The triage response classified the behavior as paywall circumvention and business-rule enforcement failure rather than a traditional security bug with deeper system compromise.</p>
           </div>
         </div>
       </section>
 
-      <section>
-        <h2>Program Response</h2>
-        <div class="status">Status / Informative</div>
+      <section id="response">
+        <h2 data-num="§08">Program Response</h2>
+        <div class="status">Status · Informative</div>
         <p style="margin-top:14px;">
           The closure rationale was basically that the report showed a product-logic weakness rather than a classic security break. That line comes up often in bounty programs: if an issue harms pricing, privacy expectations, or platform trust without crossing into infrastructure compromise, some teams still push it into the business-logic bucket.
         </p>
       </section>
 
-      <section>
-        <h2>My Take</h2>
+      <section id="take">
+        <h2 data-num="§09">My Take</h2>
         <p>
           What I like about this case is that it shows how easy it is for teams to confuse product theater with access control. A blurred profile, a premium badge, and a rose purchase flow all feel like hard restrictions to a normal user. But if the server still hands the client the necessary context and still accepts the downstream action, that protection is mostly cosmetic.
         </p>
-        <p>
-          That is why entitlement checks have to live on the server for anything tied to paid access, exposure of user profiles, or messaging rights. Otherwise the product is not enforcing a boundary. It is just hoping the client behaves.
-        </p>
+        <div class="callout callout--method">
+          <div class="callout__label">Lesson</div>
+          <p>
+            Entitlement checks have to live on the server for anything tied to paid access, exposure of user profiles, or messaging rights. Otherwise the product is not enforcing a boundary &mdash; it is just hoping the client behaves.
+          </p>
+        </div>
       </section>
 
-      <section>
-        <h2>What I Redacted</h2>
-        <div class="safe-note">Public-safe version</div>
-        <ul style="margin-top:14px;">
-          <li>All real names, profile details, screenshots, and attachment references that could identify users.</li>
-          <li>Exact IDs, raw request data, hostnames, endpoint paths, and replayable parameters.</li>
-          <li>Specific action sequences, traffic inspection details, and reproduction steps that would turn this into a guide for bypassing a live product.</li>
-        </ul>
+      <section id="redacted">
+        <h2 data-num="§10">What I Redacted</h2>
+        <div class="callout callout--safe">
+          <div class="callout__label">Public-Safe Version</div>
+          <ul>
+            <li>All real names, profile details, screenshots, and attachment references that could identify users.</li>
+            <li>Exact IDs, raw request data, hostnames, endpoint paths, and replayable parameters.</li>
+            <li>Specific action sequences, traffic inspection details, and reproduction steps that would turn this into a guide for bypassing a live product.</li>
+          </ul>
+        </div>
       </section>
 
       <a class="back-link" href="blog.html">Back to Blog</a>
@@ -414,5 +171,19 @@
 
     <footer>dripped archive / selective disclosure / 2026</footer>
   </main>
+
+  <script>
+    (function(){
+      var bar = document.getElementById('progress');
+      function update(){
+        var d = document.documentElement;
+        var max = d.scrollHeight - d.clientHeight;
+        var pct = max > 0 ? (d.scrollTop / max) * 100 : 0;
+        bar.style.width = pct + '%';
+      }
+      document.addEventListener('scroll', update, { passive:true });
+      update();
+    })();
+  </script>
 </body>
 </html>
