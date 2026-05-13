@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Independent security research mark</title>
+  <desc id="desc">Shield, terminal cursor, and signal grid mark for independent security research.</desc>
+  <rect width="64" height="64" rx="14" fill="#151a20"/>
+  <path d="M32 9 50 16v13c0 12.7-7.4 21.3-18 26-10.6-4.7-18-13.3-18-26V16l18-7Z" fill="#202936" stroke="#f2ead6" stroke-width="2.6"/>
+  <path d="M23 25l-5 5 5 5" fill="none" stroke="#f5a24a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M41 25l5 5-5 5" fill="none" stroke="#f5a24a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M29 40h11" stroke="#65d6c7" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="32" cy="30" r="5.5" fill="none" stroke="#65d6c7" stroke-width="2"/>
+  <path d="M32 20v4.5M32 35.5V40M22 30h4.5M37.5 30H42" stroke="#65d6c7" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M18 17.5 32 12l14 5.5" fill="none" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1"/>
+</svg>

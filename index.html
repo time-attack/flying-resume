@@ -448,6 +448,20 @@
     pointer-events:none;
     transform:translateX(-50%) translateY(-8px);
   }
+  body.landing-3d .site-nav,
+  body.landing-3d .header,
+  body.landing-3d .legend,
+  body.landing-3d .presets,
+  body.landing-3d .controls,
+  body.landing-3d .compass,
+  body.landing-3d .credit,
+  body.landing-3d .pov-plate,
+  body.landing-3d #exitPovBtn,
+  body.landing-3d #tutorial {
+    display:none !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+  }
   body.tutorial-active .pov-plate { opacity:0; transition:opacity .3s; }
 
   /* ——— TUTORIAL ——— */
@@ -2674,6 +2688,7 @@ body.board-view .v3-resume { display: block !important; }
   transition: background .18s, transform .18s;
 }
 .board-exit:hover { background: #d8542a; transform: translateX(-50%) translateY(-1px); }
+body.board-view .board-exit { display: none; }
 
 .v3-resume .v3-page {
   position: relative;
@@ -6403,18 +6418,8 @@ async function captureResumeToFloor() {
     _resumeTex.needsUpdate = true;
   }
 }
-window.PORTFOLIO_CAPTURE_RESUME = captureResumeToFloor;
-// Trigger capture asynchronously after page load — bounded by a timeout so
-// it can't hang the page. If it fails or takes too long, the canvas-drawn
-// fallback texture stays in place.
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    Promise.race([
-      captureResumeToFloor(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000)),
-    ]).catch(e => console.warn('html2canvas capture skipped:', e.message));
-  }, 800);
-});
+// Deprecated: the landing floor is now captured from preview/resume.html's
+// iframe below, so this older #board capture path is intentionally unscheduled.
 
 // === RESUME-AS-FLOOR · the LITERAL #board DOM element lying flat in 3D ===
 // No texture, no copy, no procedural fallback. CSS3DRenderer projects the
@@ -6448,6 +6453,15 @@ _resumeTex2.anisotropy = 8;
 _resumeTex2.minFilter  = THREE.LinearFilter;
 _resumeTex2.magFilter  = THREE.LinearFilter;
 
+const _resumeFloorBasis = new THREE.Matrix4().makeBasis(
+  new THREE.Vector3(0, 0, 1), // local/CSS X -> world Z
+  new THREE.Vector3(1, 0, 0), // local/CSS Y -> world X
+  new THREE.Vector3(0, 1, 0), // page normal -> world up
+);
+function orientResumeFloor(mesh) {
+  mesh.setRotationFromMatrix(_resumeFloorBasis);
+}
+
 const destGround = new THREE.Mesh(
   new THREE.PlaneGeometry(RESUME_FLOOR_W, RESUME_FLOOR_W * 3),
   new THREE.MeshBasicMaterial({
@@ -6456,11 +6470,9 @@ const destGround = new THREE.Mesh(
     fog: false,
   }),
 );
-// Lay flat — same orientation as the original destGround so the existing
-// landing camera math keeps working. CSS-top → world +X, CSS-right →
-// world +Z, normal → world +Y.
-destGround.rotation.x = -Math.PI / 2;
-destGround.rotation.z = -Math.PI / 2;
+// Lay flat. CSS vertical (down the resume runway) maps to world +X, CSS
+// horizontal maps to world +Z, and the page normal points up (+Y).
+orientResumeFloor(destGround);
 destGround.position.set(RUNWAY_X0 + RUNWAY_LEN / 2, 0, 0);
 destAirportGroup.add(destGround);
 
@@ -6469,14 +6481,33 @@ const destGroundBackup = new THREE.Mesh(
   new THREE.PlaneGeometry(RESUME_FLOOR_W * 1.4, RESUME_FLOOR_W * 4),
   new THREE.MeshBasicMaterial({ color: 0xf3eedd, side: THREE.DoubleSide, fog: false }),
 );
-destGroundBackup.rotation.x = -Math.PI / 2;
-destGroundBackup.rotation.z = -Math.PI / 2;
+orientResumeFloor(destGroundBackup);
 destGroundBackup.position.set(RUNWAY_X0 + RUNWAY_LEN / 2, -0.2, 0);
 destAirportGroup.add(destGroundBackup);
+
+function alignResumeFloorToRunway(runwayCenterPx, captureWidth, captureHeight) {
+  const safeW = Math.max(1, captureWidth);
+  const safeH = Math.max(1, captureHeight);
+  const floorH = RESUME_FLOOR_W * (safeH / safeW);
+  const runwayU = Math.max(0, Math.min(1, runwayCenterPx / safeW));
+
+  // Pixel X in the resume texture maps to world Z. Keep the actual resume
+  // runway column directly under the 3D runway mesh.
+  destGround.position.z = RUNWAY_Z_OFFSET - (runwayU - 0.5) * RESUME_FLOOR_W;
+  destGroundBackup.position.z = destGround.position.z;
+
+  // Pixel Y maps to world X, with the document top at the larger X edge.
+  // Place the parked aircraft on the same runway band a fresh resume load shows
+  // in the viewport: the fixed 2D plane's 50vh position.
+  const parkedRunwayY = Math.max(0, Math.min(safeH, window.innerHeight * 0.5));
+  destGround.position.x = PARK_X - floorH / 2 + (parkedRunwayY / safeH) * floorH;
+  destGroundBackup.position.x = destGround.position.x;
+}
 
 // 3D runway slab — the plane physically lands on this.
 const RUNWAY_TOP = 6;
 const RUNWAY_THICK = 4;
+const resumeLandingOverlayObjects = [];
 const runwayMesh = new THREE.Mesh(
   new THREE.BoxGeometry(RUNWAY_LEN, RUNWAY_THICK, RUNWAY_W),
   new THREE.MeshStandardMaterial({
@@ -6490,6 +6521,7 @@ runwayMesh.position.set(
   RUNWAY_Z_OFFSET,
 );
 destAirportGroup.add(runwayMesh);
+resumeLandingOverlayObjects.push(runwayMesh);
 
 // Centerline dashes for "looks like a runway".
 for (let i = 0; i < 32; i++) {
@@ -6499,7 +6531,132 @@ for (let i = 0; i < 32; i++) {
   );
   dash.position.set(RUNWAY_X0 + 80 + i * 46, RUNWAY_TOP + 0.1, RUNWAY_Z_OFFSET);
   destAirportGroup.add(dash);
+  resumeLandingOverlayObjects.push(dash);
 }
+
+function setTreeOpacity(root, opacity) {
+  const o = Math.max(0, Math.min(1, opacity));
+  root.visible = o > 0.01;
+  root.traverse(obj => {
+    if (!obj.material) return;
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+    mats.forEach(mat => {
+      if (mat.userData.resumeBaseOpacity == null) {
+        mat.userData.resumeBaseOpacity = mat.opacity == null ? 1 : mat.opacity;
+        mat.userData.resumeBaseTransparent = !!mat.transparent;
+        mat.userData.resumeBaseDepthWrite = mat.depthWrite;
+      }
+      mat.transparent = o < 0.999 || mat.userData.resumeBaseTransparent;
+      mat.opacity = mat.userData.resumeBaseOpacity * o;
+      mat.depthWrite = o >= 0.999 ? mat.userData.resumeBaseDepthWrite : false;
+      mat.needsUpdate = true;
+    });
+  });
+}
+
+function setLanding3DOverlayOpacity(opacity) {
+  resumeLandingOverlayObjects.forEach(obj => setTreeOpacity(obj, opacity));
+  setTreeOpacity(airplane, opacity);
+}
+
+let resumeCssFloorObject = null;
+let resumeCssFloorFrame = null;
+let resumeCssFloorReady = false;
+
+function setupResumeCssFloor() {
+  if (resumeCssFloorObject) {
+    layoutResumeCssFloor();
+    return;
+  }
+
+  const floor = document.createElement('div');
+  floor.className = 'resume-css3d-floor';
+  floor.style.position = 'relative';
+  floor.style.overflow = 'hidden';
+  floor.style.background = '#f3eedd';
+  floor.style.pointerEvents = 'none';
+
+  resumeCssFloorFrame = document.createElement('iframe');
+  resumeCssFloorFrame.src = 'preview/resume.html';
+  resumeCssFloorFrame.title = 'Sina Matian International landing floor';
+  resumeCssFloorFrame.setAttribute('aria-hidden', 'true');
+  resumeCssFloorFrame.setAttribute('tabindex', '-1');
+  resumeCssFloorFrame.setAttribute('scrolling', 'no');
+  resumeCssFloorFrame.style.position = 'absolute';
+  resumeCssFloorFrame.style.inset = '0';
+  resumeCssFloorFrame.style.width = '100%';
+  resumeCssFloorFrame.style.height = '100%';
+  resumeCssFloorFrame.style.border = '0';
+  resumeCssFloorFrame.style.pointerEvents = 'none';
+  floor.appendChild(resumeCssFloorFrame);
+
+  resumeCssFloorObject = new CSS3DObject(floor);
+  orientResumeFloor(resumeCssFloorObject);
+  destAirportGroup.add(resumeCssFloorObject);
+
+  resumeCssFloorFrame.addEventListener('load', () => {
+    resumeCssFloorReady = true;
+    layoutResumeCssFloor();
+  });
+
+  layoutResumeCssFloor();
+  updateResumeFloorLayering();
+}
+
+function resumeRunwayCenterPx() {
+  const fallback = window.innerWidth <= 760 ? 48 : 76;
+  try {
+    const runway = resumeCssFloorFrame?.contentDocument?.getElementById('runway');
+    const rect = runway?.getBoundingClientRect();
+    if (rect && rect.width) return rect.left + rect.width / 2;
+  } catch (e) {
+    // Same-origin in normal use; fallback keeps the floor aligned during load.
+  }
+  return fallback;
+}
+
+function layoutResumeCssFloor() {
+  if (!resumeCssFloorObject) return;
+  const vw = Math.max(1, window.innerWidth);
+  const vh = Math.max(1, window.innerHeight);
+  const scale = RESUME_FLOOR_W / vw;
+  const runwayCenterPx = resumeRunwayCenterPx();
+
+  resumeCssFloorObject.element.style.width = `${vw}px`;
+  resumeCssFloorObject.element.style.height = `${vh}px`;
+  resumeCssFloorObject.scale.set(scale, scale, scale);
+  resumeCssFloorObject.position.set(
+    PARK_X,
+    0,
+    RUNWAY_Z_OFFSET - (runwayCenterPx - vw / 2) * scale,
+  );
+  orientResumeFloor(resumeCssFloorObject);
+}
+
+function resumeFloorWorldHeight() {
+  if (resumeCssFloorObject) {
+    return RESUME_FLOOR_W * (Math.max(1, window.innerHeight) / Math.max(1, window.innerWidth));
+  }
+  return (destGround.geometry.parameters && destGround.geometry.parameters.height)
+    ? destGround.geometry.parameters.height
+    : RESUME_FLOOR_W * 3;
+}
+
+function resumeFloorCenterX() {
+  return resumeCssFloorObject ? resumeCssFloorObject.position.x : destGround.position.x;
+}
+
+function resumeFloorCenterZ() {
+  return resumeCssFloorObject ? resumeCssFloorObject.position.z : destGround.position.z;
+}
+
+function updateResumeFloorLayering() {
+  const useCssFloor = !!resumeCssFloorObject;
+  destGround.visible = !useCssFloor;
+  destGroundBackup.visible = !useCssFloor;
+}
+
+setupResumeCssFloor();
 
 // === Procedural floor texture · drawn once at startup ===
 // We deliberately do NOT html2canvas the live #board — it kept leaving
@@ -6512,116 +6669,27 @@ for (let i = 0; i < 32; i++) {
   c.width = 1080; c.height = 3200;
   const cx = c.getContext('2d');
 
-  // Cream paper bg
+  // Minimal emergency fallback only. The real landing surface is a captured
+  // render of preview/resume.html; if capture is still in flight, avoid showing
+  // a fake resume layout that could be mistaken for the final page.
   cx.fillStyle = '#f3eedd';
   cx.fillRect(0, 0, c.width, c.height);
 
-  // Subtle dot grain
+  // Subtle paper grain.
   cx.fillStyle = 'rgba(28, 24, 20, 0.04)';
   for (let i = 0; i < c.width; i += 28) {
     for (let j = 0; j < c.height; j += 28) cx.fillRect(i, j, 2, 2);
   }
 
-  // Hero card (navy)
-  const grad = cx.createLinearGradient(40, 40, c.width - 40, 480);
-  grad.addColorStop(0, '#1d2638');
-  grad.addColorStop(1, '#2c405d');
-  cx.fillStyle = grad;
-  roundRect(cx, 40, 60, c.width - 80, 480, 16); cx.fill();
-  cx.fillStyle = '#ffb04a';
-  cx.font = 'bold 22px "JetBrains Mono", monospace';
-  cx.fillText('▲ NOW ARRIVING · SMA 010 FROM KLAX', 80, 110);
-  cx.fillStyle = '#fff8e7';
-  cx.font = 'bold 96px "Boldonse", "Arial Black", sans-serif';
-  cx.fillText('SINA MATIAN', 80, 250);
-  cx.fillText('INTERNATIONAL', 80, 360);
-  cx.font = 'italic 28px "Instrument Serif", serif';
-  cx.fillStyle = 'rgba(245,236,214,0.78)';
-  cx.fillText('Founder · Independent Security Researcher · CS @ NYU', 80, 410);
-  // SMI codebox
-  cx.strokeStyle = 'rgba(245,236,214,0.4)';
-  cx.lineWidth = 2;
-  roundRect(cx, c.width - 280, 130, 220, 280, 6); cx.stroke();
-  cx.fillStyle = '#fff8e7';
-  cx.font = 'bold 96px "Boldonse", sans-serif';
-  cx.fillText('SMI', c.width - 240, 270);
-  cx.fillStyle = '#ffb04a';
-  cx.font = 'bold 14px "JetBrains Mono", monospace';
-  cx.fillText('KSMI · INTL', c.width - 240, 310);
-
-  // Section bands
-  const sections = [
-    { color: '#5446a6', title: 'EDUCATION',   sub: 'TERMINAL E · LEARNING CONCOURSE',  rows: 4, y: 700 },
-    { color: '#d4762b', title: 'EXPERIENCE',  sub: 'TERMINAL X · CAREER CONCOURSE',    rows: 4, y: 1320 },
-    { color: '#b5341f', title: 'DISCLOSURES', sub: 'CHECKPOINT C · SECURITY WING',     rows: 3, y: 1940 },
-    { color: '#7d7567', title: 'OTHER',       sub: 'DUTY-FREE · CASUAL ROLES',         rows: 2, y: 2440 },
-  ];
-  sections.forEach(sec => {
-    cx.fillStyle = sec.color;
-    cx.fillRect(80, sec.y, 80, 4);
-    cx.fillStyle = '#181612';
-    cx.font = 'bold 56px "Boldonse", sans-serif';
-    cx.fillText(sec.title, 80, sec.y + 64);
-    cx.fillStyle = 'rgba(28,24,20,0.55)';
-    cx.font = 'bold 16px "JetBrains Mono", monospace';
-    cx.fillText(sec.sub, 80, sec.y + 96);
-    // Row strips
-    for (let i = 0; i < sec.rows; i++) {
-      const ry = sec.y + 130 + i * 110;
-      cx.strokeStyle = 'rgba(28,24,20,0.16)';
-      cx.lineWidth = 1;
-      cx.setLineDash([4, 4]);
-      cx.beginPath(); cx.moveTo(80, ry + 96); cx.lineTo(c.width - 80, ry + 96); cx.stroke();
-      cx.setLineDash([]);
-      // Monogram tile
-      cx.fillStyle = '#e8dfc4';
-      roundRect(cx, 80, ry, 70, 70, 8); cx.fill();
-      cx.fillStyle = sec.color;
-      cx.font = 'bold 32px "Boldonse", sans-serif';
-      cx.fillText(sec.title[0], 100, ry + 50);
-      // Title bar (monospace placeholder for actual title)
-      cx.fillStyle = '#181612';
-      cx.font = 'bold 28px "Boldonse", sans-serif';
-      cx.fillText('Row Title', 180, ry + 36);
-      cx.fillStyle = 'rgba(28,24,20,0.55)';
-      cx.font = '16px "Hanken Grotesk", sans-serif';
-      cx.fillText('Description · subtitle', 180, ry + 64);
-      // Status pill
-      cx.fillStyle = sec.color + '22';
-      roundRect(cx, c.width - 220, ry + 18, 140, 32, 16); cx.fill();
-      cx.fillStyle = sec.color;
-      cx.font = 'bold 12px "JetBrains Mono", monospace';
-      cx.fillText('STATUS', c.width - 200, ry + 38);
-    }
-  });
-
-  // Footer
-  cx.fillStyle = '#1c2738';
-  roundRect(cx, 80, 2920, c.width - 160, 110, 12); cx.fill();
-  cx.fillStyle = '#ffb04a';
-  cx.font = 'bold 18px "JetBrains Mono", monospace';
-  cx.fillText('CONTACT · OPEN TO OPPORTUNITIES', 110, 2960);
-  cx.fillStyle = '#fff8e7';
-  cx.font = '500 18px "Hanken Grotesk", sans-serif';
-  cx.fillText('sina@sinamatian.com  ·  github.com/time-attack  ·  linkedin · sina-matian', 110, 2998);
-
-  function roundRect(c, x, y, w, h, r) {
-    c.beginPath();
-    c.moveTo(x + r, y);
-    c.arcTo(x + w, y, x + w, y + h, r);
-    c.arcTo(x + w, y + h, x, y + h, r);
-    c.arcTo(x, y + h, x, y, r);
-    c.arcTo(x, y, x + w, y, r);
-    c.closePath();
-  }
-
   _resumeTex2.needsUpdate = true;
-  // Match floor mesh aspect to canvas aspect
+  // Match floor mesh aspect to canvas aspect and align the runway column to
+  // the same viewport band as the real resume page.
   destGround.geometry.dispose();
   destGround.geometry = new THREE.PlaneGeometry(
     RESUME_FLOOR_W,
     RESUME_FLOOR_W * (c.height / c.width),
   );
+  alignResumeFloorToRunway(76, c.width, c.height);
 })();
 
 // === html2canvas the LIVE v3 resume from a CLONE ===
@@ -6631,107 +6699,123 @@ for (let i = 0; i < 32; i++) {
 // The v3 resume has zero cross-origin <img> tags, so the canvas stays
 // untainted and uploads as a WebGL texture cleanly.
 async function captureV3ResumeToFloor() {
-  // Disabled — #board is now an iframe, and html2canvas can't faithfully
-  // snapshot iframe content (produces blank/misaligned output). Letting the
-  // procedural cream fallback stay on the floor during landing; the actual
-  // resume reveals via the post-landing iframe handoff anyway.
-  return;
-  /* eslint-disable */
   if (typeof html2canvas !== 'function') return;
+  if (typeof portfolioMode !== 'undefined' && portfolioMode === 'board' && !landing3DActive) return;
+
+  const board = document.getElementById('board');
   const iframe = document.getElementById('boardFrame');
-  if (!iframe) return;
+  if (!board || !iframe) return;
+
+  const hadBoardStyle = board.hasAttribute('style');
+  const savedBoardStyle = board.getAttribute('style') || '';
+  const iframeDoc = await waitForResumeIframe(iframe);
+  if (!iframeDoc || !iframeDoc.body) return;
+
   let captured = null;
+  let revealStyle = null;
+  try {
+    // #board is display:none before handoff. Give the iframe a real viewport
+    // off-screen so preview/resume.html lays out exactly like a direct load.
+    board.style.cssText = `
+      display: block !important;
+      position: fixed !important;
+      left: -10000px !important;
+      top: 0 !important;
+      width: ${window.innerWidth}px !important;
+      height: ${window.innerHeight}px !important;
+      opacity: 1 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
+      z-index: -1 !important;
+    `;
 
-  if (!captured) return;
-  try { captured.getContext('2d').getImageData(0, 0, 1, 1); }
-  catch (e) {
-    console.warn('iframe resume capture tainted; keeping fallback texture.');
-    return;
-  }
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    if (iframeDoc.fonts && iframeDoc.fonts.ready) await iframeDoc.fonts.ready;
 
-  // Post-process: paint the runway asphalt directly onto the captured
-  // canvas. html2canvas can't render the multi-layer gradient on the
-  // .v3-runway::before pseudo-element, so the runway-strip column comes
-  // out blank in the snapshot. Draw it ourselves with the same visual.
-  (function paintRunwayOntoSnapshot(c) {
-    const ctx = c.getContext('2d');
-    // CSS layout: .v3-runway at left:32, width:88 → asphalt at left+8 to right-8
-    const STRIP_X = 32 + 8;
-    const STRIP_W = 88 - 16;
-    const cx = STRIP_X + STRIP_W / 2;
+    // The direct page fades sections in as they enter the viewport. The 3D
+    // floor can show more than one viewport during zoom-out, so force all
+    // sections visible in the captured texture without touching the live page
+    // permanently.
+    revealStyle = iframeDoc.createElement('style');
+    revealStyle.textContent = `
+      .section, .identity, .about, .highlights, .foot {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+    `;
+    iframeDoc.head.appendChild(revealStyle);
+    await new Promise(r => requestAnimationFrame(r));
 
-    // Asphalt gradient
-    const grad = ctx.createLinearGradient(0, 0, 0, c.height);
-    grad.addColorStop(0,   '#1a1c20');
-    grad.addColorStop(0.5, '#2a2d33');
-    grad.addColorStop(1,   '#1a1c20');
-    ctx.fillStyle = grad;
-    ctx.fillRect(STRIP_X, 0, STRIP_W, c.height);
-    // Edge highlights
-    ctx.strokeStyle = 'rgba(245, 236, 214, 0.22)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(STRIP_X + 0.5, 0.5, STRIP_W - 1, c.height - 1);
+    const captureW = Math.max(1, iframe.clientWidth || window.innerWidth);
+    const captureViewportH = Math.max(1, iframe.clientHeight || window.innerHeight);
+    const captureH = Math.max(
+      iframeDoc.documentElement.scrollHeight,
+      iframeDoc.body.scrollHeight,
+      captureViewportH,
+    );
 
-    // Threshold piano keys (top & bottom)
-    ctx.fillStyle = '#f5edd0';
-    const keyCount = 5, keyGap = 4;
-    const keyAreaW = STRIP_W - 12;
-    const keyW = (keyAreaW - keyGap * (keyCount - 1)) / keyCount;
-    for (let i = 0; i < keyCount; i++) {
-      const x = STRIP_X + 6 + i * (keyW + keyGap);
-      ctx.fillRect(x, 86, keyW, 18);
-      ctx.fillRect(x, c.height - 86 - 18, keyW, 18);
+    captured = await html2canvas(iframeDoc.body, {
+      width: captureW,
+      height: captureH,
+      windowWidth: captureW,
+      windowHeight: captureViewportH,
+      scrollX: 0,
+      scrollY: 0,
+      backgroundColor: '#f3eedd',
+      scale: 1,
+      logging: false,
+      useCORS: true,
+      allowTaint: false,
+      // html2canvas's gradient parser fails on a few of the resume's layered
+      // radial gradients. Browser-native foreignObject rendering keeps those
+      // pixels faithful to the real iframe.
+      foreignObjectRendering: true,
+    });
+
+    const runway = iframeDoc.getElementById('runway');
+    const runwayRect = runway ? runway.getBoundingClientRect() : null;
+    const runwayCenterPx = runwayRect
+      ? runwayRect.left + runwayRect.width / 2
+      : 76;
+
+    try { captured.getContext('2d').getImageData(0, 0, 1, 1); }
+    catch (e) {
+      console.warn('iframe resume capture tainted; keeping fallback texture.');
+      return;
     }
 
-    // Centerline dashes
-    ctx.strokeStyle = '#f1ead2';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([19, 19]);
-    ctx.beginPath();
-    ctx.moveTo(cx, 130);
-    ctx.lineTo(cx, c.height - 130);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    _resumeTex2.image = captured;
+    _resumeTex2.needsUpdate = true;
 
-    // Threshold text "27" / "09"
-    ctx.fillStyle = '#f5edd0';
-    ctx.font = 'bold 38px "Boldonse", "Arial Black", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('27', cx, 52);
-    ctx.fillText('09', cx, c.height - 30);
-    // Threshold sub-labels
-    ctx.font = 'bold 8px "JetBrains Mono", monospace';
-    ctx.fillStyle = 'rgba(245, 236, 214, 0.55)';
-    ctx.fillText('RWY · TOUCHDOWN', cx, 68);
-    ctx.fillText('END · APRON',     cx, c.height - 14);
-  })(captured);
+    destGround.geometry.dispose();
+    destGround.geometry = new THREE.PlaneGeometry(
+      RESUME_FLOOR_W,
+      RESUME_FLOOR_W * (captured.height / captured.width),
+    );
 
-  _resumeTex2.image = captured;
-  _resumeTex2.needsUpdate = true;
+    alignResumeFloorToRunway(runwayCenterPx, captureW, captureH);
+    _resumeFloorCaptureReady = true;
+  } catch (e) {
+    console.warn('iframe resume capture failed:', e);
+  } finally {
+    if (revealStyle) revealStyle.remove();
+    if (hadBoardStyle) board.setAttribute('style', savedBoardStyle);
+    else board.removeAttribute('style');
+  }
+}
 
-  // Resize floor mesh aspect to match the captured texture so content
-  // doesn't stretch.
-  destGround.geometry.dispose();
-  destGround.geometry = new THREE.PlaneGeometry(
-    RESUME_FLOOR_W,
-    RESUME_FLOOR_W * (captured.height / captured.width),
-  );
-
-  // Calibrate the floor's world Z offset so the texture's runway-strip
-  // column (at CSS pixel ~76 of the captured viewport-width layout) sits
-  // exactly on top of the 3D runway mesh at z = RUNWAY_Z_OFFSET. This
-  // makes the live DOM render line up pixel-for-pixel with the 3D
-  // texture render at handoff.
-  const stripCenterPx = 76;        // CSS px from left edge of v3 layout to runway-strip centre
-  const stripUV = stripCenterPx / captured.width;
-  // texture pixel u maps to floor world Z = floor.z + (u - 0.5) * RESUME_FLOOR_W
-  // we want the strip world Z = RUNWAY_Z_OFFSET, so:
-  //   RUNWAY_Z_OFFSET = floor.z + (stripUV - 0.5) * RESUME_FLOOR_W
-  destGround.position.z = RUNWAY_Z_OFFSET - (stripUV - 0.5) * RESUME_FLOOR_W;
-  destGroundBackup.position.z = destGround.position.z;
+async function waitForResumeIframe(iframe) {
+  for (let i = 0; i < 80; i++) {
+    const doc = iframe.contentDocument;
+    if (doc && doc.body && doc.readyState === 'complete') return doc;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return iframe.contentDocument;
 }
 
 let _v3CaptureTimer = 0;
+let _resumeFloorCaptureReady = false;
 function _scheduleV3Capture(delay) {
   clearTimeout(_v3CaptureTimer);
   _v3CaptureTimer = setTimeout(() => {
@@ -6741,10 +6825,7 @@ function _scheduleV3Capture(delay) {
     ]).catch(e => console.warn('v3 capture skipped:', e.message));
   }, delay);
 }
-window.addEventListener('load', () => _scheduleV3Capture(800));
-// On resize, debounce re-capture so the texture and the floor alignment
-// always match the current viewport. Live calibration.
-window.addEventListener('resize', () => _scheduleV3Capture(300));
+window.PORTFOLIO_CAPTURE_RESUME = () => _scheduleV3Capture(0);
 
 mapGroup.add(destAirportGroup);
 
@@ -6805,6 +6886,8 @@ function exitMapView() {
   scene.fog.near = FOG_ORIG.near;
   scene.fog.far  = FOG_ORIG.far;
   stars.material.opacity = 0;
+  setLanding3DOverlayOpacity(1);
+  updateResumeFloorLayering();
   if (typeof css3dRenderer !== 'undefined') {
     css3dRenderer.domElement.style.display = 'none';
   }
@@ -7786,6 +7869,7 @@ document.querySelectorAll('.presets button').forEach(btn => {
    ANIMATION LOOP
    ═══════════════════════════════════════════════ */
 function resize() {
+  layoutResumeCssFloor();
   if (_resumeMode3D) {
     setupBirdsEyeOrtho();
     css3dRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -7995,9 +8079,11 @@ window.__forceBirdsEye = () => {
   return {samples, planePos: airplane.position.toArray(), camPos: orthoCamera.position.toArray(), runwayPos: [RUNWAY_X0 + RUNWAY_LEN / 2, RUNWAY_TOP, RUNWAY_Z_OFFSET]};
 };
 window.__texInfo = () => ({
-  w: _resumeTex?.image?.width,
-  h: _resumeTex?.image?.height,
-  type: _resumeTex?.image?.tagName,
+  w: _resumeTex2?.image?.width,
+  h: _resumeTex2?.image?.height,
+  type: _resumeTex2?.image?.tagName,
+  ready: resumeCssFloorReady || _resumeFloorCaptureReady,
+  cssFloor: resumeCssFloorReady,
 });
 // Test helper — runs the entire 3D landing sequence in a tight synchronous loop.
 window.__runLandingSync = () => {
@@ -8054,6 +8140,9 @@ function trigger3DLanding() {
   controls.enabled = false;
   document.body.classList.add('landing-3d');
   document.body.classList.remove('birds-eye');
+  setLanding3DOverlayOpacity(1);
+  layoutResumeCssFloor();
+  updateResumeFloorLayering();
   // Reset opacity in case a prior landing faded these out.
   if (renderer.domElement) renderer.domElement.style.opacity = '1';
   // Reveal the CSS3D resume floor — hidden until now so it doesn't float
@@ -8235,9 +8324,8 @@ function update3DLanding(now) {
     const k = easeInOut(Math.max(0, Math.min(1, t)));
     if (!_resumeHandoffStarted) {
       _resumeHandoffStarted = true;
-      // Begin HTML resume reveal NOW so its 1.2s opacity fade overlaps the
-      // canvas shrink — no black gap between the two visualisations.
-      setMode('board');
+      // Keep the 3D loop alive for the full handoff. The live iframe is cut in
+      // only after the camera has settled on the matching resume-page framing.
       cloudGroup.visible = false;
       stars.material.opacity = 0;
       ensureBirdsEyeLight();
@@ -8327,15 +8415,13 @@ function zoomoutCamera(k) {
   // Altitude where floor's full WIDTH (RESUME_FLOOR_W) projects to
   // viewport width on screen → texture renders at native scale.
   const targetAltitude = _focal * (RESUME_FLOOR_W / _vw);
-  const floorH = (destGround.geometry.parameters && destGround.geometry.parameters.height)
-                 ? destGround.geometry.parameters.height
-                 : RESUME_FLOOR_W * 3;
+  const floorH = resumeFloorWorldHeight();
   const halfV = targetAltitude * Math.tan(Math.PI / 6);
-  const floorCentreX = RUNWAY_X0 + RUNWAY_LEN / 2;
+  const floorCentreX = resumeFloorCenterX();
   // Top-aligned: place the FLOOR'S TOP EDGE exactly at SCREEN-TOP
   // (= scroll position 0 in the DOM rendering).
   const finalTargetX = floorCentreX + floorH / 2 - halfV;
-  const finalCamZ    = destGround.position.z;
+  const finalCamZ    = resumeFloorCenterZ();
 
   const startCamX = PARK_X - 95;
   const startCamY = 32;
@@ -8373,6 +8459,9 @@ function zoomoutCamera(k) {
   camera.fov = 38 + (60 - 38) * k;
   camera.aspect = window.innerWidth / Math.max(1, window.innerHeight);
   camera.updateProjectionMatrix();
+
+  const overlayFade = Math.max(0, Math.min(1, (k - 0.62) / 0.30));
+  setLanding3DOverlayOpacity(1 - easeInOut(overlayFade));
 }
 
 // HANDOFF · hold at the "matches DOM scroll=0" framing while the handoff
@@ -8385,12 +8474,10 @@ function animateHandoffPerspective(k) {
   const _vh = window.innerHeight;
   const _focal = _vh / 2 / Math.tan(Math.PI / 6);
   const camY = _focal * (RESUME_FLOOR_W / _vw);
-  const floorH = (destGround.geometry.parameters && destGround.geometry.parameters.height)
-                 ? destGround.geometry.parameters.height
-                 : RESUME_FLOOR_W * 3;
+  const floorH = resumeFloorWorldHeight();
   const halfV = camY * Math.tan(Math.PI / 6);
-  const camX = (RUNWAY_X0 + RUNWAY_LEN / 2) + floorH / 2 - halfV;
-  const camZ = destGround.position.z;
+  const camX = resumeFloorCenterX() + floorH / 2 - halfV;
+  const camZ = resumeFloorCenterZ();
   camera.position.set(camX, camY, camZ);
   controls.target.set(camX, 0, camZ);
   camera.up.set(1, 0, 0);
@@ -8447,6 +8534,8 @@ function hand3DOffToResume() {
     board.removeAttribute('style');
     if (board.parentElement !== document.body) document.body.appendChild(board);
     board.scrollTop = 0;
+    const frame = document.getElementById('boardFrame');
+    if (frame && frame.contentWindow) frame.contentWindow.scrollTo(0, 0);
   }
 
   cloudGroup.visible = false;
@@ -8515,7 +8604,7 @@ function tick() {
   }
   updateResumeModeTaxi();
   updateTutorialAudio(dt);
-  if (!introRunning && !_resumeMode3D) controls.update();
+  if (!introRunning && !_resumeMode3D && !landing3DActive) controls.update();
   updatePlaneMarkerPosition();
   // Perspective camera throughout the entire landing flow (cruise →
   // approach → flare → rollout → zoom-out → bird's-eye → handoff). Only

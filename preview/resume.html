@@ -565,8 +565,8 @@ hr.rule {
 .avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   display: block;
+  object-fit: cover;
   position: relative;
   z-index: 1;
 }
@@ -575,6 +575,7 @@ hr.rule {
   position: absolute; inset: -4px;
   border-radius: 50%;
   border: 1px dashed var(--paper-line);
+  z-index: 2;
   pointer-events: none;
 }
 .id__main { min-width: 0; }
@@ -1029,6 +1030,7 @@ hr.rule {
   color: var(--sec);
   position: relative;
   overflow: hidden;
+  padding: 8px;
 }
 .row__mono::after {
   content: "";
@@ -1040,18 +1042,50 @@ hr.rule {
   pointer-events: none;
 }
 .row__mono img {
-  position: relative;
-  z-index: 1;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 6px;
-  display: block;
+  position: relative;
+  z-index: 1;
+}
+.row__mono--logo {
+  background: #fffaf0;
+}
+.row__mono--image::after {
+  display: none;
+}
+.row__mono--app,
+.row__mono--photo {
+  padding: 0;
+  border-radius: 12px;
+  background: #101820;
+}
+.row__mono--app img,
+.row__mono--photo img {
+  object-fit: cover;
+}
+.row__mono--photo {
+  border-radius: 50%;
+}
+.row__mono--dark {
+  background: #0d1118;
+}
+.row__mono--mark {
+  background: #152036;
+}
+.row__mono--mark img {
+  width: 86%;
+  height: 86%;
+}
+.row__mono--wide img {
+  width: 118%;
+  height: 118%;
 }
 .row__mono.has-logo::after { display: none; }
 .row__mono.has-logo { background: var(--paper-deep); }
-.row__mono.has-logo--cover { background: transparent; }
-.row__mono.has-logo--cover img { object-fit: cover; padding: 0; }
+.row__mono.has-logo--cover { background: transparent; padding: 0; }
+.row__mono.has-logo--cover img { object-fit: cover; }
 
 .row__main { min-width: 0; }
 .row__title {
@@ -1301,7 +1335,7 @@ hr.rule {
 
   <!-- Identity -->
   <section class="identity" aria-label="Identity">
-    <div class="avatar"><img src="../assets/headshot.png" alt="Sina Matian" onerror="this.replaceWith(document.createTextNode('SM'));"></div>
+    <div class="avatar"><img src="../assets/photos/sina.jpg" alt="Sina Matian" /></div>
     <div class="id__main">
       <div class="id__name">Sina Matian <span class="id__check" title="Verified">✓</span></div>
       <div class="id__head">Cybersecurity &amp; AI Researcher · 10+ Approved Bug Bounties</div>
@@ -1416,7 +1450,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row is-headline" data-href="https://www.nyu.edu" target="_blank" rel="noopener">
-        <div class="row__mono has-logo"><img src="../assets/logos/nyu.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('N'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo row__mono--wide"><img src="../assets/logos/nyu.svg" alt="New York University logo" /></div>
         <div class="row__main">
           <div class="row__title">New York University</div>
           <div class="row__role">
@@ -1434,7 +1468,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="https://www.smc.edu" target="_blank" rel="noopener">
-        <div class="row__mono has-logo"><img src="../assets/logos/smc.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo"><img src="../assets/logos/santa-monica-college.png" alt="Santa Monica College logo" /></div>
         <div class="row__main">
           <div class="row__title">Santa Monica College</div>
           <div class="row__role">
@@ -1450,7 +1484,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="https://www.piercecollege.edu" target="_blank" rel="noopener">
-        <div class="row__mono has-logo"><img src="../assets/logos/piercecollege.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('L'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo row__mono--wide"><img src="../assets/logos/los-angeles-pierce-college.svg" alt="Los Angeles Pierce College logo" /></div>
         <div class="row__main">
           <div class="row__title">Los Angeles Pierce College</div>
           <div class="row__role">
@@ -1466,7 +1500,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="https://en.wikipedia.org/wiki/Calabasas_High_School" target="_blank" rel="noopener">
-        <div class="row__mono has-logo"><img src="../assets/logos/calabasas-hs.jpg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('C'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo"><img src="../assets/logos/calabasas-high.png" alt="Calabasas High School logo" /></div>
         <div class="row__main">
           <div class="row__title">Calabasas High School</div>
           <div class="row__role">
@@ -1496,7 +1530,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row is-headline" data-href="https://tefillintimer.com" target="_blank" rel="noopener">
-        <div class="row__mono has-logo has-logo--cover"><img src="../assets/logos/tefillin-timer.jpg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('T'));"></div>
+        <div class="row__mono row__mono--image row__mono--app"><img src="../assets/logos/tefillin-timer.png" alt="Tefillin Timer app icon" /></div>
         <div class="row__main">
           <div class="row__title">Tefillin Timer</div>
           <div class="row__role">
@@ -1532,7 +1566,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="https://hackerone.com" target="_blank" rel="noopener">
-        <div class="row__mono">I</div>
+        <div class="row__mono row__mono--image row__mono--mark"><img src="../assets/logos/security-research.svg" alt="Independent security researcher mark" /></div>
         <div class="row__main">
           <div class="row__title">Independent Security Researcher</div>
           <div class="row__role">
@@ -1548,7 +1582,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="https://webutation.io" target="_blank" rel="noopener">
-        <div class="row__mono has-logo"><img src="../assets/logos/webutation.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
+        <div class="row__mono row__mono--image row__mono--mark"><img src="../assets/logos/webutation-mark.svg" alt="Webutation logo" /></div>
         <div class="row__main">
           <div class="row__title">Webutation, Inc</div>
           <div class="row__role">
@@ -1580,7 +1614,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row is-headline" data-href="blog-hinge-paywall-bypass.html">
-        <div class="row__mono has-logo"><img src="../assets/logos/hinge.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('H'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo"><img src="../assets/logos/hinge.svg" alt="Hinge logo" /></div>
         <div class="row__main">
           <div class="row__title">Hinge</div>
           <div class="row__role">
@@ -1596,7 +1630,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="blog-wix-idor.html">
-        <div class="row__mono has-logo"><img src="../assets/logos/wix.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('W'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo"><img src="../assets/logos/wix.svg" alt="Wix logo" /></div>
         <div class="row__main">
           <div class="row__title">Wix · com</div>
           <div class="row__role">
@@ -1612,7 +1646,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="blog-vibecode-ssh.html">
-        <div class="row__mono has-logo has-logo--cover"><img src="../assets/logos/vibecode.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('V'));"></div>
+        <div class="row__mono row__mono--image row__mono--app"><img src="../assets/logos/vibecode.png" alt="Vibecode logo" /></div>
         <div class="row__main">
           <div class="row__title">Vibecodeapp</div>
           <div class="row__role">
@@ -1644,7 +1678,7 @@ hr.rule {
     </header>
     <div class="rows">
       <div class="row" data-href="https://www.starbucks.com" target="_blank" rel="noopener">
-        <div class="row__mono has-logo"><img src="../assets/logos/starbucks.svg" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo"><img src="../assets/logos/starbucks.svg" alt="Starbucks logo" /></div>
         <div class="row__main">
           <div class="row__title">Starbucks</div>
           <div class="row__role">
@@ -1660,7 +1694,7 @@ hr.rule {
         </div>
       </div>
       <div class="row" data-href="https://sloansicecream.com" target="_blank" rel="noopener">
-        <div class="row__mono has-logo"><img src="../assets/logos/sloansicecream.png" alt="" onerror="this.parentElement.classList.remove('has-logo');this.replaceWith(document.createTextNode('S'));"></div>
+        <div class="row__mono row__mono--image row__mono--logo"><img src="../assets/logos/sloans-ice-cream.png" alt="Sloan's Ice Cream logo" /></div>
         <div class="row__main">
           <div class="row__title">Sloan&rsquo;s Ice Cream LLC</div>
           <div class="row__role">
