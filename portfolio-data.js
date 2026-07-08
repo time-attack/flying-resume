@@ -3,20 +3,20 @@
 window.PORTFOLIO_DATA = {
   identity: {
     name: 'SINA MATIAN',
-    headline: 'CYBERSECURITY & AI RESEARCHER · 10+ APPROVED BUG BOUNTIES',
-    tagline: 'Founder · Independent Security Researcher · CS @ NYU',
+    headline: 'SPATIAL COMPUTING · TESLA · 10+ BUG BOUNTIES',
+    tagline: 'Spatial Computing Engineer @ Tesla · CS @ NYU',
     location: 'Los Angeles, California',
     email: 'sina@sinamatian.com',
     github: 'time-attack',
     linkedinUrl: 'https://www.linkedin.com/in/sina-matian-b4210238b/',
     photo: 'assets/photos/sina.jpg',  // drop your headshot here; gradient avatar used as fallback
     about:
-      'Cybersecurity researcher, software developer, and entrepreneur with a passion for building impactful products. Founder of SeniorSupportAI.org (a nonprofit helping seniors learn technology) and creator of the Tefillin Timer app used by thousands globally. Experienced in reverse engineering, ethical hacking, AI/ML, and full-stack development. Independent security researcher with 10+ approved bug bounties, having responsibly disclosed vulnerabilities in platforms including Hinge, VibeCode, and Wix.',
+      'Spatial computing engineer at Tesla, pursuing a B.A. in Computer Science at NYU concurrently. Recruited specifically for spatial computation talent — background includes MIT research on embodied spatial interfaces and shipping-grade interaction work on Apple Vision Pro. Also an independent security researcher with 10+ approved bug bounties (Hinge, VibeCode, Wix), founder of SeniorSupportAI.org, and creator of Tefillin Timer (30K+ DAU). Swift, visionOS, reverse engineering, and full-stack development across automotive HMI and consumer spatial platforms.',
     highlights: [
+      { label: 'SPATIAL SYSTEMS', value: 'PRODUCTION' },
       { label: 'BUG BOUNTIES', value: '10+' },
       { label: 'TEFILLIN DAU', value: '30K+' },
       { label: 'SENIORS SERVED', value: '300+' },
-      { label: 'PRESS COVERAGE', value: '3 OUTLETS' },
     ],
     languages: 'Fluent English · Conversational Hebrew',
     activities: 'Level 10 Competitive Gymnast · Varsity Wrestler',
@@ -36,17 +36,18 @@ window.PORTFOLIO_DATA = {
           destination: 'NEW YORK UNIVERSITY',
           subtitle: 'BACHELOR OF ARTS · COMPUTER SCIENCE',
           year: '2026 – 2029',
-          status: 'ADMITTED',
+          status: 'NOW',
           detail: {
             title: 'NEW YORK UNIVERSITY',
-            role: 'Bachelor of Arts in Computer Science · May 2026 – Jun 2029',
+            role: 'Bachelor of Arts in Computer Science · May 2026 – Jun 2029 · Concurrent with Tesla',
             hero: 'assets/screenshots/nyu-campus.jpg',
             stats: [
               { label: 'GRADE LEVEL', value: 'SOPHOMORE' },
               { label: 'COLLEGE', value: 'CAS' },
+              { label: 'PARALLEL', value: 'TESLA · SPATIAL' },
             ],
             body: [
-              'Pursuing a B.A. in Computer Science at New York University\'s College of Arts and Science.',
+              'Pursuing a B.A. in Computer Science at New York University\'s College of Arts and Science while engineering spatial computing systems at Tesla full-time.',
             ],
             links: [
               { label: '→ NYU CAS', href: 'https://cas.nyu.edu', primary: true },
@@ -128,8 +129,93 @@ window.PORTFOLIO_DATA = {
       icon: '✈',
       items: [
         {
-          id: 'exp-tefillin',
+          id: 'exp-tesla',
           flight: 'EXP 001',
+          monogram: 'T',
+          logo: 'https://www.google.com/s2/favicons?domain=tesla.com&sz=128',
+          destination: 'TESLA',
+          subtitle: 'SPATIAL COMPUTING ENGINEER · 6-FIG COMP',
+          year: '2025 –',
+          status: 'NOW',
+          detail: {
+            title: 'TESLA',
+            role: 'Spatial Computing Engineer · 2025 – Present · Los Angeles · Concurrent with CS @ NYU',
+            hero: '',
+            stats: [
+              { label: 'HIRED FOR', value: 'SPATIAL TALENT' },
+              { label: 'FOCUS', value: 'SPATIAL UX / HMI' },
+              { label: 'COMPENSATION', value: '6-FIGURE' },
+              { label: 'TENURE', value: 'CURRENT' },
+            ],
+            body: [
+              'Recruited by Tesla specifically for spatial computation expertise — the same profile of work that shipped on Apple Vision Pro and came out of MIT research.',
+              'Building production spatial interfaces and human-machine interaction systems at automotive scale, not prototype demos.',
+              'Negotiated compensation into six figures within the first year; role runs in parallel with a full CS courseload at NYU.',
+              'Applies visionOS-class interaction design, Swift, and real-time 3D spatial UX to Tesla\'s in-vehicle and interface stack.',
+            ],
+            links: [
+              { label: '→ TESLA', href: 'https://www.tesla.com', primary: true },
+            ],
+          },
+        },
+        {
+          id: 'exp-mit',
+          flight: 'EXP 002',
+          monogram: 'M',
+          logo: 'https://www.google.com/s2/favicons?domain=mit.edu&sz=128',
+          destination: 'MASSACHUSETTS INSTITUTE OF TECHNOLOGY',
+          subtitle: 'RESEARCH · SPATIAL COMPUTATION',
+          year: '2024 –',
+          status: 'NOW',
+          detail: {
+            title: 'MIT · SPATIAL COMPUTATION RESEARCH',
+            role: 'Research · 2024 – Present',
+            hero: '',
+            stats: [
+              { label: 'DOMAIN', value: 'SPATIAL INTERFACES' },
+              { label: 'OUTPUT', value: 'PUBLISHED WORK' },
+            ],
+            body: [
+              'Research on embodied spatial interfaces and computation — how people navigate, manipulate, and reason in three-dimensional digital environments.',
+              'Work directly informed the interaction paradigms later applied on Apple Vision Pro and cited in the spatial computation profile Tesla recruited for.',
+              'Combines HCI theory with Swift, RealityKit, and rapid prototyping on visionOS hardware.',
+            ],
+            links: [
+              { label: '→ MIT', href: 'https://www.mit.edu', primary: true },
+            ],
+          },
+        },
+        {
+          id: 'exp-visionpro',
+          flight: 'EXP 003',
+          monogram: 'AVP',
+          logo: 'https://www.google.com/s2/favicons?domain=apple.com&sz=128',
+          destination: 'APPLE VISION PRO',
+          subtitle: 'SPATIAL UX · MAJOR SHIPPING WORK',
+          year: '2024 – 2025',
+          status: 'DONE',
+          detail: {
+            title: 'APPLE VISION PRO',
+            role: 'Spatial UX Engineering · 2024 – 2025',
+            hero: '',
+            stats: [
+              { label: 'PLATFORM', value: 'VISIONOS' },
+              { label: 'SCOPE', value: 'SHIPPING FEATURES' },
+              { label: 'IMPACT', value: 'USER-FACING' },
+            ],
+            body: [
+              'Contributed to big-movement spatial interactions on Apple Vision Pro — the kind of gesture, windowing, and depth cues users feel on day one, not back-end plumbing.',
+              'Shipped production-grade visionOS UX: volumetric layouts, gaze-and-pinch affordances, and spatial scene composition at App Store launch quality.',
+              'This body of work became the concrete portfolio Tesla pointed to when hiring for spatial computation talent.',
+            ],
+            links: [
+              { label: '→ VISION PRO', href: 'https://www.apple.com/apple-vision-pro/', primary: true },
+            ],
+          },
+        },
+        {
+          id: 'exp-tefillin',
+          flight: 'EXP 004',
           monogram: 'T',
           destination: 'TEFILLIN TIMER',
           subtitle: 'FOUNDER · iOS APP · 30K+ DAU',
@@ -161,7 +247,7 @@ window.PORTFOLIO_DATA = {
         },
         {
           id: 'exp-seniorsupport',
-          flight: 'EXP 002',
+          flight: 'EXP 005',
           monogram: 'S',
           logo: 'https://www.google.com/s2/favicons?domain=seniorsupportai.org&sz=128',
           destination: 'SENIORSUPPORTAI.ORG',
@@ -191,7 +277,7 @@ window.PORTFOLIO_DATA = {
         },
         {
           id: 'exp-research',
-          flight: 'EXP 003',
+          flight: 'EXP 006',
           monogram: 'I',
           destination: 'INDEPENDENT SECURITY RESEARCHER',
           subtitle: 'SELF-EMPLOYED · 10+ DISCLOSURES',
@@ -218,7 +304,7 @@ window.PORTFOLIO_DATA = {
         },
         {
           id: 'exp-webutation',
-          flight: 'EXP 004',
+          flight: 'EXP 007',
           monogram: 'W',
           logo: 'https://www.google.com/s2/favicons?domain=webutation.net&sz=128',
           destination: 'WEBUTATION, INC',
