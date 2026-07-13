@@ -7603,7 +7603,7 @@ function updateTutorial(dt) {
   const step = TUTORIAL[tutStep];
 
   if (keysDown.has(step.key)) {
-    tutProgress += dt / step.duration;
+    tutProgress += dt / (step.duration * 0.5);   // 0.5 = run the whole flight at 2x speed (half the time)
     if (tutProgress > 1) tutProgress = 1;
 
     const rotationMode = step.rotationMode ?? 'tangent';
