@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">GBrain</title>
+  <rect width="64" height="64" rx="14" fill="#151a28"/>
+  <path d="M18 34h10M36 34h10M32 18v10M32 36v10M22 24l7 7M35 33l7 7M42 24l-7 7M29 33l-7 7" fill="none" stroke="#65d6c7" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="5.5" fill="#f5a24a"/>
+  <circle cx="18" cy="34" r="3.2" fill="#f2ead6"/>
+  <circle cx="46" cy="34" r="3.2" fill="#f2ead6"/>
+  <circle cx="32" cy="18" r="3.2" fill="#f2ead6"/>
+  <circle cx="32" cy="46" r="3.2" fill="#f2ead6"/>
+  <circle cx="22" cy="24" r="2.6" fill="#7d8cff"/>
+  <circle cx="42" cy="24" r="2.6" fill="#7d8cff"/>
+  <circle cx="22" cy="40" r="2.6" fill="#7d8cff"/>
+  <circle cx="42" cy="40" r="2.6" fill="#7d8cff"/>
+</svg>

@@ -6257,14 +6257,14 @@ function buildResumeFloorCanvas() {
   x.fillText('10+ APPROVED BUG BOUNTIES', 290, 645);
   x.fillStyle = '#5a554a';
   x.font = '400 18px Inter';
-  x.fillText('Founder · Independent Security Researcher · CS @ NYU', 290, 678);
+  x.fillText('Maintainer of GStack & GBrain · CS @ NYU', 290, 678);
 
-  // ── 4. Resume sections (Education, Experience, Disclosures, Other) ──────
+  // ── 4. Resume sections (Education, Experience, Awards, Disclosures) ──────
   const sections = [
     { title: 'EDUCATION',   color: '#7d6fd1', items: ['New York University', 'Santa Monica College', 'LA Pierce College', 'Calabasas High'] },
-    { title: 'EXPERIENCE',  color: '#ed8e2b', items: ['Tefillin Timer (Founder)', 'SeniorSupportAI.org (Founder)', 'Independent Security Researcher', 'Webutation, Inc'] },
+    { title: 'EXPERIENCE',  color: '#ed8e2b', items: ['GStack (Maintainer · 129K★)', 'GBrain (Maintainer · 29K★)', 'Tefillin Timer (Founder)', 'SeniorSupportAI.org (Founder)'] },
+    { title: 'AWARDS',      color: '#b8860b', items: ['1st · GStack Hackathon (YC)', '1st · GBrain Hackathon (YC)', 'Stanford GDG Hackathon', 'Moss × YC Hackathon'] },
     { title: 'DISCLOSURES', color: '#c9432f', items: ['Hinge · Paywall Bypass', 'Wix.com · IDOR', 'Vibecodeapp · SSH Auth Bypass'] },
-    { title: 'OTHER',       color: '#9a9385', items: ['Starbucks · Barista', "Sloan's Ice Cream"] },
   ];
   let yPos = 760;
   for (const sec of sections) {
